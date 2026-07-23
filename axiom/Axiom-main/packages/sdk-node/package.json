@@ -1,0 +1,42 @@
+{
+    "name": "@accessforge/sdk",
+    "version": "0.0.1",
+    "description": "AccessForge Node.js SDK - Authorization made simple",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts",
+        "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+        "lint": "eslint src/",
+        "test": "bun test",
+        "clean": "rm -rf dist .turbo node_modules"
+    },
+    "dependencies": {
+        "@accessforge/core": "workspace:*"
+    },
+    "devDependencies": {
+        "tsup": "^8.0.1",
+        "typescript": "^5.3.2"
+    },
+    "keywords": [
+        "accessforge",
+        "authorization",
+        "permissions",
+        "access-control",
+        "rbac",
+        "abac"
+    ],
+    "author": "AccessForge",
+    "license": "MIT"
+}

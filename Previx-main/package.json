@@ -1,0 +1,41 @@
+{
+    "name": "accessforge",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "turbo dev",
+        "build": "turbo build",
+        "test": "turbo test",
+        "lint": "turbo lint",
+        "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+        "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+        "db:generate": "bun run --filter @accessforge/db generate",
+        "db:migrate": "bun run --filter @accessforge/db migrate",
+        "db:push": "bun run --filter @accessforge/db push",
+        "db:studio": "bun run --filter @accessforge/db studio",
+        "db:seed": "bun run --filter @accessforge/db seed",
+        "clean": "turbo clean && rm -rf node_modules",
+        "prepare": "husky install"
+    },
+    "devDependencies": {
+        "@changesets/cli": "^2.27.1",
+        "@types/node": "^20.10.0",
+        "@typescript-eslint/eslint-plugin": "^6.13.0",
+        "@typescript-eslint/parser": "^6.13.0",
+        "eslint": "^8.55.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-import": "^2.29.0",
+        "husky": "^8.0.3",
+        "lint-staged": "^15.2.0",
+        "prettier": "^3.1.0",
+        "turbo": "^2.3.0",
+        "typescript": "^5.3.2"
+    },
+    "packageManager": "bun@1.0.18",
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

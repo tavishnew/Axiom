@@ -1,0 +1,7 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "framework": "nextjs",
+    "buildCommand": "cd ../.. && turbo build --filter=@permix/dashboard",
+    "installCommand": "cd ../.. && bun install",
+    "outputDirectory": ".next"
+}

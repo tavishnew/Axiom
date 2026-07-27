@@ -1,0 +1,23 @@
+$ cross-env NODE_ENV=development PORT=8080 pnpm run build && pnpm run start
+$ node ./build.mjs
+
+  dist\index.mjs                   2.2mb
+  dist\pino-worker.mjs           153.2kb
+  dist\pino-file.mjs             141.9kb
+  dist\pino-pretty.mjs           114.1kb
+  dist\thread-stream-worker.mjs    7.3kb
+  ...and 5 more output files...
+
+Done in 539ms
+$ node --enable-source-maps ./dist/index.mjs
+C:\Users\tavis\Desktop\Axiom-1\backend\db\src\index.ts:8
+  throw new Error(
+        ^
+
+Error: DATABASE_URL must be set. Did you forget to provision a database?
+    at <anonymous> (C:\Users\tavis\Desktop\Axiom-1\backend\db\src\index.ts:8:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.15.0

@@ -1,7 +1,0 @@
-{
-    "$schema": "https://openapi.vercel.sh/vercel.json",
-    "framework": "nextjs",
-    "buildCommand": "cd ../.. && turbo build --filter=@accessforge/docs",
-    "installCommand": "cd ../.. && bun install",
-    "outputDirectory": ".next"
-}

@@ -5,7 +5,7 @@ Restructure the project to have separate frontend and backend directories for cl
 
 ## Current Structure
 - artifacts/
-  - accessforge/ (frontend app)
+  - axiom/ (frontend app)
   - api-server/ (backend API)
 - lib/
   - api-zod/ (shared Zod schemas)
@@ -15,7 +15,7 @@ Restructure the project to have separate frontend and backend directories for cl
 
 ## Proposed Structure
 - frontend/
-  - accessforge/
+  - axiom/
 - backend/
   - api-server/
   - db/

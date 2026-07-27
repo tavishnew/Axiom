@@ -1,4 +1,5 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
+import rateLimit from "express-rate-limit";
 import { db } from "@workspace/db";
 import {
   organizationsTable,
@@ -117,10 +118,29 @@ async function createSession(userId: string, res: Response) {
   return token;
 }
 
+// Rate limiters for auth routes (10 req/min per IP)
+const authRateLimit = rateLimit({
+  windowMs: 60_000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: "Too many requests, please try again later" } },
+  skipSuccessfulRequests: false,
+});
+
+// Stricter limiter for sign-up (5 req/min per IP)
+const signupRateLimit = rateLimit({
+  windowMs: 60_000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: "Too many sign-up attempts, please try again later" } },
+});
+
 // ============================================================
 // Auth endpoints
 // ============================================================
-router.post("/auth/sign-in", async (req: Request, res: Response) => {
+router.post("/auth/sign-in", authRateLimit, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -151,7 +171,7 @@ router.post("/auth/sign-in", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/auth/sign-up", async (req: Request, res: Response) => {
+router.post("/auth/sign-up", signupRateLimit, async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
@@ -340,13 +360,20 @@ router.patch("/policies/:id", requireAuth, async (req: Request, res: Response) =
 });
 
 router.delete("/policies/:id", requireAuth, async (req: Request, res: Response) => {
-  const id = req.params.id as string;
-  const [policy] = await db
-    .delete(policiesTable)
-    .where(and(eq(policiesTable.id, id), eq(policiesTable.organizationId, req.user!.organizationId)))
-    .returning();
-  if (!policy) return res.status(404).json({ error: "Not found" });
-  return res.json({ success: true });
+  try {
+    const id = req.params.id as string;
+    const [policy] = await db
+      .delete(policiesTable)
+      .where(and(eq(policiesTable.id, id), eq(policiesTable.organizationId, req.user!.organizationId)))
+      .returning();
+    if (!policy) return res.status(404).json({ error: "Not found" });
+    return res.json({ success: true });
+  } catch (error: any) {
+    if (error.code === "23503") {
+      return res.status(409).json({ error: { message: "Policy is assigned to entities. Remove assignments first." } });
+    }
+    return res.status(500).json({ error: { message: "Internal server error" } });
+  }
 });
 
 // Policy versions
@@ -719,13 +746,18 @@ router.get("/api-keys/:id", requireAuth, async (req: Request, res: Response) => 
 });
 
 router.delete("/api-keys/:id", requireAuth, async (req: Request, res: Response) => {
-  const id = req.params.id as string;
-  const [key] = await db
-    .delete(apiKeysTable)
-    .where(and(eq(apiKeysTable.id, id), eq(apiKeysTable.organizationId, req.user!.organizationId)))
-    .returning();
-  if (!key) return res.status(404).json({ error: "Not found" });
-  return res.json({ success: true });
+  try {
+    const id = req.params.id as string;
+    const [key] = await db
+      .update(apiKeysTable)
+      .set({ revokedAt: new Date() })
+      .where(and(eq(apiKeysTable.id, id), eq(apiKeysTable.organizationId, req.user!.organizationId)))
+      .returning();
+    if (!key) return res.status(404).json({ error: "Not found" });
+    return res.json({ success: true, revokedAt: key.revokedAt });
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Failed to revoke API key" } });
+  }
 });
 
 // ============================================================
@@ -747,11 +779,11 @@ router.post("/v1/evaluate", async (req: Request, res: Response) => {
   const [apiKey] = await db
     .select()
     .from(apiKeysTable)
-    .where(eq(apiKeysTable.hashedKey, hashedKey))
+    .where(and(eq(apiKeysTable.hashedKey, hashedKey), isNull(apiKeysTable.revokedAt)))
     .limit(1);
 
   if (!apiKey) {
-    return res.status(401).json({ error: "Invalid API key" });
+    return res.status(401).json({ error: "Invalid or revoked API key" });
   }
 
   const organizationId = apiKey.organizationId;

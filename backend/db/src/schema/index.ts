@@ -10,4 +10,3 @@ export * from "./policies";
 export * from "./policy-versions";
 export * from "./policy-assignments";
 export * from "./decision-logs";
-export * from "./usage-counters";

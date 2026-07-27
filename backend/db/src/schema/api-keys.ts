@@ -11,6 +11,7 @@ export const apiKeysTable = pgTable("api_keys", {
   prefix: text("prefix").notNull(),
   lastUsedAt: timestamp("last_used_at"),
   expiresAt: timestamp("expires_at"),
+  revokedAt: timestamp("revoked_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   organizationId: text("organization_id").notNull().references(() => organizationsTable.id, { onDelete: "cascade" }),

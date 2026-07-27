@@ -61,30 +61,30 @@
 ### Task 2: Move frontend application
 
 **Files:**
-- Move: `artifacts/accessforge` → `frontend/accessforge`
+- Move: `artifacts/axiom` → `frontend/axiom`
 - Modify: None (direct move)
 - Test: Verify moved contents
 
 **Interfaces:**
-- Consumes: Existing frontend app at `artifacts/accessforge`
-- Produces: Frontend app at `frontend/accessforge`
+- Consumes: Existing frontend app at `artifacts/axiom`
+- Produces: Frontend app at `frontend/axiom`
 
 - [ ] **Step 1: Verify source exists**
   ```bash
-  ls -la artifacts/accessforge
+  ls -la artifacts/axiom
   ```
 - [ ] **Step 2: Move directory**
   ```bash
-  mv artifacts/accessforge frontend/
+  mv artifacts/axiom frontend/
   ```
 - [ ] **Step 3: Verify move succeeded**
   ```bash
-  ls -la frontend/accessforge
+  ls -la frontend/axiom
   ```
 - [ ] **Step 4: Commit move**
   ```bash
-  git add artifacts/accessforge frontend/accessforge
-  git commit -m "feat: move accessforge to frontend"
+  git add artifacts/axiom frontend/axiom
+  git commit -m "feat: move axiom to frontend"
   ```
 
 ### Task 3: Move backend API server

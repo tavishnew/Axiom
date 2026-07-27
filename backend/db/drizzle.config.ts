@@ -4,10 +4,6 @@ import path from "path";
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
-}
-
 export default defineConfig({
   schema: [
     "./src/schema/accounts.ts",
@@ -22,10 +18,7 @@ export default defineConfig({
     "./src/schema/users.ts",
     "./src/schema/verifications.ts",
     "./src/schema/sessions.ts",
-    "./src/schema/usage-counters.ts",
   ],
   dialect: "postgresql",
-  dbCredentials: {
-    url: process.env.DATABASE_URL,
-  },
+  dbCredentials: { url: process.env.DATABASE_URL! },
 });

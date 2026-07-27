@@ -3,5 +3,8 @@ dist
 *.log
 *.err
 *.pid
+*.out
+*.bak
+*.db
 .env
 *.tsbuildinfo

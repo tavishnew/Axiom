@@ -7,14 +7,13 @@ import * as schema from "./schema";
 // Load environment variables from the project root .env file
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const { Pool } = pg;
-
 if (!process.env.DATABASE_URL) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
+const { Pool } = pg;
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });
 

@@ -19,7 +19,7 @@ export const decisionLogsTable = pgTable("decision_logs", {
   latencyMs: integer("latency_ms").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   organizationId: text("organization_id").notNull().references(() => organizationsTable.id, { onDelete: "cascade" }),
-  matchedPolicyId: text("matched_policy_id").references(() => policiesTable.id),
+  matchedPolicyId: text("matched_policy_id").references(() => policiesTable.id, { onDelete: "set null" }),
 });
 
 export const insertDecisionLogSchema = createInsertSchema(decisionLogsTable).omit({ id: true, createdAt: true });

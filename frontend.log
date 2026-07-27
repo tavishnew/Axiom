@@ -1,3 +1,0 @@
-C:\Users\tavis\Desktop\Axiom-1\frontend:
-[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @workspace/frontend@0.0.0 dev: `cross-env PORT=3000 vite --config vite.config.ts --host 0.0.0.0`
-Exit status 1

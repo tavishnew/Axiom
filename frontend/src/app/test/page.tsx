@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FlaskConical, Send, Shield, ShieldOff, Copy, CheckCircle, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function TestConsolePage() {
   const [entityId, setEntityId] = useState('user-123');
@@ -20,6 +21,7 @@ export default function TestConsolePage() {
   }>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const handleTest = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -214,10 +216,6 @@ export default function TestConsolePage() {
                       </a>
                     </div>
                   )}
-                  <div>
-                    <p className="text-xs font-medium text-muted mb-1">Matched Policy</p>
-                    <p className="text-sm text-ink">{result.matchedPolicy || 'None'}</p>
-                  </div>
                 </div>
 
                 {/* Code Example */}
@@ -231,8 +229,23 @@ export default function TestConsolePage() {
 });
 // Result: ${result.decision}`}</pre>
                   </div>
-                  <button className="mt-2 inline-flex items-center gap-1 text-xs text-muted hover:text-accent">
-                    <Copy className="h-3 w-3" /> Copy
+                  <button
+                    className="mt-2 inline-flex items-center gap-1 text-xs text-muted hover:text-accent"
+                    onClick={() => {
+                      const code = `const allowed = await axiom.can({
+  entity: { id: '${entityId}', type: '${entityType}', attributes: ${entityAttrs} },
+  action: '${action}',
+  resource: { type: '${resourceType}', id: '${resourceId}' },
+});
+// Result: ${result.decision}`;
+                      navigator.clipboard.writeText(code);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                      toast.success("Copied to clipboard");
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                    {copied ? "Copied!" : "Copy"}
                   </button>
                 </div>
               </motion.div>

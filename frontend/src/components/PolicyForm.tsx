@@ -64,7 +64,6 @@ export default function PolicyForm({ open, onOpenChange, onSuccess, policy }:Pol
           priority,
           active,
           conditions: parsedConditions,
-          organizationId: "default", // TODO: get from auth context
         };
   
         if (isEdit && policy) {
@@ -169,7 +168,7 @@ export default function PolicyForm({ open, onOpenChange, onSuccess, policy }:Pol
   
           <div className="space-y-2">
             <label className="text-sm font-medium text-ink">Conditions (JSON)</label>
-                Array of condition objects: e.g., [{ field: "plan", operator: "in", value: ["pro", "enterprise"] }]
+            <Textarea
               value={conditions}
               onChange={(e) => setConditions(e.target.value)}
               placeholder='[{"field": "plan", "operator": "in", "value": ["pro", "enterprise"]}]'
@@ -177,7 +176,7 @@ export default function PolicyForm({ open, onOpenChange, onSuccess, policy }:Pol
               className="font-mono text-xs"
             />
             <p className="text-xs text-muted mt-1">
-              Array of condition objects: { field, operator, value }
+              Array of condition objects: e.g., [{'{'}"field": "plan", "operator": "in", "value": ["pro", "enterprise"]{'}'}]
             </p>
           </div>
         </form>

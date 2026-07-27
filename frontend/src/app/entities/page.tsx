@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, User, Server, Key, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
-import { api, type Entity } from '@/lib/api';
+import { Plus, Search, User, Server, Key, MoreHorizontal, ChevronLeft, ChevronRight, Shield, X, Plus as PlusIcon } from 'lucide-react';
+import { api, type Entity, type Policy } from '@/lib/api';
 import { EntityForm } from '@/components/EntityForm';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 const typeConfig: Record<string, { icon: typeof User; bg: string; text: string }> = {
   user: { icon: User, bg: 'bg-blue-50', text: 'text-blue-700' },
@@ -17,6 +21,14 @@ export default function EntitiesPage() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editEntity, setEditEntity] = useState<Entity | null>(null);
+
+  // Policy assignments state
+  const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
+  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
+  const [assignedPolicies, setAssignedPolicies] = useState<{ entityId: string; policyId: string }[]>([]);
+  const [availablePolicies, setAvailablePolicies] = useState<Policy[]>([]);
+  const [policiesLoading, setPoliciesLoading] = useState(false);
+  const [searchPolicy, setSearchPolicy] = useState('');
 
   useEffect(() => {
     api.entities.list()
@@ -41,6 +53,59 @@ export default function EntitiesPage() {
     // Refetch entities
     api.entities.list().then(setEntities).catch(console.error);
   };
+
+  const openPolicyDialog = async (entity: Entity) => {
+    setSelectedEntity(entity);
+    setPolicyDialogOpen(true);
+    await loadPolicyData(entity.id);
+  };
+
+  const loadPolicyData = async (entityId: string) => {
+    setPoliciesLoading(true);
+    try {
+      const [assigned, allPolicies] = await Promise.all([
+        api.policyAssignments.list(entityId),
+        api.policies.list(),
+      ]);
+      setAssignedPolicies(assigned);
+      setAvailablePolicies(allPolicies);
+    } catch (err) {
+      console.error('Failed to load policies:', err);
+      toast.error('Failed to load policy data');
+    } finally {
+      setPoliciesLoading(false);
+    }
+  };
+
+  const handleAssignPolicy = async (policyId: string) => {
+    if (!selectedEntity) return;
+    try {
+      await api.policyAssignments.create(selectedEntity.id, policyId);
+      toast.success('Policy assigned successfully');
+      await loadPolicyData(selectedEntity.id);
+    } catch (err) {
+      toast.error('Failed to assign policy');
+    }
+  };
+
+  const handleRemovePolicy = async (policyId: string) => {
+    if (!selectedEntity) return;
+    try {
+      await api.policyAssignments.delete(selectedEntity.id, policyId);
+      toast.success('Policy removed successfully');
+      await loadPolicyData(selectedEntity.id);
+    } catch (err) {
+      toast.error('Failed to remove policy');
+    }
+  };
+
+  const filteredPolicies = availablePolicies.filter(p =>
+    p.name.toLowerCase().includes(searchPolicy.toLowerCase()) ||
+    p.id.toLowerCase().includes(searchPolicy.toLowerCase())
+  );
+
+  const isPolicyAssigned = (policyId: string) =>
+    assignedPolicies.some(a => a.policyId === policyId);
 
   return (
     <div className="p-6 md:p-8">
@@ -131,8 +196,9 @@ export default function EntitiesPage() {
                   <td className="hidden px-4 py-3 text-sm text-muted md:table-cell">{e.createdAt}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button className="rounded-lg px-2 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent/5">
-                        View
+                      <button className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent/5" onClick={() => openPolicyDialog(e)}>
+                        <Shield className="h-3 w-3" />
+                        Policies
                       </button>
                       <button className="rounded-lg p-1 text-muted transition-colors hover:bg-surface-2">
                         <MoreHorizontal className="h-4 w-4" />
@@ -161,12 +227,121 @@ export default function EntitiesPage() {
           </button>
         </div>
       </div>
-    <EntityForm
-      open={createOpen}
-      onOpenChange={setCreateOpen}
-      entity={editEntity}
-      onSuccess={handleSuccess}
-    />
+
+      {/* Policy Assignment Dialog */}
+      <Dialog open={policyDialogOpen} onOpenChange={setPolicyDialogOpen}>
+        <DialogContent className="sm:max-w-[700px] w-full max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Policies for {selectedEntity?.id}</DialogTitle>
+            <DialogDescription>
+              Assign or remove policies for this entity. Assigned policies take effect during evaluation.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-6 space-y-6">
+            {/* Assigned Policies */}
+            <div>
+              <h3 className="text-sm font-medium text-ink mb-3">Assigned Policies ({assignedPolicies.length})</h3>
+              {assignedPolicies.length === 0 ? (
+                <p className="text-sm text-muted py-4">No policies assigned. Entity inherits org-wide policies.</p>
+              ) : (
+                <div className="space-y-2">
+                  {assignedPolicies.map((a) => {
+                    const policy = availablePolicies.find(p => p.id === a.policyId);
+                    return (
+                      <div key={a.policyId} className="flex items-center justify-between rounded-lg border border-border bg-white p-3">
+                        <div className="flex items-center gap-3">
+                          <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
+                            policy?.effect === 'allow' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                          }`}>
+                            {policy?.effect || 'allow'}
+                          </span>
+                          <span className="text-sm font-medium text-ink">{policy?.name || a.policyId}</span>
+                          <span className="text-xs text-muted">Priority: {policy?.priority || 0}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemovePolicy(a.policyId)}
+                          disabled={policiesLoading}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <hr className="border-border" />
+
+            {/* Available Policies */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-ink">Available Policies</h3>
+                <Input
+                  placeholder="Search policies..."
+                  value={searchPolicy}
+                  onChange={e => setSearchPolicy(e.target.value)}
+                  className="w-64"
+                />
+              </div>
+              {policiesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
+                </div>
+              ) : filteredPolicies.length === 0 ? (
+                <p className="text-sm text-muted py-4">No policies available</p>
+              ) : (
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {filteredPolicies.map((p) => {
+                    const assigned = isPolicyAssigned(p.id);
+                    return (
+                      <div key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-white p-3 transition-colors hover:bg-surface-2/50">
+                        <div className="flex items-center gap-3">
+                          <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
+                            p.effect === 'allow' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                          }`}>
+                            {p.effect}
+                          </span>
+                          <span className="text-sm font-medium text-ink">{p.name}</span>
+                          <span className="text-xs text-muted">Priority: {p.priority}</span>
+                        </div>
+                        {assigned ? (
+                          <span className="text-xs text-muted">Already assigned</span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => handleAssignPolicy(p.id)}
+                            disabled={policiesLoading}
+                          >
+                            <PlusIcon className="h-3 w-3 mr-1" />
+                            Assign
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="flex justify-end pt-4">
+            <Button variant="outline" onClick={() => setPolicyDialogOpen(false)} className="px-4 py-2">
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <EntityForm
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        entity={editEntity}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 }

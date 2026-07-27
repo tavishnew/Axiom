@@ -11,13 +11,5 @@
                         },
     "include":  [
                     "src"
-                ],
-    "references":  [
-                       {
-                           "path":  "db"
-                       },
-                       {
-                           "path":  "../shared/api-zod"
-                       }
-                   ]
+                ]
 }

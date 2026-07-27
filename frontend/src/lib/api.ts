@@ -40,6 +40,13 @@ export interface Entity {
   organizationId: string;
 }
 
+export interface PolicyAssignment {
+  id: string;
+  entityId: string;
+  policyId: string;
+  createdAt: string;
+}
+
 export interface Resource {
   id: string;
   type: string;
@@ -107,6 +114,15 @@ export const api = {
       request<Entity>(`/entities/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: string) =>
       request<{ success: boolean }>(`/entities/${id}`, { method: 'DELETE' }),
+    // Policy assignments
+    getPolicies: (entityId: string) => request<PolicyAssignment[]>(`/entities/${entityId}/policies`),
+    assignPolicy: (entityId: string, policyId: string) =>
+      request<PolicyAssignment>(`/entities/${entityId}/policies`, {
+        method: 'POST',
+        body: JSON.stringify({ policyId }),
+      }),
+    removePolicy: (entityId: string, policyId: string) =>
+      request<{ success: boolean }>(`/entities/${entityId}/policies/${policyId}`, { method: 'DELETE' }),
   },
 
   // Resources
@@ -136,6 +152,20 @@ export const api = {
     list: () => request<ApiKey[]>('/api-keys'),
     create: (data: Partial<ApiKey>) =>
       request<ApiKey>('/api-keys', { method: 'POST', body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/api-keys/${id}`, { method: 'DELETE' }),
+  },
+
+  // Policy Assignments
+  policyAssignments: {
+    list: (entityId: string) => request<{ entityId: string; policyId: string }[]>(`/entities/${entityId}/policies`),
+    create: (entityId: string, policyId: string) =>
+      request<{ entityId: string; policyId: string }>(`/entities/${entityId}/policies`, {
+        method: 'POST',
+        body: JSON.stringify({ policyId }),
+      }),
+    delete: (entityId: string, policyId: string) =>
+      request<{ success: boolean }>(`/entities/${entityId}/policies/${policyId}`, { method: 'DELETE' }),
   },
 
   // Organizations

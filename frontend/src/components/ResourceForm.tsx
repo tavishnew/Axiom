@@ -52,7 +52,6 @@ export function ResourceForm({ open, onOpenChange, resource, onSuccess }: Resour
         name,
         description,
         attributes: parsedAttributes,
-        organizationId: "default", // TODO: get from auth context
       };
 
       if (isEdit && resource) {

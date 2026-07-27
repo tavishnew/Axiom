@@ -1,12 +1,10 @@
 {
     "scripts": {
-        "dev": "concurrently \"pnpm -F @workspace/frontend dev\" \"pnpm -F @workspace/backend dev\""
-    },
-    "dependencies": {
-        "@rollup/rollup-win32-x64-msvc": "4.62.2",
-        "@tailwindcss/oxide-win32-x64-msvc": "4.3.3",
-        "lightningcss": "1.32.0",
-        "lightningcss-win32-x64-msvc": "1.32.0"
+        "dev": "concurrently \"pnpm -F @workspace/frontend dev\" \"pnpm -F @workspace/backend dev\"",
+        "build": "pnpm -r run build",
+        "start": "pnpm -F @workspace/backend start",
+        "typecheck": "pnpm -r run typecheck",
+        "lint": "pnpm -r run lint"
     },
     "devDependencies": {
         "concurrently": "^10.0.4",

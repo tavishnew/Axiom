@@ -1,6 +1,6 @@
 'use client';
 
-import { useLocation, Link } from 'wouter';
+import { useLocation } from 'wouter';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Settings as SettingsIcon, Copy, Trash2, Plus, Building2, Key, Users as UsersIcon, CreditCard, User, Check, RefreshCw } from 'lucide-react';
@@ -15,7 +15,7 @@ const navItems = [
 ];
 
 export default function SettingsPage() {
-  const { pathname } = useLocation();
+  const [pathname, router] = useLocation();
   const [org, setOrg] = useState<Organization | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +94,7 @@ export default function SettingsPage() {
                   href={item.href}
                   onClick={(e) => {
                     e.preventDefault();
-                    router.push(item.href);
+                    router(item.href);
                   }}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -301,13 +301,13 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-muted">API Requests</p>
-                        <p class="text-2xl font-bold text-ink">12,450</p>
-                        <p class="text-xs text-muted">of 100,000 included</p>
+                        <p className="text-2xl font-bold text-ink">12,450</p>
+                        <p className="text-xs text-muted">of 100,000 included</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted">Active Entities</p>
-                        <p class="text-2xl font-bold text-ink">42</p>
-                        <p class="text-xs text-muted">of 1,000 included</p>
+                        <p className="text-2xl font-bold text-ink">42</p>
+                        <p className="text-xs text-muted">of 1,000 included</p>
                       </div>
                     </div>
                   </div>

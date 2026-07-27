@@ -5,8 +5,7 @@ import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { useEffect } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
-
-const queryClient = new QueryClient();
+import { AuthProvider, ProtectedRoute } from '@/lib/auth.tsx';
 
 // Pages
 import LandingPage from './app/landing/page';
@@ -19,17 +18,21 @@ import DecisionsPage from './app/decisions/page';
 import TestConsolePage from './app/test/page';
 import SettingsPage from './app/settings/page';
 
+const queryClient = new QueryClient();
+
 function ScrollToTop() {
   const [location] = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [location]);
   return null;
 }
 
-function DashboardRoute({ component: Component }: { component: React.ComponentType }) {
+function ProtectedDashboardRoute({ component: Component }: { component: React.ComponentType }) {
   return (
-    <DashboardLayout>
-      <Component />
-    </DashboardLayout>
+    <ProtectedRoute>
+      <DashboardLayout>
+        <Component />
+      </DashboardLayout>
+    </ProtectedRoute>
   );
 }
 
@@ -42,12 +45,12 @@ function Router() {
         <Route path="/landing" component={LandingPage} />
         <Route path="/auth/sign-in" component={SignInPage} />
         <Route path="/auth/sign-up" component={SignUpPage} />
-        <Route path="/policies" component={() => <DashboardRoute component={PoliciesPage} />} />
-        <Route path="/entities" component={() => <DashboardRoute component={EntitiesPage} />} />
-        <Route path="/resources" component={() => <DashboardRoute component={ResourcesPage} />} />
-        <Route path="/decisions" component={() => <DashboardRoute component={DecisionsPage} />} />
-        <Route path="/test" component={() => <DashboardRoute component={TestConsolePage} />} />
-        {/* <Route path="/settings" component={() => <DashboardRoute component={SettingsPage} />} /> */}
+        <Route path="/policies" component={() => <ProtectedDashboardRoute component={PoliciesPage} />} />
+        <Route path="/entities" component={() => <ProtectedDashboardRoute component={EntitiesPage} />} />
+        <Route path="/resources" component={() => <ProtectedDashboardRoute component={ResourcesPage} />} />
+        <Route path="/decisions" component={() => <ProtectedDashboardRoute component={DecisionsPage} />} />
+        <Route path="/test" component={() => <ProtectedDashboardRoute component={TestConsolePage} />} />
+        <Route path="/settings" component={() => <ProtectedDashboardRoute component={SettingsPage} />} />
         <Route component={NotFound} />
       </Switch>
     </>
@@ -59,7 +62,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

@@ -1,4 +1,4 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { db } from "@workspace/db";
 import {
   organizationsTable,
@@ -8,6 +8,9 @@ import {
   decisionLogsTable,
   apiKeysTable,
   usersTable,
+  sessionsTable,
+  policyAssignmentsTable,
+  policyVersionsTable,
   insertPolicySchema,
   insertEntitySchema,
   insertResourceSchema,
@@ -15,28 +18,132 @@ import {
   insertOrganizationSchema,
   insertApiKeySchema,
   insertUserSchema,
+  insertSessionSchema,
 } from "@workspace/db/schema";
-import { eq, desc, and, ilike, count as drizzleCount } from "drizzle-orm";
+import { eq, desc, and, or, isNull, inArray, sql, count as drizzleCount } from "drizzle-orm";
 import { randomUUID, createHash } from "crypto";
+import bcrypt from "bcryptjs";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
 import type { Policy, Entity, Resource, ApiKey } from "@workspace/db/schema";
 
 const router: IRouter = Router();
 
 // ============================================================
-// Auth endpoints (simplified)
+// Update schemas for PATCH routes (partial, no system fields)
+// ============================================================
+const updatePolicySchema = createInsertSchema(policiesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true, version: true });
+const updateEntitySchema = createInsertSchema(entitiesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true });
+const updateResourceSchema = createInsertSchema(resourcesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true });
+const updateOrganizationSchema = createInsertSchema(organizationsTable).partial().omit({ id: true, createdAt: true, updatedAt: true });
+
+// ============================================================
+// Auth middleware — populates req.user from session cookie
+// ============================================================
+interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  organizationId: string;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthUser;
+    }
+  }
+}
+
+async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const token = req.cookies?.session_token;
+    if (!token) {
+      res.status(401).json({ error: { message: "Authentication required" } });
+      return;
+    }
+
+    const [session] = await db
+      .select()
+      .from(sessionsTable)
+      .where(and(eq(sessionsTable.token, token), sql`${sessionsTable.expiresAt} > NOW()`))
+      .limit(1);
+
+    if (!session) {
+      res.status(401).json({ error: { message: "Session expired or invalid" } });
+      return;
+    }
+
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, session.userId))
+      .limit(1);
+
+    if (!user || !user.organizationId) {
+      res.status(401).json({ error: { message: "User not found" } });
+      return;
+    }
+
+    req.user = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      organizationId: user.organizationId,
+    };
+    next();
+  } catch (error) {
+    res.status(500).json({ error: { message: "Auth check failed" } });
+  }
+}
+
+// Helper: create session row + set cookie
+async function createSession(userId: string, res: Response) {
+  const id = randomUUID();
+  const token = randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  await db.insert(sessionsTable).values({
+    id,
+    token,
+    userId,
+    expiresAt,
+  });
+  res.cookie("session_token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    expires: expiresAt,
+  });
+  return token;
+}
+
+// ============================================================
+// Auth endpoints
 // ============================================================
 router.post("/auth/sign-in", async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: { message: "Email and password required" } });
+    }
+
     const [user] = await db
       .select()
       .from(usersTable)
       .where(eq(usersTable.email, email))
       .limit(1);
 
-    if (!user) {
+    if (!user || !user.passwordHash) {
       return res.status(401).json({ error: { message: "Invalid email or password" } });
     }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      return res.status(401).json({ error: { message: "Invalid email or password" } });
+    }
+
+    await createSession(user.id, res);
 
     return res.json({ data: { user: { id: user.id, email: user.email, name: user.name } } });
   } catch (error) {
@@ -47,6 +154,14 @@ router.post("/auth/sign-in", async (req: Request, res: Response) => {
 router.post("/auth/sign-up", async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: { message: "Name, email, and password required" } });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: { message: "Password must be at least 8 characters" } });
+    }
 
     const [existing] = await db
       .select()
@@ -66,13 +181,17 @@ router.post("/auth/sign-up", async (req: Request, res: Response) => {
       slug: `org-${randomUUID().slice(0, 8)}`,
     });
 
+    const passwordHash = await bcrypt.hash(password, 12);
     const userId = randomUUID();
     await db.insert(usersTable).values({
       id: userId,
       name,
       email,
+      passwordHash,
       organizationId: orgId,
     });
+
+    await createSession(userId, res);
 
     return res.json({ data: { user: { id: userId, email, name } } });
   } catch (error) {
@@ -80,138 +199,281 @@ router.post("/auth/sign-up", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/auth/sign-out", (_req: Request, res: Response) => {
-  return res.json({ data: null });
+router.post("/auth/sign-out", async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies?.session_token;
+    if (token) {
+      await db.delete(sessionsTable).where(eq(sessionsTable.token, token));
+      res.clearCookie("session_token");
+    }
+    return res.json({ data: null });
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Internal server error" } });
+  }
 });
 
 // ============================================================
-// Organizations
+// Session info
 // ============================================================
-router.get("/organizations", async (_req: Request, res: Response) => {
-  const orgs = await db.select().from(organizationsTable);
-  return res.json(orgs);
+router.get("/auth/session", async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies?.session_token;
+    if (!token) {
+      return res.json({ data: null });
+    }
+
+    const [session] = await db
+      .select()
+      .from(sessionsTable)
+      .where(and(eq(sessionsTable.token, token), sql`${sessionsTable.expiresAt} > NOW()`))
+      .limit(1);
+
+    if (!session) {
+      return res.json({ data: null });
+    }
+
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, session.userId))
+      .limit(1);
+
+    if (!user) {
+      return res.json({ data: null });
+    }
+
+    return res.json({ data: { user: { id: user.id, email: user.email, name: user.name } } });
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Internal server error" } });
+  }
 });
 
-router.get("/organizations/:id", async (req: Request, res: Response) => {
-  const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, req.params.id)).limit(1);
+// ============================================================
+// Organizations (auth-protected, scoped)
+// ============================================================
+router.get("/organizations", requireAuth, async (req: Request, res: Response) => {
+  const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, req.user!.organizationId)).limit(1);
+  return res.json(org ? [org] : []);
+});
+
+router.get("/organizations/:id", requireAuth, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  if (id !== req.user!.organizationId) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, id)).limit(1);
   if (!org) return res.status(404).json({ error: "Not found" });
   return res.json(org);
 });
 
-router.patch("/organizations/:id", async (req: Request, res: Response) => {
-  const [org] = await db.update(organizationsTable).set(req.body).where(eq(organizationsTable.id, req.params.id)).returning();
+router.patch("/organizations/:id", requireAuth, async (req: Request, res: Response) => {
+  if (req.params.id !== req.user!.organizationId) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  const parsed = updateOrganizationSchema.parse(req.body);
+  const [org] = await db.update(organizationsTable).set(parsed).where(eq(organizationsTable.id, req.params.id)).returning();
   if (!org) return res.status(404).json({ error: "Not found" });
   return res.json(org);
 });
 
-router.post("/organizations", async (req: Request, res: Response) => {
-  const parsed = insertOrganizationSchema.parse(req.body);
-  const [org] = await db.insert(organizationsTable).values(parsed).returning();
-  return res.status(201).json(org);
-});
+// POST /organizations removed — organizations are created during sign-up only
 
 // ============================================================
-// Policies
+// Policies (auth-protected, tenant-scoped)
 // ============================================================
-router.get("/policies", async (_req: Request, res: Response) => {
-  const policies = await db.select().from(policiesTable).orderBy(desc(policiesTable.priority));
+router.get("/policies", requireAuth, async (req: Request, res: Response) => {
+  const policies = await db
+    .select()
+    .from(policiesTable)
+    .where(eq(policiesTable.organizationId, req.user!.organizationId))
+    .orderBy(desc(policiesTable.priority));
   return res.json(policies);
 });
 
-router.get("/policies/:id", async (req: Request, res: Response) => {
-  const [policy] = await db.select().from(policiesTable).where(eq(policiesTable.id, req.params.id)).limit(1);
+router.get("/policies/:id", requireAuth, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const [policy] = await db
+    .select()
+    .from(policiesTable)
+    .where(and(eq(policiesTable.id, id), eq(policiesTable.organizationId, req.user!.organizationId)))
+    .limit(1);
   if (!policy) return res.status(404).json({ error: "Not found" });
   return res.json(policy);
 });
 
-router.post("/policies", async (req: Request, res: Response) => {
+router.post("/policies", requireAuth, async (req: Request, res: Response) => {
   const parsed = insertPolicySchema.parse(req.body);
-  const [policy] = await db.insert(policiesTable).values(parsed).returning();
+  const [policy] = await db.insert(policiesTable).values({
+    ...parsed,
+    organizationId: req.user!.organizationId,
+  }).returning();
   return res.json(policy);
 });
 
-router.patch("/policies/:id", async (req: Request, res: Response) => {
+router.patch("/policies/:id", requireAuth, async (req: Request, res: Response) => {
+  const parsed = updatePolicySchema.parse(req.body);
+  const id = req.params.id as string;
+
+  // Snapshot current state to policy_versions before updating
+  const [current] = await db
+    .select()
+    .from(policiesTable)
+    .where(and(eq(policiesTable.id, id), eq(policiesTable.organizationId, req.user!.organizationId)))
+    .limit(1);
+  if (!current) return res.status(404).json({ error: "Not found" });
+
+  await db.insert(policyVersionsTable).values({
+    policyId: current.id,
+    version: current.version,
+    effect: current.effect,
+    priority: current.priority,
+    conditions: current.conditions as Record<string, unknown>[],
+    active: current.active,
+  });
+
   const [policy] = await db
     .update(policiesTable)
-    .set(req.body)
-    .where(eq(policiesTable.id, req.params.id))
+    .set({ ...parsed, version: current.version + 1 })
+    .where(and(eq(policiesTable.id, id), eq(policiesTable.organizationId, req.user!.organizationId)))
     .returning();
   return res.json(policy);
 });
 
-router.delete("/policies/:id", async (req: Request, res: Response) => {
-  await db.delete(policiesTable).where(eq(policiesTable.id, req.params.id));
+router.delete("/policies/:id", requireAuth, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const [policy] = await db
+    .delete(policiesTable)
+    .where(and(eq(policiesTable.id, id), eq(policiesTable.organizationId, req.user!.organizationId)))
+    .returning();
+  if (!policy) return res.status(404).json({ error: "Not found" });
   return res.json({ success: true });
 });
 
+// Policy versions
+router.get("/policies/:id/versions", requireAuth, async (req: Request, res: Response) => {
+  const policyId = req.params.id as string;
+  const versions = await db
+    .select()
+    .from(policyVersionsTable)
+    .where(eq(policyVersionsTable.policyId, policyId))
+    .orderBy(desc(policyVersionsTable.version));
+  return res.json(versions);
+});
+
 // ============================================================
-// Entities
+// Entities (auth-protected, tenant-scoped)
 // ============================================================
-router.get("/entities", async (_req: Request, res: Response) => {
-  const limit = Math.min(parseInt(_req.query.limit as string) || 50, 100);
-  const items = await db.select().from(entitiesTable).orderBy(desc(entitiesTable.createdAt)).limit(limit);
+router.get("/entities", requireAuth, async (req: Request, res: Response) => {
+  const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+  const items = await db
+    .select()
+    .from(entitiesTable)
+    .where(eq(entitiesTable.organizationId, req.user!.organizationId))
+    .orderBy(desc(entitiesTable.createdAt))
+    .limit(limit);
   return res.json(items);
 });
 
-router.get("/entities/:id", async (req: Request, res: Response) => {
-  const [entity] = await db.select().from(entitiesTable).where(eq(entitiesTable.id, req.params.id)).limit(1);
+router.get("/entities/:id", requireAuth, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const [entity] = await db
+    .select()
+    .from(entitiesTable)
+    .where(and(eq(entitiesTable.id, id), eq(entitiesTable.organizationId, req.user!.organizationId)))
+    .limit(1);
   if (!entity) return res.status(404).json({ error: "Not found" });
   return res.json(entity);
 });
 
-router.patch("/entities/:id", async (req: Request, res: Response) => {
-  const [entity] = await db.update(entitiesTable).set(req.body).where(eq(entitiesTable.id, req.params.id)).returning();
+router.patch("/entities/:id", requireAuth, async (req: Request, res: Response) => {
+  const parsed = updateEntitySchema.parse(req.body);
+  const id = req.params.id as string;
+  const [entity] = await db
+    .update(entitiesTable)
+    .set(parsed)
+    .where(and(eq(entitiesTable.id, id), eq(entitiesTable.organizationId, req.user!.organizationId)))
+    .returning();
   if (!entity) return res.status(404).json({ error: "Not found" });
   return res.json(entity);
 });
 
-router.delete("/entities/:id", async (req: Request, res: Response) => {
-  const [entity] = await db.delete(entitiesTable).where(eq(entitiesTable.id, req.params.id)).returning();
+router.delete("/entities/:id", requireAuth, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const [entity] = await db
+    .delete(entitiesTable)
+    .where(and(eq(entitiesTable.id, id), eq(entitiesTable.organizationId, req.user!.organizationId)))
+    .returning();
   if (!entity) return res.status(404).json({ error: "Not found" });
   return res.json({ success: true });
 });
 
-router.post("/entities", async (req: Request, res: Response) => {
+router.post("/entities", requireAuth, async (req: Request, res: Response) => {
   const parsed = insertEntitySchema.parse(req.body);
-  const [entity] = await db.insert(entitiesTable).values(parsed).returning();
+  const [entity] = await db.insert(entitiesTable).values({
+    ...parsed,
+    organizationId: req.user!.organizationId,
+  }).returning();
   return res.status(201).json(entity);
 });
 
 // ============================================================
-// Resources
+// Resources (auth-protected, tenant-scoped)
 // ============================================================
-router.get("/resources", async (_req: Request, res: Response) => {
-  const limit = Math.min(parseInt(_req.query.limit as string) || 50, 100);
-  const items = await db.select().from(resourcesTable).orderBy(desc(resourcesTable.createdAt)).limit(limit);
+router.get("/resources", requireAuth, async (req: Request, res: Response) => {
+  const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+  const items = await db
+    .select()
+    .from(resourcesTable)
+    .where(eq(resourcesTable.organizationId, req.user!.organizationId))
+    .orderBy(desc(resourcesTable.createdAt))
+    .limit(limit);
   return res.json(items);
 });
 
-router.get("/resources/:id", async (req: Request, res: Response) => {
-  const [resource] = await db.select().from(resourcesTable).where(eq(resourcesTable.id, req.params.id)).limit(1);
+router.get("/resources/:id", requireAuth, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const [resource] = await db
+    .select()
+    .from(resourcesTable)
+    .where(and(eq(resourcesTable.id, id), eq(resourcesTable.organizationId, req.user!.organizationId)))
+    .limit(1);
   if (!resource) return res.status(404).json({ error: "Not found" });
   return res.json(resource);
 });
 
-router.patch("/resources/:id", async (req: Request, res: Response) => {
-  const [resource] = await db.update(resourcesTable).set(req.body).where(eq(resourcesTable.id, req.params.id)).returning();
+router.patch("/resources/:id", requireAuth, async (req: Request, res: Response) => {
+  const parsed = updateResourceSchema.parse(req.body);
+  const id = req.params.id as string;
+  const [resource] = await db
+    .update(resourcesTable)
+    .set(parsed)
+    .where(and(eq(resourcesTable.id, id), eq(resourcesTable.organizationId, req.user!.organizationId)))
+    .returning();
   if (!resource) return res.status(404).json({ error: "Not found" });
   return res.json(resource);
 });
 
-router.delete("/resources/:id", async (req: Request, res: Response) => {
-  const [resource] = await db.delete(resourcesTable).where(eq(resourcesTable.id, req.params.id)).returning();
+router.delete("/resources/:id", requireAuth, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const [resource] = await db
+    .delete(resourcesTable)
+    .where(and(eq(resourcesTable.id, id), eq(resourcesTable.organizationId, req.user!.organizationId)))
+    .returning();
   if (!resource) return res.status(404).json({ error: "Not found" });
   return res.json({ success: true });
 });
 
-router.post("/resources", async (req: Request, res: Response) => {
+router.post("/resources", requireAuth, async (req: Request, res: Response) => {
   const parsed = insertResourceSchema.parse(req.body);
-  const [resource] = await db.insert(resourcesTable).values(parsed).returning();
+  const [resource] = await db.insert(resourcesTable).values({
+    ...parsed,
+    organizationId: req.user!.organizationId,
+  }).returning();
   return res.status(201).json(resource);
 });
 
 // ============================================================
-// Policy Evaluation
+// Policy Evaluation (auth-protected, org scoped from session)
 // ============================================================
 
 function resolveValue(field: string, context: Record<string, unknown>): unknown {
@@ -287,31 +549,78 @@ function evaluatePolicies(
   return { decision: "deny", reason: "No matching allow policy found", matchedPolicyId: null };
 }
 
-router.get("/decisions", async (req: Request, res: Response) => {
+router.get("/decisions", requireAuth, async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
   const items = await db
     .select()
     .from(decisionLogsTable)
+    .where(eq(decisionLogsTable.organizationId, req.user!.organizationId))
     .orderBy(desc(decisionLogsTable.createdAt))
     .limit(limit);
   return res.json(items);
 });
 
-router.post("/decisions/evaluate", async (req: Request, res: Response) => {
-  const { entity, action, resource, organizationId } = req.body;
+router.post("/decisions/evaluate", requireAuth, async (req: Request, res: Response) => {
+  const { entity, action, resource } = req.body;
+  const organizationId = req.user!.organizationId;
   const start = Date.now();
 
-  if (!organizationId) {
-    return res.status(400).json({ error: "organizationId is required" });
-  }
-
   try {
-    // Fetch all active policies for the organization
-    const policies = await db
-      .select()
-      .from(policiesTable)
-      .where(and(eq(policiesTable.organizationId, organizationId), eq(policiesTable.active, true)))
-      .orderBy(desc(policiesTable.priority));
+    // Fetch policies: those assigned to the entity UNION unassigned (org-wide) policies
+    const entityId = entity?.id;
+    let resolvedPolicies: typeof policiesTable.$inferSelect[] = [];
+
+    if (entityId) {
+      // Find policy IDs with no assignments (org-wide defaults)
+      const unassigned = await db
+        .select({ id: policiesTable.id })
+        .from(policiesTable)
+        .leftJoin(policyAssignmentsTable, eq(policiesTable.id, policyAssignmentsTable.policyId))
+        .where(and(
+          eq(policiesTable.organizationId, organizationId),
+          eq(policiesTable.active, true),
+          isNull(policyAssignmentsTable.policyId),
+        ));
+
+      // Find policies explicitly assigned to this entity
+      const assigned = await db
+        .select({ policyId: policyAssignmentsTable.policyId })
+        .from(policyAssignmentsTable)
+        .where(eq(policyAssignmentsTable.entityId, entityId));
+
+      const allPolicyIds = [
+        ...unassigned.map(p => p.id),
+        ...assigned.map(a => a.policyId).filter(Boolean) as string[],
+      ];
+
+      if (allPolicyIds.length > 0) {
+        resolvedPolicies = await db
+          .select()
+          .from(policiesTable)
+          .where(inArray(policiesTable.id, allPolicyIds as string[]))
+          .orderBy(desc(policiesTable.priority));
+      }
+    } else {
+      // No entity specified — fetch all org-wide active policies with no assignments
+      const unassigned = await db
+        .select({ id: policiesTable.id })
+        .from(policiesTable)
+        .leftJoin(policyAssignmentsTable, eq(policiesTable.id, policyAssignmentsTable.policyId))
+        .where(and(
+          eq(policiesTable.organizationId, organizationId),
+          eq(policiesTable.active, true),
+          isNull(policyAssignmentsTable.policyId),
+        ));
+
+      const ids = unassigned.map(p => p.id);
+      if (ids.length > 0) {
+        resolvedPolicies = await db
+          .select()
+          .from(policiesTable)
+          .where(inArray(policiesTable.id, ids))
+          .orderBy(desc(policiesTable.priority));
+      }
+    }
 
     // Build evaluation context from entity attributes, resource attributes, and action
     const context: Record<string, unknown> = {
@@ -336,7 +645,7 @@ router.post("/decisions/evaluate", async (req: Request, res: Response) => {
     };
 
     const result = evaluatePolicies(
-      policies as unknown as Array<{ id: string; effect: string; priority: number; conditions: Record<string, unknown>[]; active: boolean }>,
+      resolvedPolicies as unknown as Array<{ id: string; effect: string; priority: number; conditions: Record<string, unknown>[]; active: boolean }>,
       context,
     );
 
@@ -373,16 +682,18 @@ router.post("/decisions/evaluate", async (req: Request, res: Response) => {
 });
 
 // ============================================================
-// API Keys
+// API Keys (auth-protected, tenant-scoped)
 // ============================================================
-router.get("/api-keys", async (_req: Request, res: Response) => {
-  const keys = await db.select().from(apiKeysTable);
+router.get("/api-keys", requireAuth, async (req: Request, res: Response) => {
+  const keys = await db
+    .select()
+    .from(apiKeysTable)
+    .where(eq(apiKeysTable.organizationId, req.user!.organizationId));
   return res.json(keys);
 });
 
-router.post("/api-keys", async (req: Request, res: Response) => {
+router.post("/api-keys", requireAuth, async (req: Request, res: Response) => {
   const parsed = insertApiKeySchema.parse(req.body);
-  // Hash the API key before storing
   const rawKey = `ak_${randomUUID()}`;
   const hashedKey = createHash("sha256").update(rawKey).digest("hex");
   const prefix = rawKey.slice(0, 8);
@@ -390,19 +701,29 @@ router.post("/api-keys", async (req: Request, res: Response) => {
     ...parsed,
     hashedKey,
     prefix,
+    organizationId: req.user!.organizationId,
   }).returning();
   // Return the raw key only once (on creation)
   return res.status(201).json({ ...key, key: rawKey });
 });
 
-router.get("/api-keys/:id", async (req: Request, res: Response) => {
-  const [key] = await db.select().from(apiKeysTable).where(eq(apiKeysTable.id, req.params.id)).limit(1);
+router.get("/api-keys/:id", requireAuth, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const [key] = await db
+    .select()
+    .from(apiKeysTable)
+    .where(and(eq(apiKeysTable.id, id), eq(apiKeysTable.organizationId, req.user!.organizationId)))
+    .limit(1);
   if (!key) return res.status(404).json({ error: "Not found" });
   return res.json(key);
 });
 
-router.delete("/api-keys/:id", async (req: Request, res: Response) => {
-  const [key] = await db.delete(apiKeysTable).where(eq(apiKeysTable.id, req.params.id)).returning();
+router.delete("/api-keys/:id", requireAuth, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const [key] = await db
+    .delete(apiKeysTable)
+    .where(and(eq(apiKeysTable.id, id), eq(apiKeysTable.organizationId, req.user!.organizationId)))
+    .returning();
   if (!key) return res.status(404).json({ error: "Not found" });
   return res.json({ success: true });
 });
@@ -411,20 +732,52 @@ router.delete("/api-keys/:id", async (req: Request, res: Response) => {
 // v1 Evaluate endpoint (for API key auth)
 // ============================================================
 router.post("/v1/evaluate", async (req: Request, res: Response) => {
-  const { entity, action, resource, organizationId } = req.body;
+  const { entity, action, resource } = req.body;
   const start = Date.now();
 
-  if (!organizationId) {
-    return res.status(400).json({ error: "organizationId is required" });
+  // Authenticate via API key in Authorization header
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "API key required (Authorization: Bearer ak_...)" });
   }
+
+  const rawKey = authHeader.slice(7);
+  const hashedKey = createHash("sha256").update(rawKey).digest("hex");
+
+  const [apiKey] = await db
+    .select()
+    .from(apiKeysTable)
+    .where(eq(apiKeysTable.hashedKey, hashedKey))
+    .limit(1);
+
+  if (!apiKey) {
+    return res.status(401).json({ error: "Invalid API key" });
+  }
+
+  const organizationId = apiKey.organizationId;
 
   try {
     // Fetch all active policies for the organization
-    const policies = await db
-      .select()
+    let resolvedPolicies: typeof policiesTable.$inferSelect[] = [];
+
+    const unassigned = await db
+      .select({ id: policiesTable.id })
       .from(policiesTable)
-      .where(and(eq(policiesTable.organizationId, organizationId), eq(policiesTable.active, true)))
-      .orderBy(desc(policiesTable.priority));
+      .leftJoin(policyAssignmentsTable, eq(policiesTable.id, policyAssignmentsTable.policyId))
+      .where(and(
+        eq(policiesTable.organizationId, organizationId),
+        eq(policiesTable.active, true),
+        isNull(policyAssignmentsTable.policyId),
+      ));
+
+    const ids = [...new Set(unassigned.map(p => p.id))] as string[];
+    if (ids.length > 0) {
+      resolvedPolicies = await db
+        .select()
+        .from(policiesTable)
+        .where(inArray(policiesTable.id, ids))
+        .orderBy(desc(policiesTable.priority));
+    }
 
     const context: Record<string, unknown> = {
       "entity.id": entity?.id,
@@ -443,7 +796,7 @@ router.post("/v1/evaluate", async (req: Request, res: Response) => {
     };
 
     const result = evaluatePolicies(
-      policies as unknown as Array<{ id: string; effect: string; priority: number; conditions: Record<string, unknown>[]; active: boolean }>,
+      resolvedPolicies as unknown as Array<{ id: string; effect: string; priority: number; conditions: Record<string, unknown>[]; active: boolean }>,
       context,
     );
 
@@ -458,6 +811,58 @@ router.post("/v1/evaluate", async (req: Request, res: Response) => {
   } catch (e) {
     return res.status(500).json({ error: "Evaluation failed" });
   }
+});
+
+// ============================================================
+// Policy Assignments (auth-protected, tenant-scoped)
+// ============================================================
+router.get("/entities/:id/policies", requireAuth, async (req: Request, res: Response) => {
+  const entityId = req.params.id as string;
+  const assignments = await db
+    .select()
+    .from(policyAssignmentsTable)
+    .where(eq(policyAssignmentsTable.entityId, entityId));
+  return res.json(assignments);
+});
+
+router.post("/entities/:id/policies", requireAuth, async (req: Request, res: Response) => {
+  const { policyId } = req.body;
+  const entityId = req.params.id as string;
+  if (!policyId) {
+    return res.status(400).json({ error: "policyId is required" });
+  }
+
+  // Verify policy belongs to user's org
+  const [policy] = await db
+    .select()
+    .from(policiesTable)
+    .where(and(eq(policiesTable.id, policyId), eq(policiesTable.organizationId, req.user!.organizationId)))
+    .limit(1);
+  if (!policy) {
+    return res.status(404).json({ error: "Policy not found in your organization" });
+  }
+
+  const [assignment] = await db
+    .insert(policyAssignmentsTable)
+    .values({ entityId, policyId })
+    .onConflictDoNothing()
+    .returning();
+
+  return res.status(201).json(assignment || { success: true });
+});
+
+router.delete("/entities/:id/policies/:policyId", requireAuth, async (req: Request, res: Response) => {
+  const entityId = req.params.id as string;
+  const policyId = req.params.policyId as string;
+  const [assignment] = await db
+    .delete(policyAssignmentsTable)
+    .where(and(
+      eq(policyAssignmentsTable.entityId, entityId),
+      eq(policyAssignmentsTable.policyId, policyId),
+    ))
+    .returning();
+  if (!assignment) return res.status(404).json({ error: "Assignment not found" });
+  return res.json({ success: true });
 });
 
 export default router;

@@ -50,7 +50,6 @@ export function EntityForm({ open, onOpenChange, entity, onSuccess }: EntityForm
         externalId,
         type,
         attributes: parsedAttributes,
-        organizationId: "default", // TODO: get from auth context
       };
 
       if (isEdit && entity) {

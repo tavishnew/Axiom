@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Policies', href: '/policies', icon: Shield },
   { name: 'Entities', href: '/entities', icon: Users },
   { name: 'Resources', href: '/resources', icon: FolderKanban },

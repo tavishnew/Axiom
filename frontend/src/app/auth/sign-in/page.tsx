@@ -6,7 +6,7 @@ import { ShieldHalf, ArrowRight, Mail, Lock } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 
 export default function SignInPage() {
-  const [email, setEmail] = useState('admin@demo.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

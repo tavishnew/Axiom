@@ -1,4 +1,4 @@
-import { pgTable, text, jsonb, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, jsonb, integer, boolean, timestamp, index } from "drizzle-orm/pg-core";
 import { organizationsTable } from "./organizations";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -17,7 +17,8 @@ export const policiesTable = pgTable("policies", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   organizationId: text("organization_id").notNull().references(() => organizationsTable.id, { onDelete: "cascade" }),
 }, (table) => ({
-  uniqueOrgName: unique().on(table.organizationId, table.name),
+  idxOrgPriority: index("idx_policies_org_priority").on(table.organizationId, table.priority.desc()),
+  idxOrgActiveEffect: index("idx_policies_org_active_effect").on(table.organizationId, table.active, table.effect),
 }));
 
 export const insertPolicySchema = createInsertSchema(policiesTable).omit({ id: true, createdAt: true, updatedAt: true });

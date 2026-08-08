@@ -1,18 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FlaskConical, Send, Shield, ShieldOff, Copy, CheckCircle, XCircle } from 'lucide-react';
-import { api } from '@/lib/api';
+import { FlaskConical, Send, Shield, ShieldOff, Copy, CheckCircle, XCircle, Search, ChevronDown, User, Server, Key, FileText, Database } from 'lucide-react';
+import { api, type Entity, type Resource } from '@/lib/api';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function TestConsolePage() {
-  const [entityId, setEntityId] = useState('user-123');
+  const [entityId, setEntityId] = useState('');
   const [entityType, setEntityType] = useState('user');
   const [entityAttrs, setEntityAttrs] = useState('{"plan": "pro", "role": "member"}');
   const [action, setAction] = useState('read');
   const [resourceType, setResourceType] = useState('document');
-  const [resourceId, setResourceId] = useState('doc-456');
+  const [resourceId, setResourceId] = useState('');
   const [result, setResult] = useState<null | {
     decision: 'allow' | 'deny';
     reason: string;
@@ -22,6 +24,32 @@ export default function TestConsolePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Autocomplete data
+  const [entities, setEntities] = useState<Entity[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [showEntityDropdown, setShowEntityDropdown] = useState(false);
+  const [showResourceDropdown, setShowResourceDropdown] = useState(false);
+  const [entitySearch, setEntitySearch] = useState('');
+  const [resourceSearch, setResourceSearch] = useState('');
+
+  // Fetch entities and resources for autocomplete
+  useEffect(() => {
+    api.entities.list({ limit: 100 }).then(res => setEntities(res.data)).catch(console.error);
+    api.resources.list({ limit: 100 }).then(res => setResources(res.data)).catch(console.error);
+  }, []);
+
+  const filteredEntities = entities.filter(e =>
+    e.id.toLowerCase().includes(entitySearch.toLowerCase()) ||
+    e.externalId.toLowerCase().includes(entitySearch.toLowerCase()) ||
+    e.type.toLowerCase().includes(entitySearch.toLowerCase())
+  );
+
+  const filteredResources = resources.filter(r =>
+    r.name.toLowerCase().includes(resourceSearch.toLowerCase()) ||
+    r.type.toLowerCase().includes(resourceSearch.toLowerCase()) ||
+    (r.description || '').toLowerCase().includes(resourceSearch.toLowerCase())
+  );
 
   const handleTest = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,6 +83,34 @@ export default function TestConsolePage() {
     setLoading(false);
   };
 
+  const selectEntity = (entity: Entity) => {
+    setEntityId(entity.id);
+    setEntityType(entity.type);
+    setEntityAttrs(JSON.stringify(entity.attributes, null, 2));
+    setShowEntityDropdown(false);
+    setEntitySearch('');
+  };
+
+  const selectResource = (resource: Resource) => {
+    setResourceType(resource.type);
+    setResourceId(resource.name);
+    setShowResourceDropdown(false);
+    setResourceSearch('');
+  };
+
+  const entityTypeIcons = {
+    user: { icon: User, bg: 'bg-blue-50', color: 'text-blue-600' },
+    service: { icon: Server, bg: 'bg-emerald-50', color: 'text-emerald-600' },
+    api_key: { icon: Key, bg: 'bg-amber-50', color: 'text-amber-600' },
+  };
+
+  const resourceTypeIcons = {
+    document: { icon: FileText, bg: 'bg-blue-50', color: 'text-blue-600' },
+    database: { icon: Database, bg: 'bg-emerald-50', color: 'text-emerald-600' },
+    api: { icon: Server, bg: 'bg-violet-50', color: 'text-violet-600' },
+    billing: { icon: FileText, bg: 'bg-amber-50', color: 'text-amber-600' },
+  };
+
   return (
     <div className="p-6 md:p-8">
       {/* Header */}
@@ -80,16 +136,54 @@ export default function TestConsolePage() {
             <div>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Entity</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div className="relative">
                   <label className="block text-xs font-medium text-muted mb-1">ID</label>
-                  <input type="text" value={entityId} onChange={e => setEntityId(e.target.value)} className="w-full" />
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={entityId}
+                      onChange={e => { setEntityId(e.target.value); setEntitySearch(e.target.value); setShowEntityDropdown(true); }}
+                      onFocus={() => setShowEntityDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowEntityDropdown(false), 200)}
+                      placeholder="Select or type entity ID"
+                      className="w-full"
+                    />
+                    {showEntityDropdown && filteredEntities.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-white shadow-lg z-10 max-h-60 overflow-y-auto">
+                        {filteredEntities.map(entity => {
+                          const cfg = entityTypeIcons[entity.type as keyof typeof entityTypeIcons] || entityTypeIcons.user;
+                          const Icon = cfg.icon;
+                          return (
+                            <button
+                              key={entity.id}
+                              type="button"
+                              onClick={() => selectEntity(entity)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-2 transition-colors"
+                            >
+                              <div className={`flex h-6 w-6 items-center justify-center rounded ${cfg.bg}`}>
+                                <Icon className={`h-3 w-3 ${cfg.color}`} />
+                              </div>
+                              <div className="flex-1 text-left">
+                                <p className="text-sm font-medium text-ink">{entity.id}</p>
+                                <p className="text-xs text-muted capitalize">{entity.type}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1">Type</label>
-                  <select value={entityType} onChange={e => setEntityType(e.target.value)} className="w-full">
-                    <option value="user">user</option>
-                    <option value="service">service</option>
-                    <option value="api_key">api_key</option>
+                  <select
+                    value={entityType}
+                    onChange={e => setEntityType(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm"
+                  >
+                    <option value="user">User</option>
+                    <option value="service">Service</option>
+                    <option value="api_key">API Key</option>
                   </select>
                 </div>
               </div>
@@ -98,8 +192,8 @@ export default function TestConsolePage() {
                 <textarea
                   value={entityAttrs}
                   onChange={e => setEntityAttrs(e.target.value)}
-                  rows={2}
-                  className="w-full font-mono text-sm"
+                  rows={3}
+                  className="w-full font-mono text-sm rounded-lg border border-border bg-white px-3 py-2"
                 />
               </div>
             </div>
@@ -107,7 +201,11 @@ export default function TestConsolePage() {
             {/* Action */}
             <div>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Action</h3>
-              <select value={action} onChange={e => setAction(e.target.value)} className="w-full">
+              <select
+                value={action}
+                onChange={e => setAction(e.target.value)}
+                className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm"
+              >
                 <option value="read">read</option>
                 <option value="write">write</option>
                 <option value="delete">delete</option>
@@ -119,13 +217,53 @@ export default function TestConsolePage() {
             <div>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Resource</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div className="relative">
                   <label className="block text-xs font-medium text-muted mb-1">Type</label>
-                  <input type="text" value={resourceType} onChange={e => setResourceType(e.target.value)} className="w-full" />
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={resourceType}
+                      onChange={e => { setResourceType(e.target.value); setResourceSearch(e.target.value); setShowResourceDropdown(true); }}
+                      onFocus={() => setShowResourceDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowResourceDropdown(false), 200)}
+                      placeholder="Select or type resource type"
+                      className="w-full"
+                    />
+                    {showResourceDropdown && filteredResources.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-white shadow-lg z-10 max-h-60 overflow-y-auto">
+                        {filteredResources.map(resource => {
+                          const cfg = resourceTypeIcons[resource.type as keyof typeof resourceTypeIcons] || { icon: FileText, bg: 'bg-gray-50', color: 'text-gray-600' };
+                          const Icon = cfg.icon;
+                          return (
+                            <button
+                              key={resource.id}
+                              type="button"
+                              onClick={() => selectResource(resource)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-2 transition-colors"
+                            >
+                              <div className={`flex h-6 w-6 items-center justify-center rounded ${cfg.bg}`}>
+                                <Icon className={`h-3 w-3 ${cfg.color}`} />
+                              </div>
+                              <div className="flex-1 text-left">
+                                <p className="text-sm font-medium text-ink">{resource.name}</p>
+                                <p className="text-xs text-muted">{resource.type}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1">ID (optional)</label>
-                  <input type="text" value={resourceId} onChange={e => setResourceId(e.target.value)} className="w-full" />
+                  <Input
+                    type="text"
+                    value={resourceId}
+                    onChange={e => setResourceId(e.target.value)}
+                    placeholder="Resource ID"
+                    className="w-full"
+                  />
                 </div>
               </div>
             </div>
@@ -137,17 +275,18 @@ export default function TestConsolePage() {
             )}
 
             {/* Submit */}
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-accent/90 hover:shadow-md disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-sm hover:bg-accent/90 hover:shadow-md disabled:opacity-50"
             >
-              {loading ? (
-                <>Checking...</>
-              ) : (
-                <><Send className="h-4 w-4" /> Check Access</>
+              {loading ? 'Checking...' : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Check Access
+                </>
               )}
-            </button>
+            </Button>
           </form>
         </motion.div>
 
@@ -222,15 +361,17 @@ export default function TestConsolePage() {
                 <div>
                   <p className="text-xs font-medium text-muted mb-1">SDK Code</p>
                   <div className="rounded-lg border border-border bg-[#f5f7fb] p-3">
-                    <pre className="font-mono text-xs leading-relaxed text-ink">{`const allowed = await axiom.can({
+                    <pre className="font-mono text-xs leading-relaxed text-ink overflow-x-auto">{`const allowed = await axiom.can({
   entity: { id: '${entityId}', type: '${entityType}', attributes: ${entityAttrs} },
   action: '${action}',
   resource: { type: '${resourceType}', id: '${resourceId}' },
 });
 // Result: ${result.decision}`}</pre>
                   </div>
-                  <button
-                    className="mt-2 inline-flex items-center gap-1 text-xs text-muted hover:text-accent"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2 gap-1 text-xs text-muted hover:text-accent"
                     onClick={() => {
                       const code = `const allowed = await axiom.can({
   entity: { id: '${entityId}', type: '${entityType}', attributes: ${entityAttrs} },
@@ -246,7 +387,7 @@ export default function TestConsolePage() {
                   >
                     <Copy className="h-3 w-3" />
                     {copied ? "Copied!" : "Copy"}
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             )}

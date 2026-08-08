@@ -12,6 +12,7 @@ import {
   sessionsTable,
   policyAssignmentsTable,
   policyVersionsTable,
+  invitationsTable,
   insertPolicySchema,
   insertEntitySchema,
   insertResourceSchema,
@@ -20,20 +21,85 @@ import {
   insertApiKeySchema,
   insertUserSchema,
   insertSessionSchema,
+  insertInvitationSchema,
 } from "@workspace/db/schema";
-import { eq, desc, and, or, isNull, inArray, sql, count as drizzleCount } from "drizzle-orm";
+import { eq, desc, and, or, isNull, inArray, sql, count as drizzleCount, like, ilike, asc } from "drizzle-orm";
 import { randomUUID, createHash } from "crypto";
 import bcrypt from "bcryptjs";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import type { Policy, Entity, Resource, ApiKey } from "@workspace/db/schema";
 
+// Stripe (lazy-load to avoid build issues if not configured)
+let stripe: any = null;
+async function getStripe() {
+  if (!stripe && process.env.STRIPE_SECRET_KEY) {
+    const { default: Stripe } = await import("stripe");
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
+  }
+  return stripe;
+}
+
+// Pagination & filter helpers
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 20;
+
+function getPagination(req: Request) {
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(req.query.limit as string) || DEFAULT_LIMIT));
+  const offset = (page - 1) * limit;
+  return { page, limit, offset };
+}
+
+function getSearchTerm(req: Request): string | undefined {
+  const q = req.query.q as string;
+  return q?.trim() ? q.trim() : undefined;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+async function paginate<T>(
+  query: any,
+  countQuery: any,
+  { page, limit, offset }: ReturnType<typeof getPagination>
+): Promise<PaginatedResponse<T>> {
+  const [items, [{ value: total }]] = await Promise.all([
+    query.limit(limit).offset(offset),
+    countQuery,
+  ]);
+  const totalPages = Math.ceil(Number(total) / limit);
+  return {
+    data: items as T[],
+    pagination: {
+      page,
+      limit,
+      total: Number(total),
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    },
+  };
+}
+
+function sortByColumn(table: any, sortBy: string) {
+  return table[sortBy] ?? table.id;
+}
+
 const router: IRouter = Router();
 
 // ============================================================
 // Update schemas for PATCH routes (partial, no system fields)
 // ============================================================
-const updatePolicySchema = createInsertSchema(policiesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true, version: true });
 const updateEntitySchema = createInsertSchema(entitiesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true });
 const updateResourceSchema = createInsertSchema(resourcesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true });
 const updateOrganizationSchema = createInsertSchema(organizationsTable).partial().omit({ id: true, createdAt: true, updatedAt: true });
@@ -269,6 +335,93 @@ router.get("/auth/session", async (req: Request, res: Response) => {
 });
 
 // ============================================================
+// User Profile & Auth (auth-protected)
+// ============================================================
+router.get("/auth/profile", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user!.id))
+      .limit(1);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const { passwordHash, ...safeUser } = user;
+    return res.json({ data: safeUser });
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Internal server error" } });
+  }
+});
+
+const updateProfileSchema = createInsertSchema(usersTable).pick({ name: true, image: true }).partial();
+router.patch("/auth/profile", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const parsed = updateProfileSchema.parse(req.body);
+    const [user] = await db
+      .update(usersTable)
+      .set({ ...parsed, updatedAt: new Date() })
+      .where(eq(usersTable.id, req.user!.id))
+      .returning();
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const { passwordHash, ...safeUser } = user;
+    return res.json({ data: safeUser });
+  } catch (error: any) {
+    return res.status(400).json({ error: { message: error.message || "Invalid request" } });
+  }
+});
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+});
+router.post("/auth/change-password", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user!.id)).limit(1);
+    if (!user || !user.passwordHash) {
+      return res.status(401).json({ error: { message: "Invalid credentials" } });
+    }
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      return res.status(401).json({ error: { message: "Current password is incorrect" } });
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await db.update(usersTable).set({ passwordHash, updatedAt: new Date() }).where(eq(usersTable.id, req.user!.id));
+    // Optionally revoke all other sessions
+    await db.delete(sessionsTable).where(eq(sessionsTable.userId, req.user!.id));
+    return res.json({ success: true });
+  } catch (error: any) {
+    return res.status(400).json({ error: { message: error.message || "Invalid request" } });
+  }
+});
+
+router.get("/auth/sessions", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const sessions = await db
+      .select()
+      .from(sessionsTable)
+      .where(and(eq(sessionsTable.userId, req.user!.id), sql`${sessionsTable.expiresAt} > NOW()`))
+      .orderBy(desc(sessionsTable.createdAt));
+    return res.json(sessions);
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Internal server error" } });
+  }
+});
+
+router.delete("/auth/sessions/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const sessionId = req.params.id as string;
+    const [session] = await db
+      .delete(sessionsTable)
+      .where(and(eq(sessionsTable.id, sessionId), eq(sessionsTable.userId, req.user!.id)))
+      .returning();
+    if (!session) return res.status(404).json({ error: "Session not found" });
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Internal server error" } });
+  }
+});
+
+// ============================================================
 // Organizations (auth-protected, scoped)
 // ============================================================
 router.get("/organizations", requireAuth, async (req: Request, res: Response) => {
@@ -302,12 +455,27 @@ router.patch("/organizations/:id", requireAuth, async (req: Request, res: Respon
 // Policies (auth-protected, tenant-scoped)
 // ============================================================
 router.get("/policies", requireAuth, async (req: Request, res: Response) => {
-  const policies = await db
-    .select()
-    .from(policiesTable)
-    .where(eq(policiesTable.organizationId, req.user!.organizationId))
-    .orderBy(desc(policiesTable.priority));
-  return res.json(policies);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const effect = req.query.effect as string;
+  const active = req.query.active as string;
+  const sortBy = (req.query.sortBy as string) || "priority";
+  const sortOrder = (req.query.sortOrder as string) || "desc";
+
+  const conditions = [eq(policiesTable.organizationId, req.user!.organizationId)];
+  if (search) conditions.push(or(ilike(policiesTable.name, `%${search}%`), ilike(policiesTable.description, `%${search}%`))!);
+  if (effect && ["allow", "deny"].includes(effect)) conditions.push(eq(policiesTable.effect, effect));
+  if (active && ["true", "false"].includes(active)) conditions.push(eq(policiesTable.active, active === "true"));
+
+  const sortByColumn = (table: any, sortBy: string) => table[sortBy] ?? table.id;
+
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn(policiesTable, sortBy)) : desc(sortByColumn(policiesTable, sortBy));
+
+  const baseQuery = db.select().from(policiesTable).where(and(...conditions)).orderBy(orderBy as any);
+  const countQuery = db.select({ value: drizzleCount() }).from(policiesTable).where(and(...conditions));
+
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 
 router.get("/policies/:id", requireAuth, async (req: Request, res: Response) => {
@@ -322,7 +490,7 @@ router.get("/policies/:id", requireAuth, async (req: Request, res: Response) => 
 });
 
 router.post("/policies", requireAuth, async (req: Request, res: Response) => {
-  const parsed = insertPolicySchema.parse(req.body);
+  const parsed = createPolicySchema.parse(req.body);
   const [policy] = await db.insert(policiesTable).values({
     ...parsed,
     organizationId: req.user!.organizationId,
@@ -391,14 +559,23 @@ router.get("/policies/:id/versions", requireAuth, async (req: Request, res: Resp
 // Entities (auth-protected, tenant-scoped)
 // ============================================================
 router.get("/entities", requireAuth, async (req: Request, res: Response) => {
-  const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
-  const items = await db
-    .select()
-    .from(entitiesTable)
-    .where(eq(entitiesTable.organizationId, req.user!.organizationId))
-    .orderBy(desc(entitiesTable.createdAt))
-    .limit(limit);
-  return res.json(items);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const type = req.query.type as string;
+  const sortBy = (req.query.sortBy as string) || "createdAt";
+  const sortOrder = (req.query.sortOrder as string) || "desc";
+
+  const conditions = [eq(entitiesTable.organizationId, req.user!.organizationId)];
+  if (search) conditions.push(or(ilike(entitiesTable.externalId, `%${search}%`), ilike(entitiesTable.type, `%${search}%`))!);
+  if (type) conditions.push(eq(entitiesTable.type, type));
+
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn(entitiesTable, sortBy)) : desc(sortByColumn(entitiesTable, sortBy));
+
+  const baseQuery = db.select().from(entitiesTable).where(and(...conditions)).orderBy(orderBy as any);
+  const countQuery = db.select({ value: drizzleCount() }).from(entitiesTable).where(and(...conditions));
+
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 
 router.get("/entities/:id", requireAuth, async (req: Request, res: Response) => {
@@ -435,7 +612,7 @@ router.delete("/entities/:id", requireAuth, async (req: Request, res: Response) 
 });
 
 router.post("/entities", requireAuth, async (req: Request, res: Response) => {
-  const parsed = insertEntitySchema.parse(req.body);
+  const parsed = createEntitySchema.parse(req.body);
   const [entity] = await db.insert(entitiesTable).values({
     ...parsed,
     organizationId: req.user!.organizationId,
@@ -447,14 +624,23 @@ router.post("/entities", requireAuth, async (req: Request, res: Response) => {
 // Resources (auth-protected, tenant-scoped)
 // ============================================================
 router.get("/resources", requireAuth, async (req: Request, res: Response) => {
-  const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
-  const items = await db
-    .select()
-    .from(resourcesTable)
-    .where(eq(resourcesTable.organizationId, req.user!.organizationId))
-    .orderBy(desc(resourcesTable.createdAt))
-    .limit(limit);
-  return res.json(items);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const type = req.query.type as string;
+  const sortBy = (req.query.sortBy as string) || "createdAt";
+  const sortOrder = (req.query.sortOrder as string) || "desc";
+
+  const conditions = [eq(resourcesTable.organizationId, req.user!.organizationId)];
+  if (search) conditions.push(or(ilike(resourcesTable.name, `%${search}%`), ilike(resourcesTable.description, `%${search}%`), ilike(resourcesTable.type, `%${search}%`))!);
+  if (type) conditions.push(eq(resourcesTable.type, type));
+
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn(resourcesTable, sortBy)) : desc(sortByColumn(resourcesTable, sortBy));
+
+  const baseQuery = db.select().from(resourcesTable).where(and(...conditions)).orderBy(orderBy as any);
+  const countQuery = db.select({ value: drizzleCount() }).from(resourcesTable).where(and(...conditions));
+
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 
 router.get("/resources/:id", requireAuth, async (req: Request, res: Response) => {
@@ -491,7 +677,7 @@ router.delete("/resources/:id", requireAuth, async (req: Request, res: Response)
 });
 
 router.post("/resources", requireAuth, async (req: Request, res: Response) => {
-  const parsed = insertResourceSchema.parse(req.body);
+  const parsed = createResourceSchema.parse(req.body);
   const [resource] = await db.insert(resourcesTable).values({
     ...parsed,
     organizationId: req.user!.organizationId,
@@ -577,14 +763,39 @@ function evaluatePolicies(
 }
 
 router.get("/decisions", requireAuth, async (req: Request, res: Response) => {
-  const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
-  const items = await db
-    .select()
-    .from(decisionLogsTable)
-    .where(eq(decisionLogsTable.organizationId, req.user!.organizationId))
-    .orderBy(desc(decisionLogsTable.createdAt))
-    .limit(limit);
-  return res.json(items);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const entityId = req.query.entityId as string;
+  const entityType = req.query.entityType as string;
+  const action = req.query.action as string;
+  const resourceType = req.query.resourceType as string;
+  const decision = req.query.decision as string;
+  const since = req.query.since as string;
+  const until = req.query.until as string;
+  const sortBy = (req.query.sortBy as string) || "createdAt";
+  const sortOrder = (req.query.sortOrder as string) || "desc";
+
+  const conditions = [eq(decisionLogsTable.organizationId, req.user!.organizationId)];
+  if (search) conditions.push(or(
+    ilike(decisionLogsTable.entityId, `%${search}%`),
+    ilike(decisionLogsTable.resourceId, `%${search}%`),
+    ilike(decisionLogsTable.requestId, `%${search}%`)
+  )!);
+  if (entityId) conditions.push(eq(decisionLogsTable.entityId, entityId));
+  if (entityType) conditions.push(eq(decisionLogsTable.entityType, entityType));
+  if (action) conditions.push(eq(decisionLogsTable.action, action));
+  if (resourceType) conditions.push(eq(decisionLogsTable.resourceType, resourceType));
+  if (decision && ["allow", "deny"].includes(decision)) conditions.push(eq(decisionLogsTable.decision, decision));
+  if (since) conditions.push(sql`${decisionLogsTable.createdAt} >= ${since}`);
+  if (until) conditions.push(sql`${decisionLogsTable.createdAt} <= ${until}`);
+
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn(decisionLogsTable, sortBy)) : desc(sortByColumn(decisionLogsTable, sortBy));
+
+  const baseQuery = db.select().from(decisionLogsTable).where(and(...conditions)).orderBy(orderBy as any);
+  const countQuery = db.select({ value: drizzleCount() }).from(decisionLogsTable).where(and(...conditions));
+
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 
 router.post("/decisions/evaluate", requireAuth, async (req: Request, res: Response) => {
@@ -712,15 +923,27 @@ router.post("/decisions/evaluate", requireAuth, async (req: Request, res: Respon
 // API Keys (auth-protected, tenant-scoped)
 // ============================================================
 router.get("/api-keys", requireAuth, async (req: Request, res: Response) => {
-  const keys = await db
-    .select()
-    .from(apiKeysTable)
-    .where(eq(apiKeysTable.organizationId, req.user!.organizationId));
-  return res.json(keys);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const includeRevoked = req.query.includeRevoked === "true";
+  const sortBy = (req.query.sortBy as string) || "createdAt";
+  const sortOrder = (req.query.sortOrder as string) || "desc";
+
+  const conditions = [eq(apiKeysTable.organizationId, req.user!.organizationId)];
+  if (!includeRevoked) conditions.push(isNull(apiKeysTable.revokedAt));
+  if (search) conditions.push(or(ilike(apiKeysTable.name, `%${search}%`), ilike(apiKeysTable.prefix, `%${search}%`))!);
+
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn(apiKeysTable, sortBy)) : desc(sortByColumn(apiKeysTable, sortBy));
+
+  const baseQuery = db.select().from(apiKeysTable).where(and(...conditions)).orderBy(orderBy as any);
+  const countQuery = db.select({ value: drizzleCount() }).from(apiKeysTable).where(and(...conditions));
+
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 
 router.post("/api-keys", requireAuth, async (req: Request, res: Response) => {
-  const parsed = insertApiKeySchema.parse(req.body);
+  const parsed = createApiKeySchema.parse(req.body);
   const rawKey = `ak_${randomUUID()}`;
   const hashedKey = createHash("sha256").update(rawKey).digest("hex");
   const prefix = rawKey.slice(0, 8);
@@ -758,6 +981,50 @@ router.delete("/api-keys/:id", requireAuth, async (req: Request, res: Response) 
   } catch (error) {
     return res.status(500).json({ error: { message: "Failed to revoke API key" } });
   }
+});
+
+// ============================================================
+// Team / Members (admin-only for mutating)
+// ============================================================
+router.get("/team", requireAuth, async (req: Request, res: Response) => {
+  const orgId = req.user!.organizationId;
+  const members = await db.select().from(usersTable).where(eq(usersTable.organizationId, orgId)).orderBy(usersTable.name);
+  return res.json(members);
+});
+
+router.post("/team/invite", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { email, name, role } = req.body;
+    if (!email) return res.status(400).json({ error: { message: "Email is required" } });
+
+    const parsed = insertInvitationSchema.parse({ email, name, role: role || "member", organizationId: req.user!.organizationId, invitedById: req.user!.id });
+    const token = randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const [invite] = await db.insert(invitationsTable).values({ ...parsed, token, expiresAt }).returning();
+    return res.status(201).json(invite);
+  } catch (err: any) {
+    return res.status(400).json({ error: { message: err.message || "Invalid request" } });
+  }
+});
+
+router.patch("/team/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const memberId = req.params.id as string;
+    const { role } = req.body;
+    if (!role) return res.status(400).json({ error: { message: "Role is required" } });
+    const [member] = await db.update(usersTable).set({ role, updatedAt: new Date() }).where(and(eq(usersTable.id, memberId), eq(usersTable.organizationId, req.user!.organizationId))).returning();
+    if (!member) return res.status(404).json({ error: "Not found" });
+    return res.json(member);
+  } catch (err: any) {
+    return res.status(400).json({ error: { message: err.message || "Invalid request" } });
+  }
+});
+
+router.delete("/team/:id", requireAuth, async (req: Request, res: Response) => {
+  const memberId = req.params.id as string;
+  const [member] = await db.delete(usersTable).where(and(eq(usersTable.id, memberId), eq(usersTable.organizationId, req.user!.organizationId))).returning();
+  if (!member) return res.status(404).json({ error: "Not found" });
+  return res.json({ success: true });
 });
 
 // ============================================================
@@ -896,5 +1163,147 @@ router.delete("/entities/:id/policies/:policyId", requireAuth, async (req: Reque
   if (!assignment) return res.status(404).json({ error: "Assignment not found" });
   return res.json({ success: true });
 });
+
+// ============================================================
+// Billing / Subscription (requires STRIPE_SECRET_KEY)
+// ============================================================
+const createCheckoutSchema = z.object({
+  priceId: z.string().min(1),
+  successUrl: z.string().url().optional(),
+  cancelUrl: z.string().url().optional(),
+});
+
+router.get("/billing/subscription", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const st = await getStripe();
+    if (!st) return res.status(503).json({ error: { message: "Billing not configured" } });
+
+    const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, req.user!.organizationId)).limit(1);
+    if (!org || !org.stripeCustomerId) {
+      return res.json({ data: null });
+    }
+
+    const subscriptions = await st.subscriptions.list({ customer: org.stripeCustomerId, status: "all", limit: 1 });
+    const sub = subscriptions.data[0] || null;
+    return res.json({ data: sub });
+  } catch (error: any) {
+    return res.status(500).json({ error: { message: error.message || "Billing error" } });
+  }
+});
+
+router.post("/billing/checkout", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const st = await getStripe();
+    if (!st) return res.status(503).json({ error: { message: "Billing not configured" } });
+
+    const parsed = createCheckoutSchema.parse(req.body);
+    const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, req.user!.organizationId)).limit(1);
+    if (!org) return res.status(404).json({ error: { message: "Organization not found" } });
+
+    let customerId = org.stripeCustomerId;
+    if (!customerId) {
+      const customer = await st.customers.create({ email: req.user!.email, name: org.name, metadata: { organizationId: org.id } });
+      customerId = customer.id;
+      await db.update(organizationsTable).set({ stripeCustomerId: customerId }).where(eq(organizationsTable.id, org.id));
+    }
+
+    const session = await st.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
+      line_items: [{ price: parsed.priceId, quantity: 1 }],
+      success_url: parsed.successUrl || `${process.env.FRONTEND_URL}/settings/billing?success=true`,
+      cancel_url: parsed.cancelUrl || `${process.env.FRONTEND_URL}/settings/billing?canceled=true`,
+      allow_promotion_codes: true,
+      subscription_data: { metadata: { organizationId: org.id } },
+    });
+
+    return res.json({ data: { url: session.url } });
+  } catch (error: any) {
+    return res.status(400).json({ error: { message: error.message || "Checkout failed" } });
+  }
+});
+
+router.post("/billing/portal", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const st = await getStripe();
+    if (!st) return res.status(503).json({ error: { message: "Billing not configured" } });
+
+    const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, req.user!.organizationId)).limit(1);
+    if (!org || !org.stripeCustomerId) {
+      return res.status(404).json({ error: { message: "No billing account found" } });
+    }
+
+    const session = await st.billingPortal.sessions.create({
+      customer: org.stripeCustomerId,
+      return_url: `${process.env.FRONTEND_URL}/settings/billing`,
+    });
+
+    return res.json({ data: { url: session.url } });
+  } catch (error: any) {
+    return res.status(500).json({ error: { message: error.message || "Portal error" } });
+  }
+});
+
+router.post("/billing/webhook", async (req: Request, res: Response) => {
+  try {
+    const st = await getStripe();
+    if (!st || !process.env.STRIPE_WEBHOOK_SECRET) {
+      return res.status(503).json({ error: { message: "Webhook not configured" } });
+    }
+
+    const sig = req.headers["stripe-signature"] as string;
+    const event = st.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+
+    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as any;
+      const orgId = subscription.metadata?.organizationId;
+      if (orgId) {
+        await db.update(organizationsTable).set({
+          stripeSubscriptionId: subscription.id,
+          stripeStatus: subscription.status,
+          stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        }).where(eq(organizationsTable.id, orgId));
+      }
+    }
+
+    return res.json({ received: true });
+  } catch (error: any) {
+    console.error("Webhook error:", error);
+    return res.status(400).json({ error: { message: `Webhook error: ${error.message}` } });
+  }
+});
+
+// ============================================================
+// Validation schemas for conditions, policies, API keys
+// ============================================================
+const conditionSchema = z.object({
+  field: z.string().min(1),
+  operator: z.enum(["equals", "not_equals", "in", "not_in", "contains", "not_contains", "exists", "not_exists", "gt", "lt", "gte", "lte"]),
+  value: z.unknown(),
+});
+
+const policyConditionsSchema = z.array(conditionSchema);
+
+const createPolicySchema = insertPolicySchema
+  .omit({ organizationId: true })
+  .extend({
+    conditions: policyConditionsSchema,
+  });
+
+const updatePolicySchema = createInsertSchema(policiesTable)
+  .partial()
+  .omit({ id: true, organizationId: true, createdAt: true, updatedAt: true, version: true })
+  .extend({ conditions: policyConditionsSchema.optional() });
+
+const createEntitySchema = insertEntitySchema.omit({ organizationId: true });
+
+const createResourceSchema = insertResourceSchema.omit({ organizationId: true });
+
+const createApiKeySchema = insertApiKeySchema
+  .omit({ organizationId: true, hashedKey: true, prefix: true, revokedAt: true, lastUsedAt: true })
+  .extend({
+    name: z.string().min(1).max(100),
+    expiresAt: z.coerce.date().optional().nullable(),
+  });
 
 export default router;

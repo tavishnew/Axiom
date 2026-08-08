@@ -209,18 +209,18 @@ var require_common = __commonJS({
           if (typeof args[0] !== "string") {
             args.unshift("%O");
           }
-          let index = 0;
+          let index2 = 0;
           args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
             if (match === "%%") {
               return "%";
             }
-            index++;
+            index2++;
             const formatter = createDebug.formatters[format];
             if (typeof formatter === "function") {
-              const val = args[index];
+              const val = args[index2];
               match = formatter.call(self, val);
-              args.splice(index, 1);
-              index--;
+              args.splice(index2, 1);
+              index2--;
             }
             return match;
           });
@@ -455,15 +455,15 @@ var require_browser = __commonJS({
       }
       const c = "color: " + this.color;
       args.splice(1, 0, c, "color: inherit");
-      let index = 0;
+      let index2 = 0;
       let lastC = 0;
       args[0].replace(/%[a-zA-Z%]/g, (match) => {
         if (match === "%%") {
           return;
         }
-        index++;
+        index2++;
         if (match === "%c") {
-          lastC = index;
+          lastC = index2;
         }
       });
       args.splice(lastC, 0, c);
@@ -913,8 +913,8 @@ var require_depd = __commonJS({
       return deprecate;
     }
     function eehaslisteners(emitter, type) {
-      var count = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
-      return count > 0;
+      var count2 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
+      return count2 > 0;
     }
     function isignored(namespace) {
       if (process.noDeprecation) {
@@ -3629,19 +3629,19 @@ var require_dbcs_codec = __commonJS({
       return newBuf.slice(0, j).toString("ucs2");
     };
     DBCSDecoder.prototype.end = function() {
-      var ret = "";
+      var ret2 = "";
       while (this.prevBytes.length > 0) {
-        ret += this.defaultCharUnicode;
+        ret2 += this.defaultCharUnicode;
         var bytesArr = this.prevBytes.slice(1);
         this.prevBytes = [];
         this.nodeIdx = 0;
         if (bytesArr.length > 0) {
-          ret += this.write(bytesArr);
+          ret2 += this.write(bytesArr);
         }
       }
       this.prevBytes = [];
       this.nodeIdx = 0;
-      return ret;
+      return ret2;
     };
     function findIdx(table, val) {
       if (table[0] > val) {
@@ -5833,12 +5833,12 @@ var require_dist = __commonJS({
     }
     function parse(header, options) {
       const len = header.length;
-      let index = skipOWS(header, 0, len);
-      const valueStart = index;
-      index = skipValue(header, index, len);
-      const valueEnd = trailingOWS(header, valueStart, index);
+      let index2 = skipOWS(header, 0, len);
+      const valueStart = index2;
+      index2 = skipValue(header, index2, len);
+      const valueEnd = trailingOWS(header, valueStart, index2);
       const type = header.slice(valueStart, valueEnd).toLowerCase();
-      const parameters = options?.parameters === false ? new NullObject() : parseParameters(header, index, len);
+      const parameters = options?.parameters === false ? new NullObject() : parseParameters(header, index2, len);
       return { type, parameters };
     }
     var SP = 32;
@@ -5847,68 +5847,68 @@ var require_dist = __commonJS({
     var EQ = 61;
     var DQUOTE = 34;
     var BSLASH = 92;
-    function parseParameters(header, index, len) {
+    function parseParameters(header, index2, len) {
       const parameters = new NullObject();
-      parameter: while (index < len) {
-        index = skipOWS(header, index + 1, len);
-        const keyStart = index;
-        while (index < len) {
-          const code = header.charCodeAt(index);
+      parameter: while (index2 < len) {
+        index2 = skipOWS(header, index2 + 1, len);
+        const keyStart = index2;
+        while (index2 < len) {
+          const code = header.charCodeAt(index2);
           if (code === SEMI)
             continue parameter;
           if (code === EQ) {
-            const keyEnd = trailingOWS(header, keyStart, index);
+            const keyEnd = trailingOWS(header, keyStart, index2);
             const key = header.slice(keyStart, keyEnd).toLowerCase();
-            index = skipOWS(header, index + 1, len);
-            if (index < len && header.charCodeAt(index) === DQUOTE) {
-              index++;
+            index2 = skipOWS(header, index2 + 1, len);
+            if (index2 < len && header.charCodeAt(index2) === DQUOTE) {
+              index2++;
               let value = "";
-              while (index < len) {
-                const code2 = header.charCodeAt(index++);
+              while (index2 < len) {
+                const code2 = header.charCodeAt(index2++);
                 if (code2 === DQUOTE) {
-                  index = skipValue(header, index, len);
+                  index2 = skipValue(header, index2, len);
                   if (parameters[key] === void 0)
                     parameters[key] = value;
                   break;
                 }
-                if (code2 === BSLASH && index < len) {
-                  value += header[index++];
+                if (code2 === BSLASH && index2 < len) {
+                  value += header[index2++];
                   continue;
                 }
                 value += String.fromCharCode(code2);
               }
               continue parameter;
             }
-            const valueStart = index;
-            index = skipValue(header, index, len);
+            const valueStart = index2;
+            index2 = skipValue(header, index2, len);
             if (parameters[key] === void 0) {
-              const valueEnd = trailingOWS(header, valueStart, index);
+              const valueEnd = trailingOWS(header, valueStart, index2);
               parameters[key] = header.slice(valueStart, valueEnd);
             }
             continue parameter;
           }
-          index++;
+          index2++;
         }
       }
       return parameters;
     }
-    function skipValue(str, index, len) {
-      while (index < len) {
-        const char2 = str.charCodeAt(index);
+    function skipValue(str, index2, len) {
+      while (index2 < len) {
+        const char2 = str.charCodeAt(index2);
         if (char2 === SEMI)
           break;
-        index++;
+        index2++;
       }
-      return index;
+      return index2;
     }
-    function skipOWS(header, index, len) {
-      while (index < len) {
-        const char2 = header.charCodeAt(index);
+    function skipOWS(header, index2, len) {
+      while (index2 < len) {
+        const char2 = header.charCodeAt(index2);
         if (char2 !== SP && char2 !== HTAB)
           break;
-        index++;
+        index2++;
       }
-      return index;
+      return index2;
     }
     function trailingOWS(header, start, end) {
       while (end > start) {
@@ -15489,10 +15489,10 @@ var require_media_typer = __commonJS({
       var type = match[1];
       var subtype = match[2];
       var suffix;
-      var index = subtype.lastIndexOf("+");
-      if (index !== -1) {
-        suffix = subtype.substr(index + 1);
-        subtype = subtype.substr(0, index);
+      var index2 = subtype.lastIndexOf("+");
+      if (index2 !== -1) {
+        suffix = subtype.substr(index2 + 1);
+        subtype = subtype.substr(0, index2);
       }
       return new MediaType(type, subtype, suffix);
     }
@@ -15868,10 +15868,10 @@ var require_json = __commonJS({
       };
     }
     function createStrictSyntaxError(str, char2) {
-      const index = str.indexOf(char2);
+      const index2 = str.indexOf(char2);
       let partial = "";
-      if (index !== -1) {
-        partial = str.substring(0, index) + JSON_SYNTAX_CHAR.repeat(str.length - index);
+      if (index2 !== -1) {
+        partial = str.substring(0, index2) + JSON_SYNTAX_CHAR.repeat(str.length - index2);
       }
       try {
         JSON.parse(partial);
@@ -15879,7 +15879,7 @@ var require_json = __commonJS({
       } catch (e) {
         return normalizeJsonSyntaxError(e, {
           message: e.message.replace(JSON_SYNTAX_REGEXP, function(placeholder) {
-            return str.substring(index, index + placeholder.length);
+            return str.substring(index2, index2 + placeholder.length);
           }),
           stack: e.stack
         });
@@ -17952,7 +17952,7 @@ var require_stringify = __commonJS({
       return typeof v === "string" || typeof v === "number" || typeof v === "boolean" || typeof v === "symbol" || typeof v === "bigint";
     };
     var sentinel = {};
-    var stringify = function stringify2(object, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, sideChannel) {
+    var stringify2 = function stringify3(object, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, sideChannel) {
       var obj = object;
       var tmpSc = sideChannel;
       var step = 0;
@@ -18030,7 +18030,7 @@ var require_stringify = __commonJS({
         sideChannel.set(object, step);
         var valueSideChannel = getSideChannel();
         valueSideChannel.set(sentinel, sideChannel);
-        pushToArray(values, stringify2(
+        pushToArray(values, stringify3(
           value,
           keyPrefix,
           generateArrayPrefix,
@@ -18150,7 +18150,7 @@ var require_stringify = __commonJS({
         if (options.skipNulls && value === null) {
           continue;
         }
-        pushToArray(keys, stringify(
+        pushToArray(keys, stringify2(
           value,
           key,
           generateArrayPrefix,
@@ -18351,18 +18351,18 @@ var require_parse = __commonJS({
           obj = options.plainObjects ? { __proto__: null } : {};
           var cleanRoot = root.charAt(0) === "[" && root.charAt(root.length - 1) === "]" ? root.slice(1, -1) : root;
           var decodedRoot = options.decodeDotInKeys ? cleanRoot.replace(/%2E/g, ".") : cleanRoot;
-          var index = parseInt(decodedRoot, 10);
-          var isValidArrayIndex = !isNaN(index) && root !== decodedRoot && String(index) === decodedRoot && index >= 0 && options.parseArrays;
+          var index2 = parseInt(decodedRoot, 10);
+          var isValidArrayIndex = !isNaN(index2) && root !== decodedRoot && String(index2) === decodedRoot && index2 >= 0 && options.parseArrays;
           if (!options.parseArrays && decodedRoot === "") {
             obj = { 0: leaf };
-          } else if (isValidArrayIndex && index < options.arrayLimit) {
+          } else if (isValidArrayIndex && index2 < options.arrayLimit) {
             obj = [];
-            obj[index] = leaf;
+            obj[index2] = leaf;
           } else if (isValidArrayIndex && options.throwOnLimitExceeded) {
             throw new RangeError("Array limit exceeded. Only " + options.arrayLimit + " element" + (options.arrayLimit === 1 ? "" : "s") + " allowed in an array.");
           } else if (isValidArrayIndex) {
-            obj[index] = leaf;
-            utils.markOverflow(obj, index);
+            obj[index2] = leaf;
+            utils.markOverflow(obj, index2);
           } else if (decodedRoot !== "__proto__") {
             obj[decodedRoot] = leaf;
           }
@@ -18518,13 +18518,13 @@ var require_parse = __commonJS({
 var require_lib2 = __commonJS({
   "../node_modules/.pnpm/qs@6.15.3/node_modules/qs/lib/index.js"(exports, module) {
     "use strict";
-    var stringify = require_stringify();
+    var stringify2 = require_stringify();
     var parse = require_parse();
     var formats = require_formats();
     module.exports = {
       formats,
       parse,
-      stringify
+      stringify: stringify2
     };
   }
 });
@@ -18536,7 +18536,7 @@ var require_urlencoded = __commonJS({
     var createError = require_http_errors();
     var debug = require_src()("body-parser:urlencoded");
     var read = require_read();
-    var qs = require_lib2();
+    var qs2 = require_lib2();
     var { normalizeOptions } = require_utils();
     module.exports = urlencoded;
     function urlencoded(options) {
@@ -18581,7 +18581,7 @@ var require_urlencoded = __commonJS({
         const arrayLimit = extended ? Math.max(100, paramCount) : paramCount;
         debug("parse " + (extended ? "extended " : "") + "urlencoding");
         try {
-          return qs.parse(body, {
+          return qs2.parse(body, {
             allowPrototypes: true,
             arrayLimit,
             depth,
@@ -18603,14 +18603,14 @@ var require_urlencoded = __commonJS({
       };
     }
     function parameterCount(body, limit) {
-      let count = 0;
-      let index = -1;
+      let count2 = 0;
+      let index2 = -1;
       do {
-        count++;
-        if (count > limit) return void 0;
-        index = body.indexOf("&", index + 1);
-      } while (index !== -1);
-      return count;
+        count2++;
+        if (count2 > limit) return void 0;
+        index2 = body.indexOf("&", index2 + 1);
+      } while (index2 !== -1);
+      return count2;
     }
   }
 });
@@ -18682,10 +18682,10 @@ var require_escape_html = __commonJS({
       }
       var escape2;
       var html = "";
-      var index = 0;
+      var index2 = 0;
       var lastIndex = 0;
-      for (index = match.index; index < str.length; index++) {
-        switch (str.charCodeAt(index)) {
+      for (index2 = match.index; index2 < str.length; index2++) {
+        switch (str.charCodeAt(index2)) {
           case 34:
             escape2 = "&quot;";
             break;
@@ -18704,13 +18704,13 @@ var require_escape_html = __commonJS({
           default:
             continue;
         }
-        if (lastIndex !== index) {
-          html += str.substring(lastIndex, index);
+        if (lastIndex !== index2) {
+          html += str.substring(lastIndex, index2);
         }
-        lastIndex = index + 1;
+        lastIndex = index2 + 1;
         html += escape2;
       }
-      return lastIndex !== index ? html + str.substring(lastIndex, index) : html;
+      return lastIndex !== index2 ? html + str.substring(lastIndex, index2) : html;
     }
   }
 });
@@ -19063,22 +19063,22 @@ var require_content_type = __commonJS({
       if (typeof header !== "string") {
         throw new TypeError("argument string is required to be a string");
       }
-      var index = header.indexOf(";");
-      var type = index !== -1 ? header.slice(0, index).trim() : header.trim();
+      var index2 = header.indexOf(";");
+      var type = index2 !== -1 ? header.slice(0, index2).trim() : header.trim();
       if (!TYPE_REGEXP.test(type)) {
         throw new TypeError("invalid media type");
       }
       var obj = new ContentType(type.toLowerCase());
-      if (index !== -1) {
+      if (index2 !== -1) {
         var key;
         var match;
         var value;
-        PARAM_REGEXP.lastIndex = index;
+        PARAM_REGEXP.lastIndex = index2;
         while (match = PARAM_REGEXP.exec(header)) {
-          if (match.index !== index) {
+          if (match.index !== index2) {
             throw new TypeError("invalid parameter format");
           }
-          index += match[0].length;
+          index2 += match[0].length;
           key = match[1].toLowerCase();
           value = match[2];
           if (value.charCodeAt(0) === 34) {
@@ -19089,7 +19089,7 @@ var require_content_type = __commonJS({
           }
           obj.parameters[key] = value;
         }
-        if (index !== header.length) {
+        if (index2 !== header.length) {
           throw new TypeError("invalid parameter format");
         }
       }
@@ -19129,14 +19129,14 @@ var require_etag = __commonJS({
   "../node_modules/.pnpm/etag@1.8.1/node_modules/etag/index.js"(exports, module) {
     "use strict";
     module.exports = etag;
-    var crypto2 = __require("crypto");
+    var crypto4 = __require("crypto");
     var Stats = __require("fs").Stats;
     var toString = Object.prototype.toString;
     function entitytag(entity) {
       if (entity.length === 0) {
         return '"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk"';
       }
-      var hash2 = crypto2.createHash("sha1").update(entity, "utf8").digest("base64").substring(0, 27);
+      var hash2 = crypto4.createHash("sha1").update(entity, "utf8").digest("base64").substring(0, 27);
       var len = typeof entity === "string" ? Buffer.byteLength(entity, "utf8") : entity.length;
       return '"' + len.toString(16) + "-" + hash2 + '"';
     }
@@ -20003,7 +20003,7 @@ var require_utils3 = __commonJS({
     var etag = require_etag();
     var mime = require_mime_types();
     var proxyaddr = require_proxy_addr();
-    var qs = require_lib2();
+    var qs2 = require_lib2();
     var querystring = __require("node:querystring");
     var { Buffer: Buffer3 } = __require("node:buffer");
     exports.methods = METHODS.map((method) => method.toLowerCase());
@@ -20018,27 +20018,27 @@ var require_utils3 = __commonJS({
     function acceptParams(str) {
       var length = str.length;
       var colonIndex = str.indexOf(";");
-      var index = colonIndex === -1 ? length : colonIndex;
-      var ret = { value: str.slice(0, index).trim(), quality: 1, params: {} };
-      while (index < length) {
-        var splitIndex = str.indexOf("=", index);
+      var index2 = colonIndex === -1 ? length : colonIndex;
+      var ret2 = { value: str.slice(0, index2).trim(), quality: 1, params: {} };
+      while (index2 < length) {
+        var splitIndex = str.indexOf("=", index2);
         if (splitIndex === -1) break;
-        var colonIndex = str.indexOf(";", index);
+        var colonIndex = str.indexOf(";", index2);
         var endIndex = colonIndex === -1 ? length : colonIndex;
         if (splitIndex > endIndex) {
-          index = str.lastIndexOf(";", splitIndex - 1) + 1;
+          index2 = str.lastIndexOf(";", splitIndex - 1) + 1;
           continue;
         }
-        var key = str.slice(index, splitIndex).trim();
+        var key = str.slice(index2, splitIndex).trim();
         var value = str.slice(splitIndex + 1, endIndex).trim();
         if (key === "q") {
-          ret.quality = parseFloat(value);
+          ret2.quality = parseFloat(value);
         } else {
-          ret.params[key] = value;
+          ret2.params[key] = value;
         }
-        index = endIndex + 1;
+        index2 = endIndex + 1;
       }
-      return ret;
+      return ret2;
     }
     exports.compileETag = function(val) {
       var fn;
@@ -20114,7 +20114,7 @@ var require_utils3 = __commonJS({
       };
     }
     function parseExtendedQueryString(str) {
-      return qs.parse(str, {
+      return qs2.parse(str, {
         allowPrototypes: true
       });
     }
@@ -20138,14 +20138,14 @@ var require_wrappy = __commonJS({
         for (var i = 0; i < args.length; i++) {
           args[i] = arguments[i];
         }
-        var ret = fn.apply(this, args);
+        var ret2 = fn.apply(this, args);
         var cb2 = args[args.length - 1];
-        if (typeof ret === "function" && ret !== cb2) {
+        if (typeof ret2 === "function" && ret2 !== cb2) {
           Object.keys(cb2).forEach(function(k) {
-            ret[k] = cb2[k];
+            ret2[k] = cb2[k];
           });
         }
-        return ret;
+        return ret2;
       }
     }
   }
@@ -20216,7 +20216,7 @@ var require_dist2 = __commonJS({
     exports.compile = compile;
     exports.match = match;
     exports.pathToRegexp = pathToRegexp;
-    exports.stringify = stringify;
+    exports.stringify = stringify2;
     var DEFAULT_DELIMITER = "/";
     var NOOP_VALUE = (value) => value;
     var ID_START = /^[$_\p{ID_Start}]$/u;
@@ -20249,7 +20249,7 @@ var require_dist2 = __commonJS({
     function parse(str, options = {}) {
       const { encodePath = NOOP_VALUE } = options;
       const chars = [...str];
-      let index = 0;
+      let index2 = 0;
       function consumeUntil(end) {
         const output = [];
         let path2 = "";
@@ -20262,44 +20262,44 @@ var require_dist2 = __commonJS({
           });
           path2 = "";
         }
-        while (index < chars.length) {
-          const value = chars[index++];
+        while (index2 < chars.length) {
+          const value = chars[index2++];
           if (value === end) {
             writePath();
             return output;
           }
           if (value === "\\") {
-            if (index === chars.length) {
-              throw new PathError(`Unexpected end after \\ at index ${index}`, str);
+            if (index2 === chars.length) {
+              throw new PathError(`Unexpected end after \\ at index ${index2}`, str);
             }
-            path2 += chars[index++];
+            path2 += chars[index2++];
             continue;
           }
           if (value === ":" || value === "*") {
             const type = value === ":" ? "param" : "wildcard";
             let name = "";
-            if (ID_START.test(chars[index])) {
+            if (ID_START.test(chars[index2])) {
               do {
-                name += chars[index++];
-              } while (ID_CONTINUE.test(chars[index]));
-            } else if (chars[index] === '"') {
-              let quoteStart = index;
-              while (index < chars.length) {
-                if (chars[++index] === '"') {
-                  index++;
+                name += chars[index2++];
+              } while (ID_CONTINUE.test(chars[index2]));
+            } else if (chars[index2] === '"') {
+              let quoteStart = index2;
+              while (index2 < chars.length) {
+                if (chars[++index2] === '"') {
+                  index2++;
                   quoteStart = 0;
                   break;
                 }
-                if (chars[index] === "\\")
-                  index++;
-                name += chars[index];
+                if (chars[index2] === "\\")
+                  index2++;
+                name += chars[index2];
               }
               if (quoteStart) {
                 throw new PathError(`Unterminated quote at index ${quoteStart}`, str);
               }
             }
             if (!name) {
-              throw new PathError(`Missing parameter name at index ${index}`, str);
+              throw new PathError(`Missing parameter name at index ${index2}`, str);
             }
             writePath();
             output.push({ type, name });
@@ -20314,12 +20314,12 @@ var require_dist2 = __commonJS({
             continue;
           }
           if (value === "}" || value === "(" || value === ")" || value === "[" || value === "]" || value === "+" || value === "?" || value === "!") {
-            throw new PathError(`Unexpected ${value} at index ${index - 1}`, str);
+            throw new PathError(`Unexpected ${value} at index ${index2 - 1}`, str);
           }
           path2 += value;
         }
         if (end) {
-          throw new PathError(`Unexpected end at index ${index}, expected ${end}`, str);
+          throw new PathError(`Unexpected end at index ${index2}, expected ${end}`, str);
         }
         writePath();
         return output;
@@ -20453,12 +20453,12 @@ var require_dist2 = __commonJS({
       pattern += end ? "$" : "(?=" + escape2(delimiter) + "|$)";
       return { regexp: new RegExp(pattern, sensitive ? "" : "i"), keys };
     }
-    function flatten(tokens, index, result, callback) {
-      while (index < tokens.length) {
-        const token = tokens[index++];
+    function flatten(tokens, index2, result, callback) {
+      while (index2 < tokens.length) {
+        const token = tokens[index2++];
         if (token.type === "group") {
           const len = result.length;
-          flatten(token.tokens, 0, result, (seq) => flatten(tokens, index, seq, callback));
+          flatten(token.tokens, 0, result, (seq) => flatten(tokens, index2, seq, callback));
           result.length = len;
           continue;
         }
@@ -20472,10 +20472,10 @@ var require_dist2 = __commonJS({
       let wildcardBacktrack = "";
       let prevCaptureType = 0;
       let hasSegmentCapture = 0;
-      let index = 0;
-      function hasInSegment(index2, type) {
-        while (index2 < tokens.length) {
-          const token = tokens[index2++];
+      let index2 = 0;
+      function hasInSegment(index3, type) {
+        while (index3 < tokens.length) {
+          const token = tokens[index3++];
           if (token.type === type)
             return true;
           if (token.type === "text") {
@@ -20485,18 +20485,18 @@ var require_dist2 = __commonJS({
         }
         return false;
       }
-      function peekText(index2) {
+      function peekText(index3) {
         let result2 = "";
-        while (index2 < tokens.length) {
-          const token = tokens[index2++];
+        while (index3 < tokens.length) {
+          const token = tokens[index3++];
           if (token.type !== "text")
             break;
           result2 += token.value;
         }
         return result2;
       }
-      while (index < tokens.length) {
-        const token = tokens[index++];
+      while (index2 < tokens.length) {
+        const token = tokens[index2++];
         if (token.type === "text") {
           result += escape2(token.value);
           backtrack += token.value;
@@ -20511,7 +20511,7 @@ var require_dist2 = __commonJS({
             throw new PathError(`Missing text before "${token.name}" ${token.type}`, originalPath);
           }
           if (token.type === "param") {
-            result += hasSegmentCapture & 2 ? `(${negate(delimiter, backtrack)}+)` : hasInSegment(index, "wildcard") ? `(${negate(delimiter, peekText(index))}+)` : hasSegmentCapture & 1 ? `(${negate(delimiter, backtrack)}+|${escape2(backtrack)})` : `(${negate(delimiter, "")}+)`;
+            result += hasSegmentCapture & 2 ? `(${negate(delimiter, backtrack)}+)` : hasInSegment(index2, "wildcard") ? `(${negate(delimiter, peekText(index2))}+)` : hasSegmentCapture & 1 ? `(${negate(delimiter, backtrack)}+|${escape2(backtrack)})` : `(${negate(delimiter, "")}+)`;
             hasSegmentCapture |= prevCaptureType = 1;
           } else {
             result += hasSegmentCapture & 2 ? `(${negate(backtrack, "")}+)` : wildcardBacktrack ? `(${negate(wildcardBacktrack, "")}+|${negate(delimiter, "")}+)` : `([^]+)`;
@@ -20537,10 +20537,10 @@ var require_dist2 = __commonJS({
         return `(?:(?!${escape2(a)})[^${escape2(b)}])`;
       return `[^${escape2(a + b)}]`;
     }
-    function stringifyTokens(tokens, index) {
+    function stringifyTokens(tokens, index2) {
       let value = "";
-      while (index < tokens.length) {
-        const token = tokens[index++];
+      while (index2 < tokens.length) {
+        const token = tokens[index2++];
         if (token.type === "text") {
           value += escapeText(token.value);
           continue;
@@ -20550,18 +20550,18 @@ var require_dist2 = __commonJS({
           continue;
         }
         if (token.type === "param") {
-          value += ":" + stringifyName(token.name, tokens[index]);
+          value += ":" + stringifyName(token.name, tokens[index2]);
           continue;
         }
         if (token.type === "wildcard") {
-          value += "*" + stringifyName(token.name, tokens[index]);
+          value += "*" + stringifyName(token.name, tokens[index2]);
           continue;
         }
         throw new TypeError(`Unknown token type: ${token.type}`);
       }
       return value;
     }
-    function stringify(data) {
+    function stringify2(data) {
       return stringifyTokens(data.tokens, 0);
     }
     function stringifyName(name, next) {
@@ -20644,12 +20644,12 @@ var require_layer = __commonJS({
         return next(error);
       }
       try {
-        const ret = fn(error, req, res, next);
-        if (isPromise(ret)) {
-          if (!(ret instanceof Promise)) {
+        const ret2 = fn(error, req, res, next);
+        if (isPromise(ret2)) {
+          if (!(ret2 instanceof Promise)) {
             deprecate("handlers that are Promise-like are deprecated, use a native Promise instead");
           }
-          ret.then(null, function(error2) {
+          ret2.then(null, function(error2) {
             next(error2 || new Error("Rejected promise"));
           });
         }
@@ -20663,12 +20663,12 @@ var require_layer = __commonJS({
         return next();
       }
       try {
-        const ret = fn(req, res, next);
-        if (isPromise(ret)) {
-          if (!(ret instanceof Promise)) {
+        const ret2 = fn(req, res, next);
+        if (isPromise(ret2)) {
+          if (!(ret2 instanceof Promise)) {
             deprecate("handlers that are Promise-like are deprecated, use a native Promise instead");
           }
-          ret.then(null, function(error) {
+          ret2.then(null, function(error) {
             next(error || new Error("Rejected promise"));
           });
         }
@@ -20859,27 +20859,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router4;
+    module.exports = Router5;
     module.exports.Route = Route;
-    function Router4(options) {
-      if (!(this instanceof Router4)) {
-        return new Router4(options);
+    function Router5(options) {
+      if (!(this instanceof Router5)) {
+        return new Router5(options);
       }
       const opts = options || {};
-      function router4(req, res, next) {
-        router4.handle(req, res, next);
+      function router5(req, res, next) {
+        router5.handle(req, res, next);
       }
-      Object.setPrototypeOf(router4, this);
-      router4.caseSensitive = opts.caseSensitive;
-      router4.mergeParams = opts.mergeParams;
-      router4.params = {};
-      router4.strict = opts.strict;
-      router4.stack = [];
-      return router4;
+      Object.setPrototypeOf(router5, this);
+      router5.caseSensitive = opts.caseSensitive;
+      router5.mergeParams = opts.mergeParams;
+      router5.params = {};
+      router5.strict = opts.strict;
+      router5.stack = [];
+      return router5;
     }
-    Router4.prototype = function() {
+    Router5.prototype = function() {
     };
-    Router4.prototype.param = function param(name, fn) {
+    Router5.prototype.param = function param(name, fn) {
       if (!name) {
         throw new TypeError("argument name is required");
       }
@@ -20899,7 +20899,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router4.prototype.handle = function handle(req, res, callback) {
+    Router5.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -21026,7 +21026,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router4.prototype.use = function use(handler) {
+    Router5.prototype.use = function use(handler) {
       let offset = 0;
       let path2 = "/";
       if (typeof handler !== "function") {
@@ -21059,7 +21059,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router4.prototype.route = function route(path2) {
+    Router5.prototype.route = function route(path2) {
       const route2 = new Route(path2);
       const layer = new Layer(path2, {
         sensitive: this.caseSensitive,
@@ -21074,7 +21074,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router4.prototype[method] = function(path2) {
+      Router5.prototype[method] = function(path2) {
         const route = this.route(path2);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -21182,12 +21182,12 @@ var require_router = __commonJS({
         }
         if (!fn) return param();
         try {
-          const ret = fn(req, res, paramCallback, paramVal, key);
-          if (isPromise(ret)) {
-            if (!(ret instanceof Promise)) {
+          const ret2 = fn(req, res, paramCallback, paramVal, key);
+          if (isPromise(ret2)) {
+            if (!(ret2 instanceof Promise)) {
               deprecate("parameters that are Promise-like are deprecated, use a native Promise instead");
             }
-            ret.then(null, function(error) {
+            ret2.then(null, function(error) {
               paramCallback(error || new Error("Rejected promise"));
             });
           }
@@ -21250,20 +21250,20 @@ var require_application = __commonJS({
     var finalhandler = require_finalhandler();
     var debug = require_src()("express:application");
     var View2 = require_view();
-    var http = __require("node:http");
+    var http2 = __require("node:http");
     var methods = require_utils3().methods;
     var compileETag = require_utils3().compileETag;
     var compileQueryParser = require_utils3().compileQueryParser;
     var compileTrust = require_utils3().compileTrust;
     var resolve = __require("node:path").resolve;
     var once = require_once();
-    var Router4 = require_router();
+    var Router5 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router4 = null;
+      var router5 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -21272,13 +21272,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router4 === null) {
-            router4 = new Router4({
+          if (router5 === null) {
+            router5 = new Router5({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router4;
+          return router5;
         }
       });
     };
@@ -21349,15 +21349,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router4 = this.router;
+      var router5 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router4.use(path2, fn2);
+          return router5.use(path2, fn2);
         }
         debug(".use app under %s", path2);
         fn2.mountpath = path2;
         fn2.parent = this;
-        router4.use(path2, function mounted_app(req, res, next) {
+        router5.use(path2, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -21483,7 +21483,7 @@ var require_application = __commonJS({
       tryRender(view, renderOptions, done);
     };
     app2.listen = function listen() {
-      var server = http.createServer(this);
+      var server = http2.createServer(this);
       var args = slice.call(arguments);
       if (typeof args[args.length - 1] === "function") {
         var done = args[args.length - 1] = once(args[args.length - 1]);
@@ -21543,17 +21543,17 @@ var require_charset = __commonJS({
         i
       };
     }
-    function getCharsetPriority(charset, accepted, index) {
+    function getCharsetPriority(charset, accepted, index2) {
       var priority = { o: -1, q: 0, s: 0 };
       for (var i = 0; i < accepted.length; i++) {
-        var spec = specify(charset, accepted[i], index);
+        var spec = specify(charset, accepted[i], index2);
         if (spec && (priority.s - spec.s || priority.q - spec.q || priority.o - spec.o) < 0) {
           priority = spec;
         }
       }
       return priority;
     }
-    function specify(charset, spec, index) {
+    function specify(charset, spec, index2) {
       var s = 0;
       if (spec.charset.toLowerCase() === charset.toLowerCase()) {
         s |= 1;
@@ -21561,7 +21561,7 @@ var require_charset = __commonJS({
         return null;
       }
       return {
-        i: index,
+        i: index2,
         o: spec.i,
         q: spec.q,
         s
@@ -21572,8 +21572,8 @@ var require_charset = __commonJS({
       if (!provided) {
         return accepts.filter(isQuality).sort(compareSpecs).map(getFullCharset);
       }
-      var priorities = provided.map(function getPriority(type, index) {
-        return getCharsetPriority(type, accepts, index);
+      var priorities = provided.map(function getPriority(type, index2) {
+        return getCharsetPriority(type, accepts, index2);
       });
       return priorities.filter(isQuality).sort(compareSpecs).map(function getCharset(priority) {
         return provided[priorities.indexOf(priority)];
@@ -21641,17 +21641,17 @@ var require_encoding = __commonJS({
         i
       };
     }
-    function getEncodingPriority(encoding, accepted, index) {
+    function getEncodingPriority(encoding, accepted, index2) {
       var priority = { encoding, o: -1, q: 0, s: 0 };
       for (var i = 0; i < accepted.length; i++) {
-        var spec = specify(encoding, accepted[i], index);
+        var spec = specify(encoding, accepted[i], index2);
         if (spec && (priority.s - spec.s || priority.q - spec.q || priority.o - spec.o) < 0) {
           priority = spec;
         }
       }
       return priority;
     }
-    function specify(encoding, spec, index) {
+    function specify(encoding, spec, index2) {
       var s = 0;
       if (spec.encoding.toLowerCase() === encoding.toLowerCase()) {
         s |= 1;
@@ -21660,7 +21660,7 @@ var require_encoding = __commonJS({
       }
       return {
         encoding,
-        i: index,
+        i: index2,
         o: spec.i,
         q: spec.q,
         s
@@ -21685,8 +21685,8 @@ var require_encoding = __commonJS({
       if (!provided) {
         return accepts.filter(isQuality).sort(comparator).map(getFullEncoding);
       }
-      var priorities = provided.map(function getPriority(type, index) {
-        return getEncodingPriority(type, accepts, index);
+      var priorities = provided.map(function getPriority(type, index2) {
+        return getEncodingPriority(type, accepts, index2);
       });
       return priorities.filter(isQuality).sort(comparator).map(function getEncoding(priority) {
         return provided[priorities.indexOf(priority)];
@@ -21745,17 +21745,17 @@ var require_language = __commonJS({
         full
       };
     }
-    function getLanguagePriority(language, accepted, index) {
+    function getLanguagePriority(language, accepted, index2) {
       var priority = { o: -1, q: 0, s: 0 };
       for (var i = 0; i < accepted.length; i++) {
-        var spec = specify(language, accepted[i], index);
+        var spec = specify(language, accepted[i], index2);
         if (spec && (priority.s - spec.s || priority.q - spec.q || priority.o - spec.o) < 0) {
           priority = spec;
         }
       }
       return priority;
     }
-    function specify(language, spec, index) {
+    function specify(language, spec, index2) {
       var p = parseLanguage(language);
       if (!p) return null;
       var s = 0;
@@ -21769,7 +21769,7 @@ var require_language = __commonJS({
         return null;
       }
       return {
-        i: index,
+        i: index2,
         o: spec.i,
         q: spec.q,
         s
@@ -21780,8 +21780,8 @@ var require_language = __commonJS({
       if (!provided) {
         return accepts.filter(isQuality).sort(compareSpecs).map(getFullLanguage);
       }
-      var priorities = provided.map(function getPriority(type, index) {
-        return getLanguagePriority(type, accepts, index);
+      var priorities = provided.map(function getPriority(type, index2) {
+        return getLanguagePriority(type, accepts, index2);
       });
       return priorities.filter(isQuality).sort(compareSpecs).map(function getLanguage(priority) {
         return provided[priorities.indexOf(priority)];
@@ -21846,17 +21846,17 @@ var require_mediaType = __commonJS({
         i
       };
     }
-    function getMediaTypePriority(type, accepted, index) {
+    function getMediaTypePriority(type, accepted, index2) {
       var priority = { o: -1, q: 0, s: 0 };
       for (var i = 0; i < accepted.length; i++) {
-        var spec = specify(type, accepted[i], index);
+        var spec = specify(type, accepted[i], index2);
         if (spec && (priority.s - spec.s || priority.q - spec.q || priority.o - spec.o) < 0) {
           priority = spec;
         }
       }
       return priority;
     }
-    function specify(type, spec, index) {
+    function specify(type, spec, index2) {
       var p = parseMediaType(type);
       var s = 0;
       if (!p) {
@@ -21883,7 +21883,7 @@ var require_mediaType = __commonJS({
         }
       }
       return {
-        i: index,
+        i: index2,
         o: spec.i,
         q: spec.q,
         s
@@ -21894,8 +21894,8 @@ var require_mediaType = __commonJS({
       if (!provided) {
         return accepts.filter(isQuality).sort(compareSpecs).map(getFullType);
       }
-      var priorities = provided.map(function getPriority(type, index) {
-        return getMediaTypePriority(type, accepts, index);
+      var priorities = provided.map(function getPriority(type, index2) {
+        return getMediaTypePriority(type, accepts, index2);
       });
       return priorities.filter(isQuality).sort(compareSpecs).map(function getType(priority) {
         return provided[priorities.indexOf(priority)];
@@ -21911,23 +21911,23 @@ var require_mediaType = __commonJS({
       return spec.q > 0;
     }
     function quoteCount(string) {
-      var count = 0;
-      var index = 0;
-      while ((index = string.indexOf('"', index)) !== -1) {
-        count++;
-        index++;
+      var count2 = 0;
+      var index2 = 0;
+      while ((index2 = string.indexOf('"', index2)) !== -1) {
+        count2++;
+        index2++;
       }
-      return count;
+      return count2;
     }
     function splitKeyValuePair(str) {
-      var index = str.indexOf("=");
+      var index2 = str.indexOf("=");
       var key;
       var val;
-      if (index === -1) {
+      if (index2 === -1) {
         key = str;
       } else {
-        key = str.slice(0, index);
-        val = str.slice(index + 1);
+        key = str.slice(0, index2);
+        val = str.slice(index2 + 1);
       }
       return [key, val];
     }
@@ -22179,13 +22179,13 @@ var require_range_parser = __commonJS({
       if (typeof str !== "string") {
         throw new TypeError("argument str must be a string");
       }
-      var index = str.indexOf("=");
-      if (index === -1) {
+      var index2 = str.indexOf("=");
+      if (index2 === -1) {
         return -2;
       }
-      var arr = str.slice(index + 1).split(",");
+      var arr = str.slice(index2 + 1).split(",");
       var ranges = [];
-      ranges.type = str.slice(0, index);
+      ranges.type = str.slice(0, index2);
       for (var i = 0; i < arr.length; i++) {
         var indexOf = arr[i].indexOf("-");
         if (indexOf === -1) {
@@ -22241,11 +22241,11 @@ var require_range_parser = __commonJS({
       combined.type = ranges.type;
       return combined;
     }
-    function mapWithIndex(range, index) {
+    function mapWithIndex(range, index2) {
       return {
         start: range.start,
         end: range.end,
-        index
+        index: index2
       };
     }
     function mapWithoutIndex(range) {
@@ -22270,12 +22270,12 @@ var require_request = __commonJS({
     var accepts = require_accepts();
     var isIP2 = __require("node:net").isIP;
     var typeis = require_type_is();
-    var http = __require("node:http");
+    var http2 = __require("node:http");
     var fresh = require_fresh();
     var parseRange = require_range_parser();
     var parse = require_parseurl();
     var proxyaddr = require_proxy_addr();
-    var req = Object.create(http.IncomingMessage.prototype);
+    var req = Object.create(http2.IncomingMessage.prototype);
     module.exports = req;
     req.get = req.header = function header(name) {
       if (!name) {
@@ -22338,8 +22338,8 @@ var require_request = __commonJS({
         return proto;
       }
       var header = this.get("X-Forwarded-Proto") || proto;
-      var index = header.indexOf(",");
-      return index !== -1 ? header.substring(0, index).trim() : header.trim();
+      var index2 = header.indexOf(",");
+      return index2 !== -1 ? header.substring(0, index2).trim() : header.trim();
     });
     defineGetter(req, "secure", function secure() {
       return this.protocol === "https";
@@ -22378,8 +22378,8 @@ var require_request = __commonJS({
       var host = this.host;
       if (!host) return;
       var offset = host[0] === "[" ? host.indexOf("]") + 1 : 0;
-      var index = host.indexOf(":", offset);
-      return index !== -1 ? host.substring(0, index) : host;
+      var index2 = host.indexOf(":", offset);
+      return index2 !== -1 ? host.substring(0, index2) : host;
     });
     defineGetter(req, "fresh", function() {
       var method = this.method;
@@ -22519,18 +22519,18 @@ var require_content_disposition = __commonJS({
       if (!match) {
         throw new TypeError("invalid type format");
       }
-      var index = match[0].length;
+      var index2 = match[0].length;
       var type = match[1].toLowerCase();
       var key;
       var names = [];
       var params = {};
       var value;
-      index = PARAM_REGEXP.lastIndex = match[0].slice(-1) === ";" ? index - 1 : index;
+      index2 = PARAM_REGEXP.lastIndex = match[0].slice(-1) === ";" ? index2 - 1 : index2;
       while (match = PARAM_REGEXP.exec(string)) {
-        if (match.index !== index) {
+        if (match.index !== index2) {
           throw new TypeError("invalid parameter format");
         }
-        index += match[0].length;
+        index2 += match[0].length;
         key = match[1].toLowerCase();
         value = match[2];
         if (names.indexOf(key) !== -1) {
@@ -22551,7 +22551,7 @@ var require_content_disposition = __commonJS({
         }
         params[key] = value;
       }
-      if (index !== -1 && index !== string.length) {
+      if (index2 !== -1 && index2 !== string.length) {
         throw new TypeError("invalid parameter format");
       }
       return new ContentDisposition(type, params);
@@ -22623,17 +22623,17 @@ var require_content_disposition = __commonJS({
 // ../node_modules/.pnpm/cookie-signature@1.2.2/node_modules/cookie-signature/index.js
 var require_cookie_signature = __commonJS({
   "../node_modules/.pnpm/cookie-signature@1.2.2/node_modules/cookie-signature/index.js"(exports) {
-    var crypto2 = __require("crypto");
+    var crypto4 = __require("crypto");
     exports.sign = function(val, secret) {
       if ("string" != typeof val) throw new TypeError("Cookie value must be provided as a string.");
       if (null == secret) throw new TypeError("Secret key must be provided.");
-      return val + "." + crypto2.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
+      return val + "." + crypto4.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
     };
     exports.unsign = function(input, secret) {
       if ("string" != typeof input) throw new TypeError("Signed cookie string must be provided.");
       if (null == secret) throw new TypeError("Secret key must be provided.");
       var tentativeValue = input.slice(0, input.lastIndexOf(".")), expectedInput = exports.sign(tentativeValue, secret), expectedBuffer = Buffer.from(expectedInput), inputBuffer = Buffer.from(input);
-      return expectedBuffer.length === inputBuffer.length && crypto2.timingSafeEqual(expectedBuffer, inputBuffer) ? tentativeValue : false;
+      return expectedBuffer.length === inputBuffer.length && crypto4.timingSafeEqual(expectedBuffer, inputBuffer) ? tentativeValue : false;
     };
   }
 });
@@ -22658,20 +22658,20 @@ var require_cookie = __commonJS({
       var len = str.length;
       if (len < 2) return obj;
       var dec = opt && opt.decode || decode;
-      var index = 0;
+      var index2 = 0;
       var eqIdx = 0;
       var endIdx = 0;
       do {
-        eqIdx = str.indexOf("=", index);
+        eqIdx = str.indexOf("=", index2);
         if (eqIdx === -1) break;
-        endIdx = str.indexOf(";", index);
+        endIdx = str.indexOf(";", index2);
         if (endIdx === -1) {
           endIdx = len;
         } else if (eqIdx > endIdx) {
-          index = str.lastIndexOf(";", eqIdx - 1) + 1;
+          index2 = str.lastIndexOf(";", eqIdx - 1) + 1;
           continue;
         }
-        var keyStartIdx = startIndex(str, index, eqIdx);
+        var keyStartIdx = startIndex(str, index2, eqIdx);
         var keyEndIdx = endIndex(str, eqIdx, keyStartIdx);
         var key = str.slice(keyStartIdx, keyEndIdx);
         if (!__hasOwnProperty.call(obj, key)) {
@@ -22684,21 +22684,21 @@ var require_cookie = __commonJS({
           var val = str.slice(valStartIdx, valEndIdx);
           obj[key] = tryDecode(val, dec);
         }
-        index = endIdx + 1;
-      } while (index < len);
+        index2 = endIdx + 1;
+      } while (index2 < len);
       return obj;
     }
-    function startIndex(str, index, max) {
+    function startIndex(str, index2, max) {
       do {
-        var code = str.charCodeAt(index);
-        if (code !== 32 && code !== 9) return index;
-      } while (++index < max);
+        var code = str.charCodeAt(index2);
+        if (code !== 32 && code !== 9) return index2;
+      } while (++index2 < max);
       return max;
     }
-    function endIndex(str, index, min) {
-      while (index > min) {
-        var code = str.charCodeAt(--index);
-        if (code !== 32 && code !== 9) return index + 1;
+    function endIndex(str, index2, min) {
+      while (index2 > min) {
+        var code = str.charCodeAt(--index2);
+        if (code !== 32 && code !== 9) return index2 + 1;
       }
       return min;
     }
@@ -23234,8 +23234,8 @@ var require_send = __commonJS({
       }
     }
     function hasListeners(emitter, type) {
-      var count = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
-      return count > 0;
+      var count2 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
+      return count2 > 0;
     }
     function normalizeList(val, name) {
       var list = [].concat(val || []);
@@ -23369,7 +23369,7 @@ var require_response = __commonJS({
     var deprecate = require_depd()("express");
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
-    var http = __require("node:http");
+    var http2 = __require("node:http");
     var onFinished = require_on_finished();
     var mime = require_mime_types();
     var path2 = __require("node:path");
@@ -23385,7 +23385,7 @@ var require_response = __commonJS({
     var resolve = path2.resolve;
     var vary = require_vary();
     var { Buffer: Buffer3 } = __require("node:buffer");
-    var res = Object.create(http.ServerResponse.prototype);
+    var res = Object.create(http2.ServerResponse.prototype);
     module.exports = res;
     res.status = function status(code) {
       if (!Number.isInteger(code)) {
@@ -23489,7 +23489,7 @@ var require_response = __commonJS({
       var escape2 = app2.get("json escape");
       var replacer = app2.get("json replacer");
       var spaces = app2.get("json spaces");
-      var body = stringify(obj, replacer, spaces, escape2);
+      var body = stringify2(obj, replacer, spaces, escape2);
       if (!this.get("Content-Type")) {
         this.set("Content-Type", "application/json");
       }
@@ -23500,7 +23500,7 @@ var require_response = __commonJS({
       var escape2 = app2.get("json escape");
       var replacer = app2.get("json replacer");
       var spaces = app2.get("json spaces");
-      var body = stringify(obj, replacer, spaces, escape2);
+      var body = stringify2(obj, replacer, spaces, escape2);
       var callback = this.req.query[app2.get("jsonp callback name")];
       if (!this.get("Content-Type")) {
         this.set("X-Content-Type-Options", "nosniff");
@@ -23808,7 +23808,7 @@ var require_response = __commonJS({
       }
       file.pipe(res2);
     }
-    function stringify(value, replacer, spaces, escape2) {
+    function stringify2(value, replacer, spaces, escape2) {
       var json2 = replacer || spaces ? JSON.stringify(value, replacer, spaces) : JSON.stringify(value);
       if (escape2 && typeof json2 === "string") {
         json2 = json2.replace(/[<>&]/g, function(c) {
@@ -23939,10 +23939,10 @@ var require_express = __commonJS({
   "../node_modules/.pnpm/express@5.2.1_supports-color@10.2.2/node_modules/express/lib/express.js"(exports, module) {
     "use strict";
     var bodyParser = require_body_parser();
-    var EventEmitter = __require("node:events").EventEmitter;
+    var EventEmitter2 = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router4 = require_router();
+    var Router5 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23950,7 +23950,7 @@ var require_express = __commonJS({
       var app2 = function(req2, res2, next) {
         app2.handle(req2, res2, next);
       };
-      mixin(app2, EventEmitter.prototype, false);
+      mixin(app2, EventEmitter2.prototype, false);
       mixin(app2, proto, false);
       app2.request = Object.create(req, {
         app: { configurable: true, enumerable: true, writable: true, value: app2 }
@@ -23964,8 +23964,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router4.Route;
-    exports.Router = Router4;
+    exports.Route = Router5.Route;
+    exports.Router = Router5;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -24263,11 +24263,11 @@ var require_lib3 = __commonJS({
 // ../node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature/index.js
 var require_cookie_signature2 = __commonJS({
   "../node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature/index.js"(exports) {
-    var crypto2 = __require("crypto");
+    var crypto4 = __require("crypto");
     exports.sign = function(val, secret) {
       if ("string" != typeof val) throw new TypeError("Cookie value must be provided as a string.");
       if ("string" != typeof secret) throw new TypeError("Secret string must be provided.");
-      return val + "." + crypto2.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
+      return val + "." + crypto4.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
     };
     exports.unsign = function(val, secret) {
       if ("string" != typeof val) throw new TypeError("Signed cookie string must be provided.");
@@ -24276,7 +24276,7 @@ var require_cookie_signature2 = __commonJS({
       return sha1(mac) == sha1(val) ? str : false;
     };
     function sha1(str) {
-      return crypto2.createHash("sha1").update(str).digest("hex");
+      return crypto4.createHash("sha1").update(str).digest("hex");
     }
   }
 });
@@ -24357,18 +24357,18 @@ var require_cookie_parser = __commonJS({
       var cookies = Object.keys(obj);
       var dec;
       var key;
-      var ret = /* @__PURE__ */ Object.create(null);
+      var ret2 = /* @__PURE__ */ Object.create(null);
       var val;
       for (var i = 0; i < cookies.length; i++) {
         key = cookies[i];
         val = obj[key];
         dec = signedCookie(val, secret);
         if (val !== dec) {
-          ret[key] = dec;
+          ret2[key] = dec;
           delete obj[key];
         }
       }
-      return ret;
+      return ret2;
     }
   }
 });
@@ -25303,8 +25303,8 @@ var require_redaction = __commonJS({
         if (o[ns] === null) {
           return o;
         }
-        const { index } = next;
-        const nextPath = `${str.substr(index, str.length - 1)}`;
+        const { index: index2 } = next;
+        const nextPath = `${str.substr(index2, str.length - 1)}`;
         o[ns] = o[ns] || [];
         if (ns !== wildcardFirstSym && o[ns].length === 0) {
           o[ns].push(...o[wildcardFirstSym] || []);
@@ -25410,8 +25410,8 @@ var require_quick_format_unescaped = __commonJS({
         if (len === 1) return f;
         var objects = new Array(len);
         objects[0] = ss(f);
-        for (var index = 1; index < len; index++) {
-          objects[index] = ss(args[index]);
+        for (var index2 = 1; index2 < len; index2++) {
+          objects[index2] = ss(args[index2]);
         }
         return objects.join(" ");
       }
@@ -25549,7 +25549,7 @@ var require_sonic_boom = __commonJS({
   "../node_modules/.pnpm/sonic-boom@4.2.1/node_modules/sonic-boom/index.js"(exports, module) {
     "use strict";
     var fs = __require("fs");
-    var EventEmitter = __require("events");
+    var EventEmitter2 = __require("events");
     var inherits = __require("util").inherits;
     var path2 = __require("path");
     var sleep = require_atomic_sleep();
@@ -25786,7 +25786,7 @@ var require_sonic_boom = __commonJS({
       sonic._asyncDrainScheduled = false;
       sonic.emit("drain");
     }
-    inherits(SonicBoom, EventEmitter);
+    inherits(SonicBoom, EventEmitter2);
     function mergeBuf(bufs, len) {
       if (bufs.length === 0) {
         return kEmptyBuffer;
@@ -26182,8 +26182,8 @@ var require_on_exit_leak_free = __commonJS({
     }
     function clear(ref) {
       for (const event of ["exit", "beforeExit"]) {
-        const index = refs[event].indexOf(ref);
-        refs[event].splice(index, index + 1);
+        const index2 = refs[event].indexOf(ref);
+        refs[event].splice(index2, index2 + 1);
         uninstall(event);
       }
     }
@@ -26198,7 +26198,7 @@ var require_on_exit_leak_free = __commonJS({
       registry.register(obj, ref);
       refs[event].push(ref);
     }
-    function register(obj, fn) {
+    function register2(obj, fn) {
       _register("exit", obj, fn);
     }
     function registerBeforeExit(obj, fn) {
@@ -26218,7 +26218,7 @@ var require_on_exit_leak_free = __commonJS({
       }
     }
     module.exports = {
-      register,
+      register: register2,
       registerBeforeExit,
       unregister
     };
@@ -26293,9 +26293,9 @@ var require_wait = __commonJS({
   "../node_modules/.pnpm/thread-stream@3.1.0/node_modules/thread-stream/lib/wait.js"(exports, module) {
     "use strict";
     var MAX_TIMEOUT = 1e3;
-    function wait(state, index, expected, timeout, done) {
+    function wait(state, index2, expected, timeout, done) {
       const max = Date.now() + timeout;
-      let current = Atomics.load(state, index);
+      let current = Atomics.load(state, index2);
       if (current === expected) {
         done(null, "ok");
         return;
@@ -26307,7 +26307,7 @@ var require_wait = __commonJS({
         } else {
           setTimeout(() => {
             prior = current;
-            current = Atomics.load(state, index);
+            current = Atomics.load(state, index2);
             if (current === prior) {
               check(backoff >= MAX_TIMEOUT ? MAX_TIMEOUT : backoff * 2);
             } else {
@@ -26319,9 +26319,9 @@ var require_wait = __commonJS({
       };
       check(1);
     }
-    function waitDiff(state, index, expected, timeout, done) {
+    function waitDiff(state, index2, expected, timeout, done) {
       const max = Date.now() + timeout;
-      let current = Atomics.load(state, index);
+      let current = Atomics.load(state, index2);
       if (current !== expected) {
         done(null, "ok");
         return;
@@ -26331,7 +26331,7 @@ var require_wait = __commonJS({
           done(null, "timed-out");
         } else {
           setTimeout(() => {
-            current = Atomics.load(state, index);
+            current = Atomics.load(state, index2);
             if (current !== expected) {
               done(null, "ok");
             } else {
@@ -26364,7 +26364,7 @@ var require_thread_stream = __commonJS({
   "../node_modules/.pnpm/thread-stream@3.1.0/node_modules/thread-stream/index.js"(exports, module) {
     "use strict";
     var { version: version2 } = require_package();
-    var { EventEmitter } = __require("events");
+    var { EventEmitter: EventEmitter2 } = __require("events");
     var { Worker } = __require("worker_threads");
     var { join } = __require("path");
     var { pathToFileURL } = __require("url");
@@ -26520,7 +26520,7 @@ var require_thread_stream = __commonJS({
       stream.worker.off("exit", onWorkerExit);
       destroy(stream, code !== 0 ? new Error("the worker thread exited") : null);
     }
-    var ThreadStream = class extends EventEmitter {
+    var ThreadStream = class extends EventEmitter2 {
       constructor(opts = {}) {
         super();
         if (opts.bufferSize < 4) {
@@ -27022,7 +27022,7 @@ var require_tools = __commonJS({
       return asJsonChan.traceSync(_asJson, store, this, obj, msg, num, time2);
     }
     function _asJson(obj, msg, num, time2) {
-      const stringify2 = this[stringifySym];
+      const stringify3 = this[stringifySym];
       const stringifySafe = this[stringifySafeSym];
       const stringifiers = this[stringifiersSym];
       const end = this[endSym];
@@ -27064,7 +27064,7 @@ var require_tools = __commonJS({
               value = (stringifier || asString)(value);
               break;
             default:
-              value = (stringifier || stringify2)(value, stringifySafe);
+              value = (stringifier || stringify3)(value, stringifySafe);
           }
           if (value === void 0) continue;
           const strKey = asString(key);
@@ -27092,7 +27092,7 @@ var require_tools = __commonJS({
             msgStr = ',"' + messageKey + '":' + value;
             break;
           default:
-            value = (stringifier || stringify2)(value, stringifySafe);
+            value = (stringifier || stringify3)(value, stringifySafe);
             msgStr = ',"' + messageKey + '":' + value;
         }
       }
@@ -27105,7 +27105,7 @@ var require_tools = __commonJS({
     function asChindings(instance, bindings) {
       let value;
       let data = instance[chindingsSym];
-      const stringify2 = instance[stringifySym];
+      const stringify3 = instance[stringifySym];
       const stringifySafe = instance[stringifySafeSym];
       const stringifiers = instance[stringifiersSym];
       const wildcardStringifier = stringifiers[wildcardFirstSym];
@@ -27117,7 +27117,7 @@ var require_tools = __commonJS({
         const valid = (key.length < 5 || key !== "level" && key !== "serializers" && key !== "formatters" && key !== "customLevels") && bindings.hasOwnProperty(key) && value !== void 0;
         if (valid === true) {
           value = serializers[key] ? serializers[key](value) : value;
-          value = (stringifiers[key] || wildcardStringifier || stringify2)(value, stringifySafe);
+          value = (stringifiers[key] || wildcardStringifier || stringify3)(value, stringifySafe);
           if (value === void 0) continue;
           data += ',"' + key + '":' + value;
         }
@@ -27207,13 +27207,13 @@ var require_tools = __commonJS({
         return { opts, stream };
       };
     }
-    function stringify(obj, stringifySafeFn) {
+    function stringify2(obj, stringifySafeFn) {
       try {
         return JSON.stringify(obj);
       } catch (_) {
         try {
-          const stringify2 = stringifySafeFn || this[stringifySafeSym];
-          return stringify2(obj);
+          const stringify3 = stringifySafeFn || this[stringifySafeSym];
+          return stringify3(obj);
         } catch (_2) {
           return '"[unable to serialize, circular reference is too complex to analyze]"';
         }
@@ -27243,7 +27243,7 @@ var require_tools = __commonJS({
       asJson,
       genLog,
       createArgsNormalizer,
-      stringify,
+      stringify: stringify2,
       buildFormatters,
       normalizeDestFileDescriptor
     };
@@ -27477,7 +27477,7 @@ var require_meta = __commonJS({
 var require_proto = __commonJS({
   "../node_modules/.pnpm/pino@9.14.0/node_modules/pino/lib/proto.js"(exports, module) {
     "use strict";
-    var { EventEmitter } = __require("node:events");
+    var { EventEmitter: EventEmitter2 } = __require("node:events");
     var {
       lsCacheSym,
       levelValSym,
@@ -27518,7 +27518,7 @@ var require_proto = __commonJS({
       asChindings,
       asJson,
       buildFormatters,
-      stringify,
+      stringify: stringify2,
       noop
     } = require_tools();
     var {
@@ -27559,7 +27559,7 @@ var require_proto = __commonJS({
       [getLevelSym]: getLevel,
       [setLevelSym]: setLevel
     };
-    Object.setPrototypeOf(prototype, EventEmitter.prototype);
+    Object.setPrototypeOf(prototype, EventEmitter2.prototype);
     module.exports = function() {
       return Object.create(prototype);
     };
@@ -27626,9 +27626,9 @@ var require_proto = __commonJS({
       }
       if (typeof options.redact === "object" && options.redact !== null || Array.isArray(options.redact)) {
         instance.redact = options.redact;
-        const stringifiers = redaction(instance.redact, stringify);
+        const stringifiers = redaction(instance.redact, stringify2);
         const formatOpts = { stringify: stringifiers[redactFmtSym] };
-        instance[stringifySym] = stringify;
+        instance[stringifySym] = stringify2;
         instance[stringifiersSym] = stringifiers;
         instance[formatOptsSym] = formatOpts;
       }
@@ -27709,13 +27709,13 @@ var require_safe_stable_stringify = __commonJS({
   "../node_modules/.pnpm/safe-stable-stringify@2.5.0/node_modules/safe-stable-stringify/index.js"(exports, module) {
     "use strict";
     var { hasOwnProperty } = Object.prototype;
-    var stringify = configure();
-    stringify.configure = configure;
-    stringify.stringify = stringify;
-    stringify.default = stringify;
-    exports.stringify = stringify;
+    var stringify2 = configure();
+    stringify2.configure = configure;
+    stringify2.stringify = stringify2;
+    stringify2.default = stringify2;
+    exports.stringify = stringify2;
     exports.configure = configure;
-    module.exports = stringify;
+    module.exports = stringify2;
     var strEscapeSequencesRegExp = /[\u0000-\u001f\u0022\u005c\ud800-\udfff]/;
     function strEscape(str) {
       if (str.length < 5e3 && !strEscapeSequencesRegExp.test(str)) {
@@ -28273,7 +28273,7 @@ ${originalIndentation}`;
             return fail ? fail(value) : void 0;
         }
       }
-      function stringify2(value, replacer, space) {
+      function stringify3(value, replacer, space) {
         if (arguments.length > 1) {
           let spacer = "";
           if (typeof space === "number") {
@@ -28295,7 +28295,7 @@ ${originalIndentation}`;
         }
         return stringifySimple("", value, []);
       }
-      return stringify2;
+      return stringify3;
     }
   }
 });
@@ -28415,9 +28415,9 @@ var require_multistream = __commonJS({
       }
       function remove(id) {
         const { streams } = this;
-        const index = streams.findIndex((s) => s.id === id);
-        if (index >= 0) {
-          streams.splice(index, 1);
+        const index2 = streams.findIndex((s) => s.id === id);
+        if (index2 >= 0) {
+          streams.splice(index2, 1);
           streams.sort(compareByLevel);
           this.minLevel = streams.length > 0 ? streams[0].level : -1;
         }
@@ -28497,7 +28497,7 @@ var require_pino = __commonJS({
       asChindings,
       buildSafeSonicBoom,
       buildFormatters,
-      stringify,
+      stringify: stringify2,
       normalizeDestFileDescriptor,
       noop
     } = require_tools();
@@ -28601,7 +28601,7 @@ var require_pino = __commonJS({
         formatters.bindings,
         formatters.log
       );
-      const stringifyFn = stringify.bind({
+      const stringifyFn = stringify2.bind({
         [stringifySafeSym]: stringifySafe
       });
       const stringifiers = redact ? redaction(redact, stringifyFn) : {};
@@ -28611,7 +28611,7 @@ var require_pino = __commonJS({
         [chindingsSym]: "",
         [serializersSym]: serializers2,
         [stringifiersSym]: stringifiers,
-        [stringifySym]: stringify,
+        [stringifySym]: stringify2,
         [stringifySafeSym]: stringifySafe,
         [formattersSym]: allFormatters
       });
@@ -28642,7 +28642,7 @@ var require_pino = __commonJS({
         [streamSym]: stream,
         [timeSym]: time3,
         [timeSliceIndexSym]: timeSliceIndex,
-        [stringifySym]: stringify,
+        [stringifySym]: stringify2,
         [stringifySafeSym]: stringifySafe,
         [stringifiersSym]: stringifiers,
         [endSym]: end,
@@ -29010,7 +29010,7 @@ var require_main = __commonJS({
     var fs = __require("fs");
     var path2 = __require("path");
     var os2 = __require("os");
-    var crypto2 = __require("crypto");
+    var crypto4 = __require("crypto");
     var packageJson = require_package2();
     var version2 = packageJson.version;
     var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
@@ -29229,7 +29229,7 @@ var require_main = __commonJS({
       const authTag = ciphertext.subarray(-16);
       ciphertext = ciphertext.subarray(12, -16);
       try {
-        const aesgcm = crypto2.createDecipheriv("aes-256-gcm", key, nonce);
+        const aesgcm = crypto4.createDecipheriv("aes-256-gcm", key, nonce);
         aesgcm.setAuthTag(authTag);
         return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
       } catch (error) {
@@ -29785,51 +29785,51 @@ var require_textParsers = __commonJS({
       result.radius = parseFloat(radius);
       return result;
     };
-    var init = function(register) {
-      register(20, parseBigInteger);
-      register(21, parseInteger);
-      register(23, parseInteger);
-      register(26, parseInteger);
-      register(700, parseFloat);
-      register(701, parseFloat);
-      register(16, parseBool);
-      register(1082, parseDate);
-      register(1114, parseDate);
-      register(1184, parseDate);
-      register(600, parsePoint);
-      register(651, parseStringArray);
-      register(718, parseCircle);
-      register(1e3, parseBoolArray);
-      register(1001, parseByteAArray);
-      register(1005, parseIntegerArray);
-      register(1007, parseIntegerArray);
-      register(1028, parseIntegerArray);
-      register(1016, parseBigIntegerArray);
-      register(1017, parsePointArray);
-      register(1021, parseFloatArray);
-      register(1022, parseFloatArray);
-      register(1231, parseFloatArray);
-      register(1014, parseStringArray);
-      register(1015, parseStringArray);
-      register(1008, parseStringArray);
-      register(1009, parseStringArray);
-      register(1040, parseStringArray);
-      register(1041, parseStringArray);
-      register(1115, parseDateArray);
-      register(1182, parseDateArray);
-      register(1185, parseDateArray);
-      register(1186, parseInterval);
-      register(1187, parseIntervalArray);
-      register(17, parseByteA);
-      register(114, JSON.parse.bind(JSON));
-      register(3802, JSON.parse.bind(JSON));
-      register(199, parseJsonArray);
-      register(3807, parseJsonArray);
-      register(3907, parseStringArray);
-      register(2951, parseStringArray);
-      register(791, parseStringArray);
-      register(1183, parseStringArray);
-      register(1270, parseStringArray);
+    var init = function(register2) {
+      register2(20, parseBigInteger);
+      register2(21, parseInteger);
+      register2(23, parseInteger);
+      register2(26, parseInteger);
+      register2(700, parseFloat);
+      register2(701, parseFloat);
+      register2(16, parseBool);
+      register2(1082, parseDate);
+      register2(1114, parseDate);
+      register2(1184, parseDate);
+      register2(600, parsePoint);
+      register2(651, parseStringArray);
+      register2(718, parseCircle);
+      register2(1e3, parseBoolArray);
+      register2(1001, parseByteAArray);
+      register2(1005, parseIntegerArray);
+      register2(1007, parseIntegerArray);
+      register2(1028, parseIntegerArray);
+      register2(1016, parseBigIntegerArray);
+      register2(1017, parsePointArray);
+      register2(1021, parseFloatArray);
+      register2(1022, parseFloatArray);
+      register2(1231, parseFloatArray);
+      register2(1014, parseStringArray);
+      register2(1015, parseStringArray);
+      register2(1008, parseStringArray);
+      register2(1009, parseStringArray);
+      register2(1040, parseStringArray);
+      register2(1041, parseStringArray);
+      register2(1115, parseDateArray);
+      register2(1182, parseDateArray);
+      register2(1185, parseDateArray);
+      register2(1186, parseInterval);
+      register2(1187, parseIntervalArray);
+      register2(17, parseByteA);
+      register2(114, JSON.parse.bind(JSON));
+      register2(3802, JSON.parse.bind(JSON));
+      register2(199, parseJsonArray);
+      register2(3807, parseJsonArray);
+      register2(3907, parseStringArray);
+      register2(2951, parseStringArray);
+      register2(791, parseStringArray);
+      register2(1183, parseStringArray);
+      register2(1270, parseStringArray);
     };
     module.exports = {
       init
@@ -30072,11 +30072,11 @@ var require_binaryParsers = __commonJS({
         var array = [];
         var i2;
         if (dimension.length > 1) {
-          var count = dimension.shift();
-          for (i2 = 0; i2 < count; i2++) {
+          var count2 = dimension.shift();
+          for (i2 = 0; i2 < count2; i2++) {
             array[i2] = parse(dimension, elementType2);
           }
-          dimension.unshift(count);
+          dimension.unshift(count2);
         } else {
           for (i2 = 0; i2 < dimension[0]; i2++) {
             array[i2] = parseElement(elementType2);
@@ -30093,23 +30093,23 @@ var require_binaryParsers = __commonJS({
       if (value === null) return null;
       return parseBits(value, 8) > 0;
     };
-    var init = function(register) {
-      register(20, parseInt64);
-      register(21, parseInt16);
-      register(23, parseInt32);
-      register(26, parseInt32);
-      register(1700, parseNumeric);
-      register(700, parseFloat32);
-      register(701, parseFloat64);
-      register(16, parseBool);
-      register(1114, parseDate.bind(null, false));
-      register(1184, parseDate.bind(null, true));
-      register(1e3, parseArray);
-      register(1007, parseArray);
-      register(1016, parseArray);
-      register(1008, parseArray);
-      register(1009, parseArray);
-      register(25, parseText);
+    var init = function(register2) {
+      register2(20, parseInt64);
+      register2(21, parseInt16);
+      register2(23, parseInt32);
+      register2(26, parseInt32);
+      register2(1700, parseNumeric);
+      register2(700, parseFloat32);
+      register2(701, parseFloat64);
+      register2(16, parseBool);
+      register2(1114, parseDate.bind(null, false));
+      register2(1184, parseDate.bind(null, true));
+      register2(1e3, parseArray);
+      register2(1007, parseArray);
+      register2(1016, parseArray);
+      register2(1008, parseArray);
+      register2(1009, parseArray);
+      register2(25, parseText);
     };
     module.exports = {
       init
@@ -30369,25 +30369,25 @@ var require_utils4 = __commonJS({
       let year = date2.getFullYear();
       const isBCYear = year < 1;
       if (isBCYear) year = Math.abs(year) + 1;
-      let ret = String(year).padStart(4, "0") + "-" + String(date2.getMonth() + 1).padStart(2, "0") + "-" + String(date2.getDate()).padStart(2, "0") + "T" + String(date2.getHours()).padStart(2, "0") + ":" + String(date2.getMinutes()).padStart(2, "0") + ":" + String(date2.getSeconds()).padStart(2, "0") + "." + String(date2.getMilliseconds()).padStart(3, "0");
+      let ret2 = String(year).padStart(4, "0") + "-" + String(date2.getMonth() + 1).padStart(2, "0") + "-" + String(date2.getDate()).padStart(2, "0") + "T" + String(date2.getHours()).padStart(2, "0") + ":" + String(date2.getMinutes()).padStart(2, "0") + ":" + String(date2.getSeconds()).padStart(2, "0") + "." + String(date2.getMilliseconds()).padStart(3, "0");
       if (offset < 0) {
-        ret += "-";
+        ret2 += "-";
         offset *= -1;
       } else {
-        ret += "+";
+        ret2 += "+";
       }
-      ret += String(Math.floor(offset / 60)).padStart(2, "0") + ":" + String(offset % 60).padStart(2, "0");
-      if (isBCYear) ret += " BC";
-      return ret;
+      ret2 += String(Math.floor(offset / 60)).padStart(2, "0") + ":" + String(offset % 60).padStart(2, "0");
+      if (isBCYear) ret2 += " BC";
+      return ret2;
     }
     function dateToStringUTC(date2) {
       let year = date2.getUTCFullYear();
       const isBCYear = year < 1;
       if (isBCYear) year = Math.abs(year) + 1;
-      let ret = String(year).padStart(4, "0") + "-" + String(date2.getUTCMonth() + 1).padStart(2, "0") + "-" + String(date2.getUTCDate()).padStart(2, "0") + "T" + String(date2.getUTCHours()).padStart(2, "0") + ":" + String(date2.getUTCMinutes()).padStart(2, "0") + ":" + String(date2.getUTCSeconds()).padStart(2, "0") + "." + String(date2.getUTCMilliseconds()).padStart(3, "0");
-      ret += "+00:00";
-      if (isBCYear) ret += " BC";
-      return ret;
+      let ret2 = String(year).padStart(4, "0") + "-" + String(date2.getUTCMonth() + 1).padStart(2, "0") + "-" + String(date2.getUTCDate()).padStart(2, "0") + "T" + String(date2.getUTCHours()).padStart(2, "0") + ":" + String(date2.getUTCMinutes()).padStart(2, "0") + ":" + String(date2.getUTCSeconds()).padStart(2, "0") + "." + String(date2.getUTCMilliseconds()).padStart(3, "0");
+      ret2 += "+00:00";
+      if (isBCYear) ret2 += " BC";
+      return ret2;
     }
     function normalizeQueryConfig(config, values, callback) {
       config = typeof config === "string" ? { text: config } : config;
@@ -30500,46 +30500,46 @@ var require_cert_signatures = __commonJS({
     function x509Error(msg, cert) {
       return new Error("SASL channel binding: " + msg + " when parsing public certificate " + cert.toString("base64"));
     }
-    function readASN1Length(data, index) {
-      let length = data[index++];
-      if (length < 128) return { length, index };
+    function readASN1Length(data, index2) {
+      let length = data[index2++];
+      if (length < 128) return { length, index: index2 };
       const lengthBytes = length & 127;
       if (lengthBytes > 4) throw x509Error("bad length", data);
       length = 0;
       for (let i = 0; i < lengthBytes; i++) {
-        length = length << 8 | data[index++];
+        length = length << 8 | data[index2++];
       }
-      return { length, index };
+      return { length, index: index2 };
     }
-    function readASN1OID(data, index) {
-      if (data[index++] !== 6) throw x509Error("non-OID data", data);
-      const { length: OIDLength, index: indexAfterOIDLength } = readASN1Length(data, index);
-      index = indexAfterOIDLength;
-      const lastIndex = index + OIDLength;
-      const byte1 = data[index++];
+    function readASN1OID(data, index2) {
+      if (data[index2++] !== 6) throw x509Error("non-OID data", data);
+      const { length: OIDLength, index: indexAfterOIDLength } = readASN1Length(data, index2);
+      index2 = indexAfterOIDLength;
+      const lastIndex = index2 + OIDLength;
+      const byte1 = data[index2++];
       let oid = (byte1 / 40 >> 0) + "." + byte1 % 40;
-      while (index < lastIndex) {
+      while (index2 < lastIndex) {
         let value = 0;
-        while (index < lastIndex) {
-          const nextByte = data[index++];
+        while (index2 < lastIndex) {
+          const nextByte = data[index2++];
           value = value << 7 | nextByte & 127;
           if (nextByte < 128) break;
         }
         oid += "." + value;
       }
-      return { oid, index };
+      return { oid, index: index2 };
     }
-    function expectASN1Seq(data, index) {
-      if (data[index++] !== 48) throw x509Error("non-sequence data", data);
-      return readASN1Length(data, index);
+    function expectASN1Seq(data, index2) {
+      if (data[index2++] !== 48) throw x509Error("non-sequence data", data);
+      return readASN1Length(data, index2);
     }
-    function signatureAlgorithmHashFromCertificate(data, index) {
-      if (index === void 0) index = 0;
-      index = expectASN1Seq(data, index).index;
-      const { length: certInfoLength, index: indexAfterCertInfoLength } = expectASN1Seq(data, index);
-      index = indexAfterCertInfoLength + certInfoLength;
-      index = expectASN1Seq(data, index).index;
-      const { oid, index: indexAfterOID } = readASN1OID(data, index);
+    function signatureAlgorithmHashFromCertificate(data, index2) {
+      if (index2 === void 0) index2 = 0;
+      index2 = expectASN1Seq(data, index2).index;
+      const { length: certInfoLength, index: indexAfterCertInfoLength } = expectASN1Seq(data, index2);
+      index2 = indexAfterCertInfoLength + certInfoLength;
+      index2 = expectASN1Seq(data, index2).index;
+      const { oid, index: indexAfterOID } = readASN1OID(data, index2);
       switch (oid) {
         // RSA
         case "1.2.840.113549.1.1.4":
@@ -30571,12 +30571,12 @@ var require_cert_signatures = __commonJS({
           return "SHA-512";
         // RSASSA-PSS: hash is indicated separately
         case "1.2.840.113549.1.1.10": {
-          index = indexAfterOID;
-          index = expectASN1Seq(data, index).index;
-          if (data[index++] !== 160) throw x509Error("non-tag data", data);
-          index = readASN1Length(data, index).index;
-          index = expectASN1Seq(data, index).index;
-          const { oid: hashOID } = readASN1OID(data, index);
+          index2 = indexAfterOID;
+          index2 = expectASN1Seq(data, index2).index;
+          if (data[index2++] !== 160) throw x509Error("non-tag data", data);
+          index2 = readASN1Length(data, index2).index;
+          index2 = expectASN1Seq(data, index2).index;
+          const { oid: hashOID } = readASN1OID(data, index2);
           switch (hashOID) {
             // standalone hash OIDs
             case "1.2.840.113549.2.5":
@@ -30611,7 +30611,7 @@ var require_cert_signatures = __commonJS({
 var require_sasl = __commonJS({
   "../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/crypto/sasl.js"(exports, module) {
     "use strict";
-    var crypto2 = require_utils5();
+    var crypto4 = require_utils5();
     var { signatureAlgorithmHashFromCertificate } = require_cert_signatures();
     function saslprep(password) {
       const nonAsciiSpace = /[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000]/g;
@@ -30629,7 +30629,7 @@ var require_sasl = __commonJS({
       if (mechanism === "SCRAM-SHA-256-PLUS" && typeof stream.getPeerCertificate !== "function") {
         throw new Error("SASL: Mechanism SCRAM-SHA-256-PLUS requires a certificate");
       }
-      const clientNonce = crypto2.randomBytes(18).toString("base64");
+      const clientNonce = crypto4.randomBytes(18).toString("base64");
       const gs2Header = mechanism === "SCRAM-SHA-256-PLUS" ? "p=tls-server-end-point" : stream ? "y" : "n";
       return {
         mechanism,
@@ -30671,20 +30671,20 @@ var require_sasl = __commonJS({
         const peerCert = stream.getPeerCertificate().raw;
         let hashName = signatureAlgorithmHashFromCertificate(peerCert);
         if (hashName === "MD5" || hashName === "SHA-1") hashName = "SHA-256";
-        const certHash = await crypto2.hashByName(hashName, peerCert);
+        const certHash = await crypto4.hashByName(hashName, peerCert);
         const bindingData = Buffer.concat([Buffer.from("p=tls-server-end-point,,"), Buffer.from(certHash)]);
         channelBinding = bindingData.toString("base64");
       }
       const clientFinalMessageWithoutProof = "c=" + channelBinding + ",r=" + sv.nonce;
       const authMessage = clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
       const saltBytes = Buffer.from(sv.salt, "base64");
-      const saltedPassword = await crypto2.deriveKey(saslprep(password), saltBytes, sv.iteration);
-      const clientKey = await crypto2.hmacSha256(saltedPassword, "Client Key");
-      const storedKey = await crypto2.sha256(clientKey);
-      const clientSignature = await crypto2.hmacSha256(storedKey, authMessage);
+      const saltedPassword = await crypto4.deriveKey(saslprep(password), saltBytes, sv.iteration);
+      const clientKey = await crypto4.hmacSha256(saltedPassword, "Client Key");
+      const storedKey = await crypto4.sha256(clientKey);
+      const clientSignature = await crypto4.hmacSha256(storedKey, authMessage);
       const clientProof = xorBuffers(Buffer.from(clientKey), Buffer.from(clientSignature)).toString("base64");
-      const serverKey = await crypto2.hmacSha256(saltedPassword, "Server Key");
-      const serverSignatureBytes = await crypto2.hmacSha256(serverKey, authMessage);
+      const serverKey = await crypto4.hmacSha256(saltedPassword, "Server Key");
+      const serverSignatureBytes = await crypto4.hmacSha256(serverKey, authMessage);
       session.message = "SASLResponse";
       session.serverSignature = Buffer.from(serverSignatureBytes).toString("base64");
       session.response = clientFinalMessageWithoutProof + ",p=" + clientProof;
@@ -31261,10 +31261,10 @@ var require_result = __commonJS({
 var require_query = __commonJS({
   "../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/query.js"(exports, module) {
     "use strict";
-    var { EventEmitter } = __require("events");
+    var { EventEmitter: EventEmitter2 } = __require("events");
     var Result2 = require_result();
     var utils = require_utils4();
-    var Query2 = class extends EventEmitter {
+    var Query2 = class extends EventEmitter2 {
       constructor(config, values, callback) {
         super();
         config = utils.normalizeQueryConfig(config, values, callback);
@@ -32416,14 +32416,14 @@ var require_stream = __commonJS({
 var require_connection = __commonJS({
   "../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/connection.js"(exports, module) {
     "use strict";
-    var EventEmitter = __require("events").EventEmitter;
+    var EventEmitter2 = __require("events").EventEmitter;
     var { parse, serialize } = require_dist3();
     var stream = require_stream();
     var { getStream } = stream;
     var flushBuffer = serialize.flush();
     var syncBuffer = serialize.sync();
     var endBuffer = serialize.end();
-    var Connection2 = class extends EventEmitter {
+    var Connection2 = class extends EventEmitter2 {
       constructor(config) {
         super();
         config = config || {};
@@ -32905,7 +32905,7 @@ var require_lib4 = __commonJS({
 // ../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/client.js
 var require_client = __commonJS({
   "../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/client.js"(exports, module) {
-    var EventEmitter = __require("events").EventEmitter;
+    var EventEmitter2 = __require("events").EventEmitter;
     var utils = require_utils4();
     var nodeUtils = __require("util");
     var sasl = require_sasl();
@@ -32914,7 +32914,7 @@ var require_client = __commonJS({
     var Query2 = require_query();
     var defaults2 = require_defaults();
     var Connection2 = require_connection();
-    var crypto2 = require_utils5();
+    var crypto4 = require_utils5();
     var activeQueryDeprecationNotice = nodeUtils.deprecate(
       () => {
       },
@@ -32950,7 +32950,7 @@ var require_client = __commonJS({
       }
       return defaultValue;
     }
-    var Client2 = class extends EventEmitter {
+    var Client2 = class extends EventEmitter2 {
       constructor(config) {
         super();
         this.connectionParameters = new ConnectionParameters(config);
@@ -33165,7 +33165,7 @@ var require_client = __commonJS({
       _handleAuthMD5Password(msg) {
         this._getPassword(async () => {
           try {
-            const hashedPassword = await crypto2.postgresMd5PasswordHash(this.user, this.password, msg.salt);
+            const hashedPassword = await crypto4.postgresMd5PasswordHash(this.user, this.password, msg.salt);
             this.connection.password(hashedPassword);
           } catch (e) {
             this.emit("error", e);
@@ -33466,9 +33466,9 @@ var require_client = __commonJS({
             queryCallback(error);
             query.callback = () => {
             };
-            const index = this._queryQueue.indexOf(query);
-            if (index > -1) {
-              this._queryQueue.splice(index, 1);
+            const index2 = this._queryQueue.indexOf(query);
+            if (index2 > -1) {
+              this._queryQueue.splice(index2, 1);
             }
             this._pulseQueryQueue();
           }, readTimeout);
@@ -33548,7 +33548,7 @@ var require_client = __commonJS({
 var require_pg_pool = __commonJS({
   "../node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js"(exports, module) {
     "use strict";
-    var EventEmitter = __require("events").EventEmitter;
+    var EventEmitter2 = __require("events").EventEmitter;
     var NOOP = function() {
     };
     var removeWhere = (list, predicate) => {
@@ -33599,7 +33599,7 @@ var require_pg_pool = __commonJS({
         pool2.emit("error", err, client);
       };
     }
-    var Pool4 = class extends EventEmitter {
+    var Pool4 = class extends EventEmitter2 {
       constructor(options, Client2) {
         super();
         this.options = Object.assign({}, options);
@@ -33974,11 +33974,11 @@ var require_pg_pool = __commonJS({
 var require_query2 = __commonJS({
   "../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/native/query.js"(exports, module) {
     "use strict";
-    var EventEmitter = __require("events").EventEmitter;
+    var EventEmitter2 = __require("events").EventEmitter;
     var util2 = __require("util");
     var utils = require_utils4();
     var NativeQuery = module.exports = function(config, values, callback) {
-      EventEmitter.call(this);
+      EventEmitter2.call(this);
       config = utils.normalizeQueryConfig(config, values, callback);
       this.text = config.text;
       this.values = config.values;
@@ -33995,7 +33995,7 @@ var require_query2 = __commonJS({
         }.bind(this)
       );
     };
-    util2.inherits(NativeQuery, EventEmitter);
+    util2.inherits(NativeQuery, EventEmitter2);
     var errorFieldMap = {
       sqlState: "code",
       statementPosition: "position",
@@ -34122,7 +34122,7 @@ var require_client2 = __commonJS({
       throw e;
     }
     var TypeOverrides2 = require_type_overrides();
-    var EventEmitter = __require("events").EventEmitter;
+    var EventEmitter2 = __require("events").EventEmitter;
     var util2 = __require("util");
     var ConnectionParameters = require_connection_parameters();
     var NativeQuery = require_query2();
@@ -34132,7 +34132,7 @@ var require_client2 = __commonJS({
       "Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead."
     );
     var Client2 = module.exports = function(config) {
-      EventEmitter.call(this);
+      EventEmitter2.call(this);
       config = config || {};
       this._Promise = config.Promise || global.Promise;
       this._types = new TypeOverrides2(config.types);
@@ -34159,7 +34159,7 @@ var require_client2 = __commonJS({
       this.namedQueries = {};
     };
     Client2.Query = NativeQuery;
-    util2.inherits(Client2, EventEmitter);
+    util2.inherits(Client2, EventEmitter2);
     Client2.prototype._errorAllQueries = function(err) {
       const enqueueError = (query) => {
         process.nextTick(() => {
@@ -34262,9 +34262,9 @@ var require_client2 = __commonJS({
           queryCallback(error);
           query.callback = () => {
           };
-          const index = this._queryQueue.indexOf(query);
-          if (index > -1) {
-            this._queryQueue.splice(index, 1);
+          const index2 = this._queryQueue.indexOf(query);
+          if (index2 > -1) {
+            this._queryQueue.splice(index2, 1);
           }
           this._pulseQueryQueue();
         }, readTimeout);
@@ -35744,8 +35744,8 @@ var require_ipv6 = __commonJS({
         }
         const zeroLengths = zeroes.map((n) => n[1] - n[0] + 1);
         if (zeroes.length > 0) {
-          const index = zeroLengths.indexOf(Math.max(...zeroLengths));
-          groups = compact(this.parsedAddress, zeroes[index]);
+          const index2 = zeroLengths.indexOf(Math.max(...zeroLengths));
+          groups = compact(this.parsedAddress, zeroes[index2]);
         } else {
           groups = this.parsedAddress;
         }
@@ -36469,14 +36469,8789 @@ var require_ip_address = __commonJS({
   }
 });
 
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/crypto/CryptoProvider.js
+var CryptoProvider, CryptoProviderOnlySupportsAsyncError;
+var init_CryptoProvider = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/crypto/CryptoProvider.js"() {
+    CryptoProvider = class {
+      /**
+       * Computes a SHA-256 HMAC given a secret and a payload (encoded in UTF-8).
+       * The output HMAC should be encoded in hexadecimal.
+       *
+       * Sample values for implementations:
+       * - computeHMACSignature('', 'test_secret') => 'f7f9bd47fb987337b5796fdc1fdb9ba221d0d5396814bfcaf9521f43fd8927fd'
+       * - computeHMACSignature('\ud83d\ude00', 'test_secret') => '837da296d05c4fe31f61d5d7ead035099d9585a5bcde87de952012a78f0b0c43
+       */
+      computeHMACSignature(payload, secret) {
+        throw new Error("computeHMACSignature not implemented.");
+      }
+      /**
+       * Asynchronous version of `computeHMACSignature`. Some implementations may
+       * only allow support async signature computation.
+       *
+       * Computes a SHA-256 HMAC given a secret and a payload (encoded in UTF-8).
+       * The output HMAC should be encoded in hexadecimal.
+       *
+       * Sample values for implementations:
+       * - computeHMACSignature('', 'test_secret') => 'f7f9bd47fb987337b5796fdc1fdb9ba221d0d5396814bfcaf9521f43fd8927fd'
+       * - computeHMACSignature('\ud83d\ude00', 'test_secret') => '837da296d05c4fe31f61d5d7ead035099d9585a5bcde87de952012a78f0b0c43
+       */
+      computeHMACSignatureAsync(payload, secret) {
+        throw new Error("computeHMACSignatureAsync not implemented.");
+      }
+    };
+    CryptoProviderOnlySupportsAsyncError = class extends Error {
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/crypto/NodeCryptoProvider.js
+import * as crypto2 from "crypto";
+var NodeCryptoProvider;
+var init_NodeCryptoProvider = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/crypto/NodeCryptoProvider.js"() {
+    init_CryptoProvider();
+    NodeCryptoProvider = class extends CryptoProvider {
+      /** @override */
+      computeHMACSignature(payload, secret) {
+        return crypto2.createHmac("sha256", secret).update(payload, "utf8").digest("hex");
+      }
+      /** @override */
+      async computeHMACSignatureAsync(payload, secret) {
+        const signature = await this.computeHMACSignature(payload, secret);
+        return signature;
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/net/HttpClient.js
+var HttpClient, HttpClientResponse;
+var init_HttpClient = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/net/HttpClient.js"() {
+    HttpClient = class _HttpClient {
+      /** The client name used for diagnostics. */
+      getClientName() {
+        throw new Error("getClientName not implemented.");
+      }
+      makeRequest(host, port2, path2, method, headers, requestData, protocol, timeout) {
+        throw new Error("makeRequest not implemented.");
+      }
+      /** Helper to make a consistent timeout error across implementations. */
+      static makeTimeoutError() {
+        const timeoutErr = new TypeError(_HttpClient.TIMEOUT_ERROR_CODE);
+        timeoutErr.code = _HttpClient.TIMEOUT_ERROR_CODE;
+        return timeoutErr;
+      }
+    };
+    HttpClient.CONNECTION_CLOSED_ERROR_CODES = ["ECONNRESET", "EPIPE"];
+    HttpClient.TIMEOUT_ERROR_CODE = "ETIMEDOUT";
+    HttpClientResponse = class {
+      constructor(statusCode, headers) {
+        this._statusCode = statusCode;
+        this._headers = headers;
+      }
+      getStatusCode() {
+        return this._statusCode;
+      }
+      getHeaders() {
+        return this._headers;
+      }
+      getRawResponse() {
+        throw new Error("getRawResponse not implemented.");
+      }
+      toStream(streamCompleteCallback) {
+        throw new Error("toStream not implemented.");
+      }
+      toJSON() {
+        throw new Error("toJSON not implemented.");
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/net/NodeHttpClient.js
+import * as http_ from "http";
+import * as https_ from "https";
+var http, https, defaultHttpAgent, defaultHttpsAgent, NodeHttpClient, NodeHttpClientResponse;
+var init_NodeHttpClient = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/net/NodeHttpClient.js"() {
+    init_HttpClient();
+    http = http_.default || http_;
+    https = https_.default || https_;
+    defaultHttpAgent = new http.Agent({ keepAlive: true });
+    defaultHttpsAgent = new https.Agent({ keepAlive: true });
+    NodeHttpClient = class extends HttpClient {
+      constructor(agent) {
+        super();
+        this._agent = agent;
+      }
+      /** @override. */
+      getClientName() {
+        return "node";
+      }
+      makeRequest(host, port2, path2, method, headers, requestData, protocol, timeout) {
+        const isInsecureConnection = protocol === "http";
+        let agent = this._agent;
+        if (!agent) {
+          agent = isInsecureConnection ? defaultHttpAgent : defaultHttpsAgent;
+        }
+        const requestPromise = new Promise((resolve, reject) => {
+          const req = (isInsecureConnection ? http : https).request({
+            host,
+            port: port2,
+            path: path2,
+            method,
+            agent,
+            headers,
+            ciphers: "DEFAULT:!aNULL:!eNULL:!LOW:!EXPORT:!SSLv2:!MD5"
+          });
+          req.setTimeout(timeout, () => {
+            req.destroy(HttpClient.makeTimeoutError());
+          });
+          req.on("response", (res) => {
+            resolve(new NodeHttpClientResponse(res));
+          });
+          req.on("error", (error) => {
+            reject(error);
+          });
+          req.once("socket", (socket) => {
+            if (socket.connecting) {
+              socket.once(isInsecureConnection ? "connect" : "secureConnect", () => {
+                req.write(requestData);
+                req.end();
+              });
+            } else {
+              req.write(requestData);
+              req.end();
+            }
+          });
+        });
+        return requestPromise;
+      }
+    };
+    NodeHttpClientResponse = class extends HttpClientResponse {
+      constructor(res) {
+        super(res.statusCode, res.headers || {});
+        this._res = res;
+      }
+      getRawResponse() {
+        return this._res;
+      }
+      toStream(streamCompleteCallback) {
+        this._res.once("end", () => streamCompleteCallback());
+        return this._res;
+      }
+      toJSON() {
+        return new Promise((resolve, reject) => {
+          let response = "";
+          this._res.setEncoding("utf8");
+          this._res.on("data", (chunk) => {
+            response += chunk;
+          });
+          this._res.once("end", () => {
+            try {
+              resolve(JSON.parse(response));
+            } catch (e) {
+              reject(e);
+            }
+          });
+        });
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/net/FetchHttpClient.js
+var FetchHttpClient, FetchHttpClientResponse;
+var init_FetchHttpClient = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/net/FetchHttpClient.js"() {
+    init_HttpClient();
+    FetchHttpClient = class _FetchHttpClient extends HttpClient {
+      constructor(fetchFn) {
+        super();
+        if (!fetchFn) {
+          if (!globalThis.fetch) {
+            throw new Error("fetch() function not provided and is not defined in the global scope. You must provide a fetch implementation.");
+          }
+          fetchFn = globalThis.fetch;
+        }
+        if (globalThis.AbortController) {
+          this._fetchFn = _FetchHttpClient.makeFetchWithAbortTimeout(fetchFn);
+        } else {
+          this._fetchFn = _FetchHttpClient.makeFetchWithRaceTimeout(fetchFn);
+        }
+      }
+      static makeFetchWithRaceTimeout(fetchFn) {
+        return (url, init, timeout) => {
+          let pendingTimeoutId;
+          const timeoutPromise = new Promise((_, reject) => {
+            pendingTimeoutId = setTimeout(() => {
+              pendingTimeoutId = null;
+              reject(HttpClient.makeTimeoutError());
+            }, timeout);
+          });
+          const fetchPromise = fetchFn(url, init);
+          return Promise.race([fetchPromise, timeoutPromise]).finally(() => {
+            if (pendingTimeoutId) {
+              clearTimeout(pendingTimeoutId);
+            }
+          });
+        };
+      }
+      static makeFetchWithAbortTimeout(fetchFn) {
+        return async (url, init, timeout) => {
+          const abort = new AbortController();
+          let timeoutId = setTimeout(() => {
+            timeoutId = null;
+            abort.abort(HttpClient.makeTimeoutError());
+          }, timeout);
+          try {
+            return await fetchFn(url, Object.assign(Object.assign({}, init), { signal: abort.signal }));
+          } catch (err) {
+            if (err.name === "AbortError") {
+              throw HttpClient.makeTimeoutError();
+            } else {
+              throw err;
+            }
+          } finally {
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+          }
+        };
+      }
+      /** @override. */
+      getClientName() {
+        return "fetch";
+      }
+      async makeRequest(host, port2, path2, method, headers, requestData, protocol, timeout) {
+        const isInsecureConnection = protocol === "http";
+        const url = new URL(path2, `${isInsecureConnection ? "http" : "https"}://${host}`);
+        url.port = port2;
+        const methodHasPayload = method == "POST" || method == "PUT" || method == "PATCH";
+        const body = requestData || (methodHasPayload ? "" : void 0);
+        const res = await this._fetchFn(url.toString(), {
+          method,
+          // @ts-ignore
+          headers,
+          // @ts-ignore
+          body
+        }, timeout);
+        return new FetchHttpClientResponse(res);
+      }
+    };
+    FetchHttpClientResponse = class _FetchHttpClientResponse extends HttpClientResponse {
+      constructor(res) {
+        super(res.status, _FetchHttpClientResponse._transformHeadersToObject(res.headers));
+        this._res = res;
+      }
+      getRawResponse() {
+        return this._res;
+      }
+      toStream(streamCompleteCallback) {
+        streamCompleteCallback();
+        return this._res.body;
+      }
+      toJSON() {
+        return this._res.json();
+      }
+      static _transformHeadersToObject(headers) {
+        const headersObj = {};
+        for (const entry of headers) {
+          if (!Array.isArray(entry) || entry.length != 2) {
+            throw new Error("Response objects produced by the fetch function given to FetchHttpClient do not have an iterable headers map. Response#headers should be an iterable object.");
+          }
+          headersObj[entry[0]] = entry[1];
+        }
+        return headersObj;
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/crypto/SubtleCryptoProvider.js
+var SubtleCryptoProvider, byteHexMapping;
+var init_SubtleCryptoProvider = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/crypto/SubtleCryptoProvider.js"() {
+    init_CryptoProvider();
+    SubtleCryptoProvider = class extends CryptoProvider {
+      constructor(subtleCrypto) {
+        super();
+        this.subtleCrypto = subtleCrypto || crypto.subtle;
+      }
+      /** @override */
+      computeHMACSignature(payload, secret) {
+        throw new CryptoProviderOnlySupportsAsyncError("SubtleCryptoProvider cannot be used in a synchronous context.");
+      }
+      /** @override */
+      async computeHMACSignatureAsync(payload, secret) {
+        const encoder = new TextEncoder();
+        const key = await this.subtleCrypto.importKey("raw", encoder.encode(secret), {
+          name: "HMAC",
+          hash: { name: "SHA-256" }
+        }, false, ["sign"]);
+        const signatureBuffer = await this.subtleCrypto.sign("hmac", key, encoder.encode(payload));
+        const signatureBytes = new Uint8Array(signatureBuffer);
+        const signatureHexCodes = new Array(signatureBytes.length);
+        for (let i = 0; i < signatureBytes.length; i++) {
+          signatureHexCodes[i] = byteHexMapping[signatureBytes[i]];
+        }
+        return signatureHexCodes.join("");
+      }
+    };
+    byteHexMapping = new Array(256);
+    for (let i = 0; i < byteHexMapping.length; i++) {
+      byteHexMapping[i] = i.toString(16).padStart(2, "0");
+    }
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/platform/PlatformFunctions.js
+var PlatformFunctions;
+var init_PlatformFunctions = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/platform/PlatformFunctions.js"() {
+    init_FetchHttpClient();
+    init_SubtleCryptoProvider();
+    PlatformFunctions = class {
+      constructor() {
+        this._fetchFn = null;
+        this._agent = null;
+      }
+      /**
+       * Gets uname with Node's built-in `exec` function, if available.
+       */
+      getUname() {
+        throw new Error("getUname not implemented.");
+      }
+      /**
+       * Generates a v4 UUID. See https://stackoverflow.com/a/2117523
+       */
+      uuid4() {
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+          const r = Math.random() * 16 | 0;
+          const v = c === "x" ? r : r & 3 | 8;
+          return v.toString(16);
+        });
+      }
+      /**
+       * Compares strings in constant time.
+       */
+      secureCompare(a, b) {
+        if (a.length !== b.length) {
+          return false;
+        }
+        const len = a.length;
+        let result = 0;
+        for (let i = 0; i < len; ++i) {
+          result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+        }
+        return result === 0;
+      }
+      /**
+       * Creates an event emitter.
+       */
+      createEmitter() {
+        throw new Error("createEmitter not implemented.");
+      }
+      /**
+       * Checks if the request data is a stream. If so, read the entire stream
+       * to a buffer and return the buffer.
+       */
+      tryBufferData(data) {
+        throw new Error("tryBufferData not implemented.");
+      }
+      /**
+       * Creates an HTTP client which uses the Node `http` and `https` packages
+       * to issue requests.
+       */
+      createNodeHttpClient(agent) {
+        throw new Error("createNodeHttpClient not implemented.");
+      }
+      /**
+       * Creates an HTTP client for issuing Stripe API requests which uses the Web
+       * Fetch API.
+       *
+       * A fetch function can optionally be passed in as a parameter. If none is
+       * passed, will default to the default `fetch` function in the global scope.
+       */
+      createFetchHttpClient(fetchFn) {
+        return new FetchHttpClient(fetchFn);
+      }
+      /**
+       * Creates an HTTP client using runtime-specific APIs.
+       */
+      createDefaultHttpClient() {
+        throw new Error("createDefaultHttpClient not implemented.");
+      }
+      /**
+       * Creates a CryptoProvider which uses the Node `crypto` package for its computations.
+       */
+      createNodeCryptoProvider() {
+        throw new Error("createNodeCryptoProvider not implemented.");
+      }
+      /**
+       * Creates a CryptoProvider which uses the SubtleCrypto interface of the Web Crypto API.
+       */
+      createSubtleCryptoProvider(subtleCrypto) {
+        return new SubtleCryptoProvider(subtleCrypto);
+      }
+      createDefaultCryptoProvider() {
+        throw new Error("createDefaultCryptoProvider not implemented.");
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/Error.js
+var Error_exports = {};
+__export(Error_exports, {
+  StripeAPIError: () => StripeAPIError,
+  StripeAuthenticationError: () => StripeAuthenticationError,
+  StripeCardError: () => StripeCardError,
+  StripeConnectionError: () => StripeConnectionError,
+  StripeError: () => StripeError,
+  StripeIdempotencyError: () => StripeIdempotencyError,
+  StripeInvalidGrantError: () => StripeInvalidGrantError,
+  StripeInvalidRequestError: () => StripeInvalidRequestError,
+  StripePermissionError: () => StripePermissionError,
+  StripeRateLimitError: () => StripeRateLimitError,
+  StripeSignatureVerificationError: () => StripeSignatureVerificationError,
+  StripeUnknownError: () => StripeUnknownError,
+  generate: () => generate
+});
+var generate, StripeError, StripeCardError, StripeInvalidRequestError, StripeAPIError, StripeAuthenticationError, StripePermissionError, StripeRateLimitError, StripeConnectionError, StripeSignatureVerificationError, StripeIdempotencyError, StripeInvalidGrantError, StripeUnknownError;
+var init_Error = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/Error.js"() {
+    generate = (rawStripeError) => {
+      switch (rawStripeError.type) {
+        case "card_error":
+          return new StripeCardError(rawStripeError);
+        case "invalid_request_error":
+          return new StripeInvalidRequestError(rawStripeError);
+        case "api_error":
+          return new StripeAPIError(rawStripeError);
+        case "authentication_error":
+          return new StripeAuthenticationError(rawStripeError);
+        case "rate_limit_error":
+          return new StripeRateLimitError(rawStripeError);
+        case "idempotency_error":
+          return new StripeIdempotencyError(rawStripeError);
+        case "invalid_grant":
+          return new StripeInvalidGrantError(rawStripeError);
+        default:
+          return new StripeUnknownError(rawStripeError);
+      }
+    };
+    StripeError = class extends Error {
+      constructor(raw = {}, type = null) {
+        super(raw.message);
+        this.type = type || this.constructor.name;
+        this.raw = raw;
+        this.rawType = raw.type;
+        this.code = raw.code;
+        this.doc_url = raw.doc_url;
+        this.param = raw.param;
+        this.detail = raw.detail;
+        this.headers = raw.headers;
+        this.requestId = raw.requestId;
+        this.statusCode = raw.statusCode;
+        this.message = raw.message;
+        this.charge = raw.charge;
+        this.decline_code = raw.decline_code;
+        this.payment_intent = raw.payment_intent;
+        this.payment_method = raw.payment_method;
+        this.payment_method_type = raw.payment_method_type;
+        this.setup_intent = raw.setup_intent;
+        this.source = raw.source;
+      }
+    };
+    StripeError.generate = generate;
+    StripeCardError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripeCardError");
+      }
+    };
+    StripeInvalidRequestError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripeInvalidRequestError");
+      }
+    };
+    StripeAPIError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripeAPIError");
+      }
+    };
+    StripeAuthenticationError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripeAuthenticationError");
+      }
+    };
+    StripePermissionError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripePermissionError");
+      }
+    };
+    StripeRateLimitError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripeRateLimitError");
+      }
+    };
+    StripeConnectionError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripeConnectionError");
+      }
+    };
+    StripeSignatureVerificationError = class extends StripeError {
+      constructor(header, payload, raw = {}) {
+        super(raw, "StripeSignatureVerificationError");
+        this.header = header;
+        this.payload = payload;
+      }
+    };
+    StripeIdempotencyError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripeIdempotencyError");
+      }
+    };
+    StripeInvalidGrantError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripeInvalidGrantError");
+      }
+    };
+    StripeUnknownError = class extends StripeError {
+      constructor(raw = {}) {
+        super(raw, "StripeUnknownError");
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/utils.js
+function isOptionsHash(o) {
+  return o && typeof o === "object" && OPTIONS_KEYS.some((prop) => Object.prototype.hasOwnProperty.call(o, prop));
+}
+function stringifyRequestData(data) {
+  return qs.stringify(data, {
+    serializeDate: (d) => Math.floor(d.getTime() / 1e3).toString()
+  }).replace(/%5B/g, "[").replace(/%5D/g, "]");
+}
+function extractUrlParams(path2) {
+  const params = path2.match(/\{\w+\}/g);
+  if (!params) {
+    return [];
+  }
+  return params.map((param) => param.replace(/[{}]/g, ""));
+}
+function getDataFromArgs(args) {
+  if (!Array.isArray(args) || !args[0] || typeof args[0] !== "object") {
+    return {};
+  }
+  if (!isOptionsHash(args[0])) {
+    return args.shift();
+  }
+  const argKeys = Object.keys(args[0]);
+  const optionKeysInArgs = argKeys.filter((key) => OPTIONS_KEYS.includes(key));
+  if (optionKeysInArgs.length > 0 && optionKeysInArgs.length !== argKeys.length) {
+    emitWarning(`Options found in arguments (${optionKeysInArgs.join(", ")}). Did you mean to pass an options object? See https://github.com/stripe/stripe-node/wiki/Passing-Options.`);
+  }
+  return {};
+}
+function getOptionsFromArgs(args) {
+  const opts = {
+    auth: null,
+    host: null,
+    headers: {},
+    settings: {}
+  };
+  if (args.length > 0) {
+    const arg = args[args.length - 1];
+    if (typeof arg === "string") {
+      opts.auth = args.pop();
+    } else if (isOptionsHash(arg)) {
+      const params = Object.assign({}, args.pop());
+      const extraKeys = Object.keys(params).filter((key) => !OPTIONS_KEYS.includes(key));
+      if (extraKeys.length) {
+        emitWarning(`Invalid options found (${extraKeys.join(", ")}); ignoring.`);
+      }
+      if (params.apiKey) {
+        opts.auth = params.apiKey;
+      }
+      if (params.idempotencyKey) {
+        opts.headers["Idempotency-Key"] = params.idempotencyKey;
+      }
+      if (params.stripeAccount) {
+        opts.headers["Stripe-Account"] = params.stripeAccount;
+      }
+      if (params.apiVersion) {
+        opts.headers["Stripe-Version"] = params.apiVersion;
+      }
+      if (Number.isInteger(params.maxNetworkRetries)) {
+        opts.settings.maxNetworkRetries = params.maxNetworkRetries;
+      }
+      if (Number.isInteger(params.timeout)) {
+        opts.settings.timeout = params.timeout;
+      }
+      if (params.host) {
+        opts.host = params.host;
+      }
+    }
+  }
+  return opts;
+}
+function protoExtend(sub) {
+  const Super = this;
+  const Constructor = Object.prototype.hasOwnProperty.call(sub, "constructor") ? sub.constructor : function(...args) {
+    Super.apply(this, args);
+  };
+  Object.assign(Constructor, Super);
+  Constructor.prototype = Object.create(Super.prototype);
+  Object.assign(Constructor.prototype, sub);
+  return Constructor;
+}
+function removeNullish(obj) {
+  if (typeof obj !== "object") {
+    throw new Error("Argument must be an object");
+  }
+  return Object.keys(obj).reduce((result, key) => {
+    if (obj[key] != null) {
+      result[key] = obj[key];
+    }
+    return result;
+  }, {});
+}
+function normalizeHeaders(obj) {
+  if (!(obj && typeof obj === "object")) {
+    return obj;
+  }
+  return Object.keys(obj).reduce((result, header) => {
+    result[normalizeHeader(header)] = obj[header];
+    return result;
+  }, {});
+}
+function normalizeHeader(header) {
+  return header.split("-").map((text2) => text2.charAt(0).toUpperCase() + text2.substr(1).toLowerCase()).join("-");
+}
+function callbackifyPromiseWithTimeout(promise, callback) {
+  if (callback) {
+    return promise.then((res) => {
+      setTimeout(() => {
+        callback(null, res);
+      }, 0);
+    }, (err) => {
+      setTimeout(() => {
+        callback(err, null);
+      }, 0);
+    });
+  }
+  return promise;
+}
+function pascalToCamelCase(name) {
+  if (name === "OAuth") {
+    return "oauth";
+  } else {
+    return name[0].toLowerCase() + name.substring(1);
+  }
+}
+function emitWarning(warning) {
+  if (typeof process.emitWarning !== "function") {
+    return console.warn(`Stripe: ${warning}`);
+  }
+  return process.emitWarning(warning, "Stripe");
+}
+function isObject(obj) {
+  const type = typeof obj;
+  return (type === "function" || type === "object") && !!obj;
+}
+function flattenAndStringify(data) {
+  const result = {};
+  const step = (obj, prevKey) => {
+    Object.entries(obj).forEach(([key, value]) => {
+      const newKey = prevKey ? `${prevKey}[${key}]` : key;
+      if (isObject(value)) {
+        if (!(value instanceof Uint8Array) && !Object.prototype.hasOwnProperty.call(value, "data")) {
+          return step(value, newKey);
+        } else {
+          result[newKey] = value;
+        }
+      } else {
+        result[newKey] = String(value);
+      }
+    });
+  };
+  step(data, null);
+  return result;
+}
+function validateInteger(name, n, defaultVal) {
+  if (!Number.isInteger(n)) {
+    if (defaultVal !== void 0) {
+      return defaultVal;
+    } else {
+      throw new Error(`${name} must be an integer`);
+    }
+  }
+  return n;
+}
+function determineProcessUserAgentProperties() {
+  return typeof process === "undefined" ? {} : {
+    lang_version: process.version,
+    platform: process.platform
+  };
+}
+function concat(arrays) {
+  const totalLength = arrays.reduce((len, array) => len + array.length, 0);
+  const merged = new Uint8Array(totalLength);
+  let offset = 0;
+  arrays.forEach((array) => {
+    merged.set(array, offset);
+    offset += array.length;
+  });
+  return merged;
+}
+var qs, OPTIONS_KEYS, makeURLInterpolator;
+var init_utils = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/utils.js"() {
+    qs = __toESM(require_lib2(), 1);
+    OPTIONS_KEYS = [
+      "apiKey",
+      "idempotencyKey",
+      "stripeAccount",
+      "apiVersion",
+      "maxNetworkRetries",
+      "timeout",
+      "host"
+    ];
+    makeURLInterpolator = /* @__PURE__ */ (() => {
+      const rc = {
+        "\n": "\\n",
+        '"': '\\"',
+        "\u2028": "\\u2028",
+        "\u2029": "\\u2029"
+      };
+      return (str) => {
+        const cleanString = str.replace(/["\n\r\u2028\u2029]/g, ($0) => rc[$0]);
+        return (outputs) => {
+          return cleanString.replace(/\{([\s\S]+?)\}/g, ($0, $1) => (
+            // @ts-ignore
+            encodeURIComponent(outputs[$1] || "")
+          ));
+        };
+      };
+    })();
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/platform/NodePlatformFunctions.js
+import * as crypto3 from "crypto";
+import { EventEmitter } from "events";
+import { exec } from "child_process";
+var StreamProcessingError, NodePlatformFunctions;
+var init_NodePlatformFunctions = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/platform/NodePlatformFunctions.js"() {
+    init_NodeCryptoProvider();
+    init_NodeHttpClient();
+    init_PlatformFunctions();
+    init_Error();
+    init_utils();
+    StreamProcessingError = class extends StripeError {
+    };
+    NodePlatformFunctions = class extends PlatformFunctions {
+      constructor() {
+        super();
+        this._exec = exec;
+        this._UNAME_CACHE = null;
+      }
+      /** @override */
+      uuid4() {
+        if (crypto3.randomUUID) {
+          return crypto3.randomUUID();
+        }
+        return super.uuid4();
+      }
+      /**
+       * @override
+       * Node's built in `exec` function sometimes throws outright,
+       * and sometimes has a callback with an error,
+       * depending on the type of error.
+       *
+       * This unifies that interface by resolving with a null uname
+       * if an error is encountered.
+       */
+      getUname() {
+        if (!this._UNAME_CACHE) {
+          this._UNAME_CACHE = new Promise((resolve, reject) => {
+            try {
+              this._exec("uname -a", (err, uname) => {
+                if (err) {
+                  return resolve(null);
+                }
+                resolve(uname);
+              });
+            } catch (e) {
+              resolve(null);
+            }
+          });
+        }
+        return this._UNAME_CACHE;
+      }
+      /**
+       * @override
+       * Secure compare, from https://github.com/freewil/scmp
+       */
+      secureCompare(a, b) {
+        if (!a || !b) {
+          throw new Error("secureCompare must receive two arguments");
+        }
+        if (a.length !== b.length) {
+          return false;
+        }
+        if (crypto3.timingSafeEqual) {
+          const textEncoder = new TextEncoder();
+          const aEncoded = textEncoder.encode(a);
+          const bEncoded = textEncoder.encode(b);
+          return crypto3.timingSafeEqual(aEncoded, bEncoded);
+        }
+        return super.secureCompare(a, b);
+      }
+      createEmitter() {
+        return new EventEmitter();
+      }
+      /** @override */
+      tryBufferData(data) {
+        if (!(data.file.data instanceof EventEmitter)) {
+          return Promise.resolve(data);
+        }
+        const bufferArray = [];
+        return new Promise((resolve, reject) => {
+          data.file.data.on("data", (line2) => {
+            bufferArray.push(line2);
+          }).once("end", () => {
+            const bufferData = Object.assign({}, data);
+            bufferData.file.data = concat(bufferArray);
+            resolve(bufferData);
+          }).on("error", (err) => {
+            reject(new StreamProcessingError({
+              message: "An error occurred while attempting to process the file for upload.",
+              detail: err
+            }));
+          });
+        });
+      }
+      /** @override */
+      createNodeHttpClient(agent) {
+        return new NodeHttpClient(agent);
+      }
+      /** @override */
+      createDefaultHttpClient() {
+        return new NodeHttpClient();
+      }
+      /** @override */
+      createNodeCryptoProvider() {
+        return new NodeCryptoProvider();
+      }
+      /** @override */
+      createDefaultCryptoProvider() {
+        return this.createNodeCryptoProvider();
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/RequestSender.js
+var MAX_RETRY_AFTER_WAIT, RequestSender;
+var init_RequestSender = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/RequestSender.js"() {
+    init_Error();
+    init_utils();
+    init_HttpClient();
+    MAX_RETRY_AFTER_WAIT = 60;
+    RequestSender = class _RequestSender {
+      constructor(stripe2, maxBufferedRequestMetric) {
+        this._stripe = stripe2;
+        this._maxBufferedRequestMetric = maxBufferedRequestMetric;
+      }
+      _addHeadersDirectlyToObject(obj, headers) {
+        obj.requestId = headers["request-id"];
+        obj.stripeAccount = obj.stripeAccount || headers["stripe-account"];
+        obj.apiVersion = obj.apiVersion || headers["stripe-version"];
+        obj.idempotencyKey = obj.idempotencyKey || headers["idempotency-key"];
+      }
+      _makeResponseEvent(requestEvent, statusCode, headers) {
+        const requestEndTime = Date.now();
+        const requestDurationMs = requestEndTime - requestEvent.request_start_time;
+        return removeNullish({
+          api_version: headers["stripe-version"],
+          account: headers["stripe-account"],
+          idempotency_key: headers["idempotency-key"],
+          method: requestEvent.method,
+          path: requestEvent.path,
+          status: statusCode,
+          request_id: this._getRequestId(headers),
+          elapsed: requestDurationMs,
+          request_start_time: requestEvent.request_start_time,
+          request_end_time: requestEndTime
+        });
+      }
+      _getRequestId(headers) {
+        return headers["request-id"];
+      }
+      /**
+       * Used by methods with spec.streaming === true. For these methods, we do not
+       * buffer successful responses into memory or do parse them into stripe
+       * objects, we delegate that all of that to the user and pass back the raw
+       * http.Response object to the callback.
+       *
+       * (Unsuccessful responses shouldn't make it here, they should
+       * still be buffered/parsed and handled by _jsonResponseHandler -- see
+       * makeRequest)
+       */
+      _streamingResponseHandler(requestEvent, usage, callback) {
+        return (res) => {
+          const headers = res.getHeaders();
+          const streamCompleteCallback = () => {
+            const responseEvent = this._makeResponseEvent(requestEvent, res.getStatusCode(), headers);
+            this._stripe._emitter.emit("response", responseEvent);
+            this._recordRequestMetrics(this._getRequestId(headers), responseEvent.elapsed, usage);
+          };
+          const stream = res.toStream(streamCompleteCallback);
+          this._addHeadersDirectlyToObject(stream, headers);
+          return callback(null, stream);
+        };
+      }
+      /**
+       * Default handler for Stripe responses. Buffers the response into memory,
+       * parses the JSON and returns it (i.e. passes it to the callback) if there
+       * is no "error" field. Otherwise constructs/passes an appropriate Error.
+       */
+      _jsonResponseHandler(requestEvent, usage, callback) {
+        return (res) => {
+          const headers = res.getHeaders();
+          const requestId = this._getRequestId(headers);
+          const statusCode = res.getStatusCode();
+          const responseEvent = this._makeResponseEvent(requestEvent, statusCode, headers);
+          this._stripe._emitter.emit("response", responseEvent);
+          res.toJSON().then((jsonResponse) => {
+            if (jsonResponse.error) {
+              let err;
+              if (typeof jsonResponse.error === "string") {
+                jsonResponse.error = {
+                  type: jsonResponse.error,
+                  message: jsonResponse.error_description
+                };
+              }
+              jsonResponse.error.headers = headers;
+              jsonResponse.error.statusCode = statusCode;
+              jsonResponse.error.requestId = requestId;
+              if (statusCode === 401) {
+                err = new StripeAuthenticationError(jsonResponse.error);
+              } else if (statusCode === 403) {
+                err = new StripePermissionError(jsonResponse.error);
+              } else if (statusCode === 429) {
+                err = new StripeRateLimitError(jsonResponse.error);
+              } else {
+                err = StripeError.generate(jsonResponse.error);
+              }
+              throw err;
+            }
+            return jsonResponse;
+          }, (e) => {
+            throw new StripeAPIError({
+              message: "Invalid JSON received from the Stripe API",
+              exception: e,
+              requestId: headers["request-id"]
+            });
+          }).then((jsonResponse) => {
+            this._recordRequestMetrics(requestId, responseEvent.elapsed, usage);
+            const rawResponse = res.getRawResponse();
+            this._addHeadersDirectlyToObject(rawResponse, headers);
+            Object.defineProperty(jsonResponse, "lastResponse", {
+              enumerable: false,
+              writable: false,
+              value: rawResponse
+            });
+            callback(null, jsonResponse);
+          }, (e) => callback(e, null));
+        };
+      }
+      static _generateConnectionErrorMessage(requestRetries) {
+        return `An error occurred with our connection to Stripe.${requestRetries > 0 ? ` Request was retried ${requestRetries} times.` : ""}`;
+      }
+      // For more on when and how to retry API requests, see https://stripe.com/docs/error-handling#safely-retrying-requests-with-idempotency
+      static _shouldRetry(res, numRetries, maxRetries, error) {
+        if (error && numRetries === 0 && HttpClient.CONNECTION_CLOSED_ERROR_CODES.includes(error.code)) {
+          return true;
+        }
+        if (numRetries >= maxRetries) {
+          return false;
+        }
+        if (!res) {
+          return true;
+        }
+        if (res.getHeaders()["stripe-should-retry"] === "false") {
+          return false;
+        }
+        if (res.getHeaders()["stripe-should-retry"] === "true") {
+          return true;
+        }
+        if (res.getStatusCode() === 409) {
+          return true;
+        }
+        if (res.getStatusCode() >= 500) {
+          return true;
+        }
+        return false;
+      }
+      _getSleepTimeInMS(numRetries, retryAfter = null) {
+        const initialNetworkRetryDelay = this._stripe.getInitialNetworkRetryDelay();
+        const maxNetworkRetryDelay = this._stripe.getMaxNetworkRetryDelay();
+        let sleepSeconds = Math.min(initialNetworkRetryDelay * Math.pow(numRetries - 1, 2), maxNetworkRetryDelay);
+        sleepSeconds *= 0.5 * (1 + Math.random());
+        sleepSeconds = Math.max(initialNetworkRetryDelay, sleepSeconds);
+        if (Number.isInteger(retryAfter) && retryAfter <= MAX_RETRY_AFTER_WAIT) {
+          sleepSeconds = Math.max(sleepSeconds, retryAfter);
+        }
+        return sleepSeconds * 1e3;
+      }
+      // Max retries can be set on a per request basis. Favor those over the global setting
+      _getMaxNetworkRetries(settings = {}) {
+        return settings.maxNetworkRetries !== void 0 && Number.isInteger(settings.maxNetworkRetries) ? settings.maxNetworkRetries : this._stripe.getMaxNetworkRetries();
+      }
+      _defaultIdempotencyKey(method, settings) {
+        const maxRetries = this._getMaxNetworkRetries(settings);
+        if (method === "POST" && maxRetries > 0) {
+          return `stripe-node-retry-${this._stripe._platformFunctions.uuid4()}`;
+        }
+        return null;
+      }
+      _makeHeaders(auth, contentLength, apiVersion, clientUserAgent, method, userSuppliedHeaders, userSuppliedSettings) {
+        const defaultHeaders = {
+          // Use specified auth token or use default from this stripe instance:
+          Authorization: auth ? `Bearer ${auth}` : this._stripe.getApiField("auth"),
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": this._getUserAgentString(),
+          "X-Stripe-Client-User-Agent": clientUserAgent,
+          "X-Stripe-Client-Telemetry": this._getTelemetryHeader(),
+          "Stripe-Version": apiVersion,
+          "Stripe-Account": this._stripe.getApiField("stripeAccount"),
+          "Idempotency-Key": this._defaultIdempotencyKey(method, userSuppliedSettings)
+        };
+        const methodHasPayload = method == "POST" || method == "PUT" || method == "PATCH";
+        if (methodHasPayload || contentLength) {
+          if (!methodHasPayload) {
+            emitWarning(`${method} method had non-zero contentLength but no payload is expected for this verb`);
+          }
+          defaultHeaders["Content-Length"] = contentLength;
+        }
+        return Object.assign(
+          removeNullish(defaultHeaders),
+          // If the user supplied, say 'idempotency-key', override instead of appending by ensuring caps are the same.
+          normalizeHeaders(userSuppliedHeaders)
+        );
+      }
+      _getUserAgentString() {
+        const packageVersion = this._stripe.getConstant("PACKAGE_VERSION");
+        const appInfo = this._stripe._appInfo ? this._stripe.getAppInfoAsString() : "";
+        return `Stripe/v1 NodeBindings/${packageVersion} ${appInfo}`.trim();
+      }
+      _getTelemetryHeader() {
+        if (this._stripe.getTelemetryEnabled() && this._stripe._prevRequestMetrics.length > 0) {
+          const metrics = this._stripe._prevRequestMetrics.shift();
+          return JSON.stringify({
+            last_request_metrics: metrics
+          });
+        }
+      }
+      _recordRequestMetrics(requestId, requestDurationMs, usage) {
+        if (this._stripe.getTelemetryEnabled() && requestId) {
+          if (this._stripe._prevRequestMetrics.length > this._maxBufferedRequestMetric) {
+            emitWarning("Request metrics buffer is full, dropping telemetry message.");
+          } else {
+            const m = {
+              request_id: requestId,
+              request_duration_ms: requestDurationMs
+            };
+            if (usage && usage.length > 0) {
+              m.usage = usage;
+            }
+            this._stripe._prevRequestMetrics.push(m);
+          }
+        }
+      }
+      _request(method, host, path2, data, auth, options = {}, usage = [], callback, requestDataProcessor = null) {
+        let requestData;
+        const retryRequest = (requestFn, apiVersion, headers, requestRetries, retryAfter) => {
+          return setTimeout(requestFn, this._getSleepTimeInMS(requestRetries, retryAfter), apiVersion, headers, requestRetries + 1);
+        };
+        const makeRequest = (apiVersion, headers, numRetries) => {
+          const timeout = options.settings && options.settings.timeout && Number.isInteger(options.settings.timeout) && options.settings.timeout >= 0 ? options.settings.timeout : this._stripe.getApiField("timeout");
+          const req = this._stripe.getApiField("httpClient").makeRequest(host || this._stripe.getApiField("host"), this._stripe.getApiField("port"), path2, method, headers, requestData, this._stripe.getApiField("protocol"), timeout);
+          const requestStartTime = Date.now();
+          const requestEvent = removeNullish({
+            api_version: apiVersion,
+            account: headers["Stripe-Account"],
+            idempotency_key: headers["Idempotency-Key"],
+            method,
+            path: path2,
+            request_start_time: requestStartTime
+          });
+          const requestRetries = numRetries || 0;
+          const maxRetries = this._getMaxNetworkRetries(options.settings || {});
+          this._stripe._emitter.emit("request", requestEvent);
+          req.then((res) => {
+            if (_RequestSender._shouldRetry(res, requestRetries, maxRetries)) {
+              return retryRequest(
+                makeRequest,
+                apiVersion,
+                headers,
+                requestRetries,
+                // @ts-ignore
+                res.getHeaders()["retry-after"]
+              );
+            } else if (options.streaming && res.getStatusCode() < 400) {
+              return this._streamingResponseHandler(requestEvent, usage, callback)(res);
+            } else {
+              return this._jsonResponseHandler(requestEvent, usage, callback)(res);
+            }
+          }).catch((error) => {
+            if (_RequestSender._shouldRetry(null, requestRetries, maxRetries, error)) {
+              return retryRequest(makeRequest, apiVersion, headers, requestRetries, null);
+            } else {
+              const isTimeoutError = error.code && error.code === HttpClient.TIMEOUT_ERROR_CODE;
+              return callback(new StripeConnectionError({
+                message: isTimeoutError ? `Request aborted due to timeout being reached (${timeout}ms)` : _RequestSender._generateConnectionErrorMessage(requestRetries),
+                // @ts-ignore
+                detail: error
+              }));
+            }
+          });
+        };
+        const prepareAndMakeRequest = (error, data2) => {
+          if (error) {
+            return callback(error);
+          }
+          requestData = data2;
+          this._stripe.getClientUserAgent((clientUserAgent) => {
+            var _a, _b;
+            const apiVersion = this._stripe.getApiField("version");
+            const headers = this._makeHeaders(auth, requestData.length, apiVersion, clientUserAgent, method, (_a = options.headers) !== null && _a !== void 0 ? _a : null, (_b = options.settings) !== null && _b !== void 0 ? _b : {});
+            makeRequest(apiVersion, headers, 0);
+          });
+        };
+        if (requestDataProcessor) {
+          requestDataProcessor(method, data, options.headers, prepareAndMakeRequest);
+        } else {
+          prepareAndMakeRequest(null, stringifyRequestData(data || {}));
+        }
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/autoPagination.js
+function getAsyncIteratorSymbol() {
+  if (typeof Symbol !== "undefined" && Symbol.asyncIterator) {
+    return Symbol.asyncIterator;
+  }
+  return "@@asyncIterator";
+}
+function getDoneCallback(args) {
+  if (args.length < 2) {
+    return null;
+  }
+  const onDone = args[1];
+  if (typeof onDone !== "function") {
+    throw Error(`The second argument to autoPagingEach, if present, must be a callback function; received ${typeof onDone}`);
+  }
+  return onDone;
+}
+function getItemCallback(args) {
+  if (args.length === 0) {
+    return void 0;
+  }
+  const onItem = args[0];
+  if (typeof onItem !== "function") {
+    throw Error(`The first argument to autoPagingEach, if present, must be a callback function; received ${typeof onItem}`);
+  }
+  if (onItem.length === 2) {
+    return onItem;
+  }
+  if (onItem.length > 2) {
+    throw Error(`The \`onItem\` callback function passed to autoPagingEach must accept at most two arguments; got ${onItem}`);
+  }
+  return function _onItem(item, next) {
+    const shouldContinue = onItem(item);
+    next(shouldContinue);
+  };
+}
+function getLastId(listResult, reverseIteration) {
+  const lastIdx = reverseIteration ? 0 : listResult.data.length - 1;
+  const lastItem = listResult.data[lastIdx];
+  const lastId = lastItem && lastItem.id;
+  if (!lastId) {
+    throw Error("Unexpected: No `id` found on the last item while auto-paging a list.");
+  }
+  return lastId;
+}
+function makeAutoPagingEach(asyncIteratorNext) {
+  return function autoPagingEach() {
+    const args = [].slice.call(arguments);
+    const onItem = getItemCallback(args);
+    const onDone = getDoneCallback(args);
+    if (args.length > 2) {
+      throw Error(`autoPagingEach takes up to two arguments; received ${args}`);
+    }
+    const autoPagePromise = wrapAsyncIteratorWithCallback(
+      asyncIteratorNext,
+      // @ts-ignore we might need a null check
+      onItem
+    );
+    return callbackifyPromiseWithTimeout(autoPagePromise, onDone);
+  };
+}
+function makeAutoPagingToArray(autoPagingEach) {
+  return function autoPagingToArray(opts, onDone) {
+    const limit = opts && opts.limit;
+    if (!limit) {
+      throw Error("You must pass a `limit` option to autoPagingToArray, e.g., `autoPagingToArray({limit: 1000});`.");
+    }
+    if (limit > 1e4) {
+      throw Error("You cannot specify a limit of more than 10,000 items to fetch in `autoPagingToArray`; use `autoPagingEach` to iterate through longer lists.");
+    }
+    const promise = new Promise((resolve, reject) => {
+      const items = [];
+      autoPagingEach((item) => {
+        items.push(item);
+        if (items.length >= limit) {
+          return false;
+        }
+      }).then(() => {
+        resolve(items);
+      }).catch(reject);
+    });
+    return callbackifyPromiseWithTimeout(promise, onDone);
+  };
+}
+function wrapAsyncIteratorWithCallback(asyncIteratorNext, onItem) {
+  return new Promise((resolve, reject) => {
+    function handleIteration(iterResult) {
+      if (iterResult.done) {
+        resolve();
+        return;
+      }
+      const item = iterResult.value;
+      return new Promise((next) => {
+        onItem(item, next);
+      }).then((shouldContinue) => {
+        if (shouldContinue === false) {
+          return handleIteration({ done: true, value: void 0 });
+        } else {
+          return asyncIteratorNext().then(handleIteration);
+        }
+      });
+    }
+    asyncIteratorNext().then(handleIteration).catch(reject);
+  });
+}
+function isReverseIteration(requestArgs) {
+  const args = [].slice.call(requestArgs);
+  const dataFromArgs = getDataFromArgs(args);
+  return !!dataFromArgs.ending_before;
+}
+var StripeIterator, ListIterator, SearchIterator, makeAutoPaginationMethods, makeAutoPaginationMethodsFromIterator;
+var init_autoPagination = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/autoPagination.js"() {
+    init_utils();
+    StripeIterator = class {
+      constructor(firstPagePromise, requestArgs, spec, stripeResource) {
+        this.index = 0;
+        this.pagePromise = firstPagePromise;
+        this.promiseCache = { currentPromise: null };
+        this.requestArgs = requestArgs;
+        this.spec = spec;
+        this.stripeResource = stripeResource;
+      }
+      async iterate(pageResult) {
+        if (!(pageResult && pageResult.data && typeof pageResult.data.length === "number")) {
+          throw Error("Unexpected: Stripe API response does not have a well-formed `data` array.");
+        }
+        const reverseIteration = isReverseIteration(this.requestArgs);
+        if (this.index < pageResult.data.length) {
+          const idx = reverseIteration ? pageResult.data.length - 1 - this.index : this.index;
+          const value = pageResult.data[idx];
+          this.index += 1;
+          return { value, done: false };
+        } else if (pageResult.has_more) {
+          this.index = 0;
+          this.pagePromise = this.getNextPage(pageResult);
+          const nextPageResult = await this.pagePromise;
+          return this.iterate(nextPageResult);
+        }
+        return { done: true, value: void 0 };
+      }
+      /** @abstract */
+      getNextPage(_pageResult) {
+        throw new Error("Unimplemented");
+      }
+      async _next() {
+        return this.iterate(await this.pagePromise);
+      }
+      next() {
+        if (this.promiseCache.currentPromise) {
+          return this.promiseCache.currentPromise;
+        }
+        const nextPromise = (async () => {
+          const ret2 = await this._next();
+          this.promiseCache.currentPromise = null;
+          return ret2;
+        })();
+        this.promiseCache.currentPromise = nextPromise;
+        return nextPromise;
+      }
+    };
+    ListIterator = class extends StripeIterator {
+      getNextPage(pageResult) {
+        const reverseIteration = isReverseIteration(this.requestArgs);
+        const lastId = getLastId(pageResult, reverseIteration);
+        return this.stripeResource._makeRequest(this.requestArgs, this.spec, {
+          [reverseIteration ? "ending_before" : "starting_after"]: lastId
+        });
+      }
+    };
+    SearchIterator = class extends StripeIterator {
+      getNextPage(pageResult) {
+        if (!pageResult.next_page) {
+          throw Error("Unexpected: Stripe API response does not have a well-formed `next_page` field, but `has_more` was true.");
+        }
+        return this.stripeResource._makeRequest(this.requestArgs, this.spec, {
+          page: pageResult.next_page
+        });
+      }
+    };
+    makeAutoPaginationMethods = (stripeResource, requestArgs, spec, firstPagePromise) => {
+      if (spec.methodType === "search") {
+        return makeAutoPaginationMethodsFromIterator(new SearchIterator(firstPagePromise, requestArgs, spec, stripeResource));
+      }
+      if (spec.methodType === "list") {
+        return makeAutoPaginationMethodsFromIterator(new ListIterator(firstPagePromise, requestArgs, spec, stripeResource));
+      }
+      return null;
+    };
+    makeAutoPaginationMethodsFromIterator = (iterator) => {
+      const autoPagingEach = makeAutoPagingEach((...args) => iterator.next(...args));
+      const autoPagingToArray = makeAutoPagingToArray(autoPagingEach);
+      const autoPaginationMethods = {
+        autoPagingEach,
+        autoPagingToArray,
+        // Async iterator functions:
+        next: () => iterator.next(),
+        return: () => {
+          return {};
+        },
+        [getAsyncIteratorSymbol()]: () => {
+          return autoPaginationMethods;
+        }
+      };
+      return autoPaginationMethods;
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/StripeMethod.js
+function stripeMethod(spec) {
+  if (spec.path !== void 0 && spec.fullPath !== void 0) {
+    throw new Error(`Method spec specified both a 'path' (${spec.path}) and a 'fullPath' (${spec.fullPath}).`);
+  }
+  return function(...args) {
+    const callback = typeof args[args.length - 1] == "function" && args.pop();
+    spec.urlParams = extractUrlParams(spec.fullPath || this.createResourcePathWithSymbols(spec.path || ""));
+    const requestPromise = callbackifyPromiseWithTimeout(this._makeRequest(args, spec, {}), callback);
+    Object.assign(requestPromise, makeAutoPaginationMethods(this, args, spec, requestPromise));
+    return requestPromise;
+  };
+}
+var init_StripeMethod = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/StripeMethod.js"() {
+    init_utils();
+    init_autoPagination();
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/StripeResource.js
+function StripeResource(stripe2, deprecatedUrlData) {
+  this._stripe = stripe2;
+  if (deprecatedUrlData) {
+    throw new Error("Support for curried url params was dropped in stripe-node v7.0.0. Instead, pass two ids.");
+  }
+  this.basePath = makeURLInterpolator(
+    // @ts-ignore changing type of basePath
+    this.basePath || stripe2.getApiField("basePath")
+  );
+  this.resourcePath = this.path;
+  this.path = makeURLInterpolator(this.path);
+  this.initialize(...arguments);
+}
+var init_StripeResource = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/StripeResource.js"() {
+    init_utils();
+    init_StripeMethod();
+    StripeResource.extend = protoExtend;
+    StripeResource.method = stripeMethod;
+    StripeResource.MAX_BUFFERED_REQUEST_METRICS = 100;
+    StripeResource.prototype = {
+      _stripe: null,
+      // @ts-ignore the type of path changes in ctor
+      path: "",
+      resourcePath: "",
+      // Methods that don't use the API's default '/v1' path can override it with this setting.
+      basePath: null,
+      initialize() {
+      },
+      // Function to override the default data processor. This allows full control
+      // over how a StripeResource's request data will get converted into an HTTP
+      // body. This is useful for non-standard HTTP requests. The function should
+      // take method name, data, and headers as arguments.
+      requestDataProcessor: null,
+      // Function to add a validation checks before sending the request, errors should
+      // be thrown, and they will be passed to the callback/promise.
+      validateRequest: null,
+      createFullPath(commandPath, urlData) {
+        const urlParts = [this.basePath(urlData), this.path(urlData)];
+        if (typeof commandPath === "function") {
+          const computedCommandPath = commandPath(urlData);
+          if (computedCommandPath) {
+            urlParts.push(computedCommandPath);
+          }
+        } else {
+          urlParts.push(commandPath);
+        }
+        return this._joinUrlParts(urlParts);
+      },
+      // Creates a relative resource path with symbols left in (unlike
+      // createFullPath which takes some data to replace them with). For example it
+      // might produce: /invoices/{id}
+      createResourcePathWithSymbols(pathWithSymbols) {
+        if (pathWithSymbols) {
+          return `/${this._joinUrlParts([this.resourcePath, pathWithSymbols])}`;
+        } else {
+          return `/${this.resourcePath}`;
+        }
+      },
+      _joinUrlParts(parts) {
+        return parts.join("/").replace(/\/{2,}/g, "/");
+      },
+      _getRequestOpts(requestArgs, spec, overrideData) {
+        const requestMethod = (spec.method || "GET").toUpperCase();
+        const usage = spec.usage || [];
+        const urlParams = spec.urlParams || [];
+        const encode = spec.encode || ((data2) => data2);
+        const isUsingFullPath = !!spec.fullPath;
+        const commandPath = makeURLInterpolator(isUsingFullPath ? spec.fullPath : spec.path || "");
+        const path2 = isUsingFullPath ? spec.fullPath : this.createResourcePathWithSymbols(spec.path);
+        const args = [].slice.call(requestArgs);
+        const urlData = urlParams.reduce((urlData2, param) => {
+          const arg = args.shift();
+          if (typeof arg !== "string") {
+            throw new Error(`Stripe: Argument "${param}" must be a string, but got: ${arg} (on API request to \`${requestMethod} ${path2}\`)`);
+          }
+          urlData2[param] = arg;
+          return urlData2;
+        }, {});
+        const dataFromArgs = getDataFromArgs(args);
+        const data = encode(Object.assign({}, dataFromArgs, overrideData));
+        const options = getOptionsFromArgs(args);
+        const host = options.host || spec.host;
+        const streaming = !!spec.streaming;
+        if (args.filter((x) => x != null).length) {
+          throw new Error(`Stripe: Unknown arguments (${args}). Did you mean to pass an options object? See https://github.com/stripe/stripe-node/wiki/Passing-Options. (on API request to ${requestMethod} \`${path2}\`)`);
+        }
+        const requestPath = isUsingFullPath ? commandPath(urlData) : this.createFullPath(commandPath, urlData);
+        const headers = Object.assign(options.headers, spec.headers);
+        if (spec.validator) {
+          spec.validator(data, { headers });
+        }
+        const dataInQuery = spec.method === "GET" || spec.method === "DELETE";
+        const bodyData = dataInQuery ? null : data;
+        const queryData = dataInQuery ? data : {};
+        return {
+          requestMethod,
+          requestPath,
+          bodyData,
+          queryData,
+          auth: options.auth,
+          headers,
+          host: host !== null && host !== void 0 ? host : null,
+          streaming,
+          settings: options.settings,
+          usage
+        };
+      },
+      _makeRequest(requestArgs, spec, overrideData) {
+        return new Promise((resolve, reject) => {
+          var _a;
+          let opts;
+          try {
+            opts = this._getRequestOpts(requestArgs, spec, overrideData);
+          } catch (err) {
+            reject(err);
+            return;
+          }
+          function requestCallback(err, response) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(spec.transformResponseData ? spec.transformResponseData(response) : response);
+            }
+          }
+          const emptyQuery = Object.keys(opts.queryData).length === 0;
+          const path2 = [
+            opts.requestPath,
+            emptyQuery ? "" : "?",
+            stringifyRequestData(opts.queryData)
+          ].join("");
+          const { headers, settings } = opts;
+          this._stripe._requestSender._request(opts.requestMethod, opts.host, path2, opts.bodyData, opts.auth, { headers, settings, streaming: opts.streaming }, opts.usage, requestCallback, (_a = this.requestDataProcessor) === null || _a === void 0 ? void 0 : _a.bind(this));
+        });
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/Webhooks.js
+function createWebhooks(platformFunctions) {
+  const Webhook = {
+    DEFAULT_TOLERANCE: 300,
+    // @ts-ignore
+    signature: null,
+    constructEvent(payload, header, secret, tolerance, cryptoProvider, receivedAt) {
+      try {
+        this.signature.verifyHeader(payload, header, secret, tolerance || Webhook.DEFAULT_TOLERANCE, cryptoProvider, receivedAt);
+      } catch (e) {
+        if (e instanceof CryptoProviderOnlySupportsAsyncError) {
+          e.message += "\nUse `await constructEventAsync(...)` instead of `constructEvent(...)`";
+        }
+        throw e;
+      }
+      const jsonPayload = payload instanceof Uint8Array ? JSON.parse(new TextDecoder("utf8").decode(payload)) : JSON.parse(payload);
+      return jsonPayload;
+    },
+    async constructEventAsync(payload, header, secret, tolerance, cryptoProvider, receivedAt) {
+      await this.signature.verifyHeaderAsync(payload, header, secret, tolerance || Webhook.DEFAULT_TOLERANCE, cryptoProvider, receivedAt);
+      const jsonPayload = payload instanceof Uint8Array ? JSON.parse(new TextDecoder("utf8").decode(payload)) : JSON.parse(payload);
+      return jsonPayload;
+    },
+    /**
+     * Generates a header to be used for webhook mocking
+     *
+     * @typedef {object} opts
+     * @property {number} timestamp - Timestamp of the header. Defaults to Date.now()
+     * @property {string} payload - JSON stringified payload object, containing the 'id' and 'object' parameters
+     * @property {string} secret - Stripe webhook secret 'whsec_...'
+     * @property {string} scheme - Version of API to hit. Defaults to 'v1'.
+     * @property {string} signature - Computed webhook signature
+     * @property {CryptoProvider} cryptoProvider - Crypto provider to use for computing the signature if none was provided. Defaults to NodeCryptoProvider.
+     */
+    generateTestHeaderString: function(opts) {
+      const preparedOpts = prepareOptions(opts);
+      const signature2 = preparedOpts.signature || preparedOpts.cryptoProvider.computeHMACSignature(preparedOpts.payloadString, preparedOpts.secret);
+      return preparedOpts.generateHeaderString(signature2);
+    },
+    generateTestHeaderStringAsync: async function(opts) {
+      const preparedOpts = prepareOptions(opts);
+      const signature2 = preparedOpts.signature || await preparedOpts.cryptoProvider.computeHMACSignatureAsync(preparedOpts.payloadString, preparedOpts.secret);
+      return preparedOpts.generateHeaderString(signature2);
+    }
+  };
+  const signature = {
+    EXPECTED_SCHEME: "v1",
+    verifyHeader(encodedPayload, encodedHeader, secret, tolerance, cryptoProvider, receivedAt) {
+      const { decodedHeader: header, decodedPayload: payload, details, suspectPayloadType } = parseEventDetails(encodedPayload, encodedHeader, this.EXPECTED_SCHEME);
+      const secretContainsWhitespace = /\s/.test(secret);
+      cryptoProvider = cryptoProvider || getCryptoProvider();
+      const expectedSignature = cryptoProvider.computeHMACSignature(makeHMACContent(payload, details), secret);
+      validateComputedSignature(payload, header, details, expectedSignature, tolerance, suspectPayloadType, secretContainsWhitespace, receivedAt);
+      return true;
+    },
+    async verifyHeaderAsync(encodedPayload, encodedHeader, secret, tolerance, cryptoProvider, receivedAt) {
+      const { decodedHeader: header, decodedPayload: payload, details, suspectPayloadType } = parseEventDetails(encodedPayload, encodedHeader, this.EXPECTED_SCHEME);
+      const secretContainsWhitespace = /\s/.test(secret);
+      cryptoProvider = cryptoProvider || getCryptoProvider();
+      const expectedSignature = await cryptoProvider.computeHMACSignatureAsync(makeHMACContent(payload, details), secret);
+      return validateComputedSignature(payload, header, details, expectedSignature, tolerance, suspectPayloadType, secretContainsWhitespace, receivedAt);
+    }
+  };
+  function makeHMACContent(payload, details) {
+    return `${details.timestamp}.${payload}`;
+  }
+  function parseEventDetails(encodedPayload, encodedHeader, expectedScheme) {
+    if (!encodedPayload) {
+      throw new StripeSignatureVerificationError(encodedHeader, encodedPayload, {
+        message: "No webhook payload was provided."
+      });
+    }
+    const suspectPayloadType = typeof encodedPayload != "string" && !(encodedPayload instanceof Uint8Array);
+    const textDecoder2 = new TextDecoder("utf8");
+    const decodedPayload = encodedPayload instanceof Uint8Array ? textDecoder2.decode(encodedPayload) : encodedPayload;
+    if (Array.isArray(encodedHeader)) {
+      throw new Error("Unexpected: An array was passed as a header, which should not be possible for the stripe-signature header.");
+    }
+    if (encodedHeader == null || encodedHeader == "") {
+      throw new StripeSignatureVerificationError(encodedHeader, encodedPayload, {
+        message: "No stripe-signature header value was provided."
+      });
+    }
+    const decodedHeader = encodedHeader instanceof Uint8Array ? textDecoder2.decode(encodedHeader) : encodedHeader;
+    const details = parseHeader(decodedHeader, expectedScheme);
+    if (!details || details.timestamp === -1) {
+      throw new StripeSignatureVerificationError(decodedHeader, decodedPayload, {
+        message: "Unable to extract timestamp and signatures from header"
+      });
+    }
+    if (!details.signatures.length) {
+      throw new StripeSignatureVerificationError(decodedHeader, decodedPayload, {
+        message: "No signatures found with expected scheme"
+      });
+    }
+    return {
+      decodedPayload,
+      decodedHeader,
+      details,
+      suspectPayloadType
+    };
+  }
+  function validateComputedSignature(payload, header, details, expectedSignature, tolerance, suspectPayloadType, secretContainsWhitespace, receivedAt) {
+    const signatureFound = !!details.signatures.filter(platformFunctions.secureCompare.bind(platformFunctions, expectedSignature)).length;
+    const docsLocation = "\nLearn more about webhook signing and explore webhook integration examples for various frameworks at https://github.com/stripe/stripe-node#webhook-signing";
+    const whitespaceMessage = secretContainsWhitespace ? "\n\nNote: The provided signing secret contains whitespace. This often indicates an extra newline or space is in the value" : "";
+    if (!signatureFound) {
+      if (suspectPayloadType) {
+        throw new StripeSignatureVerificationError(header, payload, {
+          message: "Webhook payload must be provided as a string or a Buffer (https://nodejs.org/api/buffer.html) instance representing the _raw_ request body.Payload was provided as a parsed JavaScript object instead. \nSignature verification is impossible without access to the original signed material. \n" + docsLocation + "\n" + whitespaceMessage
+        });
+      }
+      throw new StripeSignatureVerificationError(header, payload, {
+        message: "No signatures found matching the expected signature for payload. Are you passing the raw request body you received from Stripe? \n If a webhook request is being forwarded by a third-party tool, ensure that the exact request body, including JSON formatting and new line style, is preserved.\n" + docsLocation + "\n" + whitespaceMessage
+      });
+    }
+    const timestampAge = Math.floor((typeof receivedAt === "number" ? receivedAt : Date.now()) / 1e3) - details.timestamp;
+    if (tolerance > 0 && timestampAge > tolerance) {
+      throw new StripeSignatureVerificationError(header, payload, {
+        message: "Timestamp outside the tolerance zone"
+      });
+    }
+    return true;
+  }
+  function parseHeader(header, scheme) {
+    if (typeof header !== "string") {
+      return null;
+    }
+    return header.split(",").reduce((accum, item) => {
+      const kv = item.split("=");
+      if (kv[0] === "t") {
+        accum.timestamp = parseInt(kv[1], 10);
+      }
+      if (kv[0] === scheme) {
+        accum.signatures.push(kv[1]);
+      }
+      return accum;
+    }, {
+      timestamp: -1,
+      signatures: []
+    });
+  }
+  let webhooksCryptoProviderInstance = null;
+  function getCryptoProvider() {
+    if (!webhooksCryptoProviderInstance) {
+      webhooksCryptoProviderInstance = platformFunctions.createDefaultCryptoProvider();
+    }
+    return webhooksCryptoProviderInstance;
+  }
+  function prepareOptions(opts) {
+    if (!opts) {
+      throw new StripeError({
+        message: "Options are required"
+      });
+    }
+    const timestamp2 = Math.floor(opts.timestamp) || Math.floor(Date.now() / 1e3);
+    const scheme = opts.scheme || signature.EXPECTED_SCHEME;
+    const cryptoProvider = opts.cryptoProvider || getCryptoProvider();
+    const payloadString = `${timestamp2}.${opts.payload}`;
+    const generateHeaderString = (signature2) => {
+      return `t=${timestamp2},${scheme}=${signature2}`;
+    };
+    return Object.assign(Object.assign({}, opts), {
+      timestamp: timestamp2,
+      scheme,
+      cryptoProvider,
+      payloadString,
+      generateHeaderString
+    });
+  }
+  Webhook.signature = signature;
+  return Webhook;
+}
+var init_Webhooks = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/Webhooks.js"() {
+    init_Error();
+    init_CryptoProvider();
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/apiVersion.js
+var ApiVersion;
+var init_apiVersion = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/apiVersion.js"() {
+    ApiVersion = "2024-06-20";
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/ResourceNamespace.js
+function ResourceNamespace(stripe2, resources) {
+  for (const name in resources) {
+    if (!Object.prototype.hasOwnProperty.call(resources, name)) {
+      continue;
+    }
+    const camelCaseName = name[0].toLowerCase() + name.substring(1);
+    const resource = new resources[name](stripe2);
+    this[camelCaseName] = resource;
+  }
+}
+function resourceNamespace(namespace, resources) {
+  return function(stripe2) {
+    return new ResourceNamespace(stripe2, resources);
+  };
+}
+var init_ResourceNamespace = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/ResourceNamespace.js"() {
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/FinancialConnections/Accounts.js
+var stripeMethod2, Accounts;
+var init_Accounts = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/FinancialConnections/Accounts.js"() {
+    init_StripeResource();
+    stripeMethod2 = StripeResource.method;
+    Accounts = StripeResource.extend({
+      retrieve: stripeMethod2({
+        method: "GET",
+        fullPath: "/v1/financial_connections/accounts/{account}"
+      }),
+      list: stripeMethod2({
+        method: "GET",
+        fullPath: "/v1/financial_connections/accounts",
+        methodType: "list"
+      }),
+      disconnect: stripeMethod2({
+        method: "POST",
+        fullPath: "/v1/financial_connections/accounts/{account}/disconnect"
+      }),
+      listOwners: stripeMethod2({
+        method: "GET",
+        fullPath: "/v1/financial_connections/accounts/{account}/owners",
+        methodType: "list"
+      }),
+      refresh: stripeMethod2({
+        method: "POST",
+        fullPath: "/v1/financial_connections/accounts/{account}/refresh"
+      }),
+      subscribe: stripeMethod2({
+        method: "POST",
+        fullPath: "/v1/financial_connections/accounts/{account}/subscribe"
+      }),
+      unsubscribe: stripeMethod2({
+        method: "POST",
+        fullPath: "/v1/financial_connections/accounts/{account}/unsubscribe"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Entitlements/ActiveEntitlements.js
+var stripeMethod3, ActiveEntitlements;
+var init_ActiveEntitlements = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Entitlements/ActiveEntitlements.js"() {
+    init_StripeResource();
+    stripeMethod3 = StripeResource.method;
+    ActiveEntitlements = StripeResource.extend({
+      retrieve: stripeMethod3({
+        method: "GET",
+        fullPath: "/v1/entitlements/active_entitlements/{id}"
+      }),
+      list: stripeMethod3({
+        method: "GET",
+        fullPath: "/v1/entitlements/active_entitlements",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Billing/Alerts.js
+var stripeMethod4, Alerts;
+var init_Alerts = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Billing/Alerts.js"() {
+    init_StripeResource();
+    stripeMethod4 = StripeResource.method;
+    Alerts = StripeResource.extend({
+      create: stripeMethod4({ method: "POST", fullPath: "/v1/billing/alerts" }),
+      retrieve: stripeMethod4({ method: "GET", fullPath: "/v1/billing/alerts/{id}" }),
+      list: stripeMethod4({
+        method: "GET",
+        fullPath: "/v1/billing/alerts",
+        methodType: "list"
+      }),
+      activate: stripeMethod4({
+        method: "POST",
+        fullPath: "/v1/billing/alerts/{id}/activate"
+      }),
+      archive: stripeMethod4({
+        method: "POST",
+        fullPath: "/v1/billing/alerts/{id}/archive"
+      }),
+      deactivate: stripeMethod4({
+        method: "POST",
+        fullPath: "/v1/billing/alerts/{id}/deactivate"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Issuing/Authorizations.js
+var stripeMethod5, Authorizations;
+var init_Authorizations = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Issuing/Authorizations.js"() {
+    init_StripeResource();
+    stripeMethod5 = StripeResource.method;
+    Authorizations = StripeResource.extend({
+      create: stripeMethod5({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/authorizations"
+      }),
+      capture: stripeMethod5({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/authorizations/{authorization}/capture"
+      }),
+      expire: stripeMethod5({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/authorizations/{authorization}/expire"
+      }),
+      finalizeAmount: stripeMethod5({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/authorizations/{authorization}/finalize_amount"
+      }),
+      increment: stripeMethod5({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/authorizations/{authorization}/increment"
+      }),
+      reverse: stripeMethod5({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/authorizations/{authorization}/reverse"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Authorizations.js
+var stripeMethod6, Authorizations2;
+var init_Authorizations2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Authorizations.js"() {
+    init_StripeResource();
+    stripeMethod6 = StripeResource.method;
+    Authorizations2 = StripeResource.extend({
+      retrieve: stripeMethod6({
+        method: "GET",
+        fullPath: "/v1/issuing/authorizations/{authorization}"
+      }),
+      update: stripeMethod6({
+        method: "POST",
+        fullPath: "/v1/issuing/authorizations/{authorization}"
+      }),
+      list: stripeMethod6({
+        method: "GET",
+        fullPath: "/v1/issuing/authorizations",
+        methodType: "list"
+      }),
+      approve: stripeMethod6({
+        method: "POST",
+        fullPath: "/v1/issuing/authorizations/{authorization}/approve"
+      }),
+      decline: stripeMethod6({
+        method: "POST",
+        fullPath: "/v1/issuing/authorizations/{authorization}/decline"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tax/Calculations.js
+var stripeMethod7, Calculations;
+var init_Calculations = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tax/Calculations.js"() {
+    init_StripeResource();
+    stripeMethod7 = StripeResource.method;
+    Calculations = StripeResource.extend({
+      create: stripeMethod7({ method: "POST", fullPath: "/v1/tax/calculations" }),
+      retrieve: stripeMethod7({
+        method: "GET",
+        fullPath: "/v1/tax/calculations/{calculation}"
+      }),
+      listLineItems: stripeMethod7({
+        method: "GET",
+        fullPath: "/v1/tax/calculations/{calculation}/line_items",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Cardholders.js
+var stripeMethod8, Cardholders;
+var init_Cardholders = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Cardholders.js"() {
+    init_StripeResource();
+    stripeMethod8 = StripeResource.method;
+    Cardholders = StripeResource.extend({
+      create: stripeMethod8({ method: "POST", fullPath: "/v1/issuing/cardholders" }),
+      retrieve: stripeMethod8({
+        method: "GET",
+        fullPath: "/v1/issuing/cardholders/{cardholder}"
+      }),
+      update: stripeMethod8({
+        method: "POST",
+        fullPath: "/v1/issuing/cardholders/{cardholder}"
+      }),
+      list: stripeMethod8({
+        method: "GET",
+        fullPath: "/v1/issuing/cardholders",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Issuing/Cards.js
+var stripeMethod9, Cards;
+var init_Cards = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Issuing/Cards.js"() {
+    init_StripeResource();
+    stripeMethod9 = StripeResource.method;
+    Cards = StripeResource.extend({
+      deliverCard: stripeMethod9({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/cards/{card}/shipping/deliver"
+      }),
+      failCard: stripeMethod9({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/cards/{card}/shipping/fail"
+      }),
+      returnCard: stripeMethod9({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/cards/{card}/shipping/return"
+      }),
+      shipCard: stripeMethod9({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/cards/{card}/shipping/ship"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Cards.js
+var stripeMethod10, Cards2;
+var init_Cards2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Cards.js"() {
+    init_StripeResource();
+    stripeMethod10 = StripeResource.method;
+    Cards2 = StripeResource.extend({
+      create: stripeMethod10({ method: "POST", fullPath: "/v1/issuing/cards" }),
+      retrieve: stripeMethod10({ method: "GET", fullPath: "/v1/issuing/cards/{card}" }),
+      update: stripeMethod10({ method: "POST", fullPath: "/v1/issuing/cards/{card}" }),
+      list: stripeMethod10({
+        method: "GET",
+        fullPath: "/v1/issuing/cards",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/BillingPortal/Configurations.js
+var stripeMethod11, Configurations;
+var init_Configurations = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/BillingPortal/Configurations.js"() {
+    init_StripeResource();
+    stripeMethod11 = StripeResource.method;
+    Configurations = StripeResource.extend({
+      create: stripeMethod11({
+        method: "POST",
+        fullPath: "/v1/billing_portal/configurations"
+      }),
+      retrieve: stripeMethod11({
+        method: "GET",
+        fullPath: "/v1/billing_portal/configurations/{configuration}"
+      }),
+      update: stripeMethod11({
+        method: "POST",
+        fullPath: "/v1/billing_portal/configurations/{configuration}"
+      }),
+      list: stripeMethod11({
+        method: "GET",
+        fullPath: "/v1/billing_portal/configurations",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Terminal/Configurations.js
+var stripeMethod12, Configurations2;
+var init_Configurations2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Terminal/Configurations.js"() {
+    init_StripeResource();
+    stripeMethod12 = StripeResource.method;
+    Configurations2 = StripeResource.extend({
+      create: stripeMethod12({
+        method: "POST",
+        fullPath: "/v1/terminal/configurations"
+      }),
+      retrieve: stripeMethod12({
+        method: "GET",
+        fullPath: "/v1/terminal/configurations/{configuration}"
+      }),
+      update: stripeMethod12({
+        method: "POST",
+        fullPath: "/v1/terminal/configurations/{configuration}"
+      }),
+      list: stripeMethod12({
+        method: "GET",
+        fullPath: "/v1/terminal/configurations",
+        methodType: "list"
+      }),
+      del: stripeMethod12({
+        method: "DELETE",
+        fullPath: "/v1/terminal/configurations/{configuration}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/ConfirmationTokens.js
+var stripeMethod13, ConfirmationTokens;
+var init_ConfirmationTokens = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/ConfirmationTokens.js"() {
+    init_StripeResource();
+    stripeMethod13 = StripeResource.method;
+    ConfirmationTokens = StripeResource.extend({
+      create: stripeMethod13({
+        method: "POST",
+        fullPath: "/v1/test_helpers/confirmation_tokens"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Terminal/ConnectionTokens.js
+var stripeMethod14, ConnectionTokens;
+var init_ConnectionTokens = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Terminal/ConnectionTokens.js"() {
+    init_StripeResource();
+    stripeMethod14 = StripeResource.method;
+    ConnectionTokens = StripeResource.extend({
+      create: stripeMethod14({
+        method: "POST",
+        fullPath: "/v1/terminal/connection_tokens"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/CreditReversals.js
+var stripeMethod15, CreditReversals;
+var init_CreditReversals = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/CreditReversals.js"() {
+    init_StripeResource();
+    stripeMethod15 = StripeResource.method;
+    CreditReversals = StripeResource.extend({
+      create: stripeMethod15({
+        method: "POST",
+        fullPath: "/v1/treasury/credit_reversals"
+      }),
+      retrieve: stripeMethod15({
+        method: "GET",
+        fullPath: "/v1/treasury/credit_reversals/{credit_reversal}"
+      }),
+      list: stripeMethod15({
+        method: "GET",
+        fullPath: "/v1/treasury/credit_reversals",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Customers.js
+var stripeMethod16, Customers;
+var init_Customers = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Customers.js"() {
+    init_StripeResource();
+    stripeMethod16 = StripeResource.method;
+    Customers = StripeResource.extend({
+      fundCashBalance: stripeMethod16({
+        method: "POST",
+        fullPath: "/v1/test_helpers/customers/{customer}/fund_cash_balance"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/DebitReversals.js
+var stripeMethod17, DebitReversals;
+var init_DebitReversals = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/DebitReversals.js"() {
+    init_StripeResource();
+    stripeMethod17 = StripeResource.method;
+    DebitReversals = StripeResource.extend({
+      create: stripeMethod17({
+        method: "POST",
+        fullPath: "/v1/treasury/debit_reversals"
+      }),
+      retrieve: stripeMethod17({
+        method: "GET",
+        fullPath: "/v1/treasury/debit_reversals/{debit_reversal}"
+      }),
+      list: stripeMethod17({
+        method: "GET",
+        fullPath: "/v1/treasury/debit_reversals",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Disputes.js
+var stripeMethod18, Disputes;
+var init_Disputes = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Disputes.js"() {
+    init_StripeResource();
+    stripeMethod18 = StripeResource.method;
+    Disputes = StripeResource.extend({
+      create: stripeMethod18({ method: "POST", fullPath: "/v1/issuing/disputes" }),
+      retrieve: stripeMethod18({
+        method: "GET",
+        fullPath: "/v1/issuing/disputes/{dispute}"
+      }),
+      update: stripeMethod18({
+        method: "POST",
+        fullPath: "/v1/issuing/disputes/{dispute}"
+      }),
+      list: stripeMethod18({
+        method: "GET",
+        fullPath: "/v1/issuing/disputes",
+        methodType: "list"
+      }),
+      submit: stripeMethod18({
+        method: "POST",
+        fullPath: "/v1/issuing/disputes/{dispute}/submit"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Radar/EarlyFraudWarnings.js
+var stripeMethod19, EarlyFraudWarnings;
+var init_EarlyFraudWarnings = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Radar/EarlyFraudWarnings.js"() {
+    init_StripeResource();
+    stripeMethod19 = StripeResource.method;
+    EarlyFraudWarnings = StripeResource.extend({
+      retrieve: stripeMethod19({
+        method: "GET",
+        fullPath: "/v1/radar/early_fraud_warnings/{early_fraud_warning}"
+      }),
+      list: stripeMethod19({
+        method: "GET",
+        fullPath: "/v1/radar/early_fraud_warnings",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Entitlements/Features.js
+var stripeMethod20, Features;
+var init_Features = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Entitlements/Features.js"() {
+    init_StripeResource();
+    stripeMethod20 = StripeResource.method;
+    Features = StripeResource.extend({
+      create: stripeMethod20({ method: "POST", fullPath: "/v1/entitlements/features" }),
+      retrieve: stripeMethod20({
+        method: "GET",
+        fullPath: "/v1/entitlements/features/{id}"
+      }),
+      update: stripeMethod20({
+        method: "POST",
+        fullPath: "/v1/entitlements/features/{id}"
+      }),
+      list: stripeMethod20({
+        method: "GET",
+        fullPath: "/v1/entitlements/features",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/FinancialAccounts.js
+var stripeMethod21, FinancialAccounts;
+var init_FinancialAccounts = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/FinancialAccounts.js"() {
+    init_StripeResource();
+    stripeMethod21 = StripeResource.method;
+    FinancialAccounts = StripeResource.extend({
+      create: stripeMethod21({
+        method: "POST",
+        fullPath: "/v1/treasury/financial_accounts"
+      }),
+      retrieve: stripeMethod21({
+        method: "GET",
+        fullPath: "/v1/treasury/financial_accounts/{financial_account}"
+      }),
+      update: stripeMethod21({
+        method: "POST",
+        fullPath: "/v1/treasury/financial_accounts/{financial_account}"
+      }),
+      list: stripeMethod21({
+        method: "GET",
+        fullPath: "/v1/treasury/financial_accounts",
+        methodType: "list"
+      }),
+      retrieveFeatures: stripeMethod21({
+        method: "GET",
+        fullPath: "/v1/treasury/financial_accounts/{financial_account}/features"
+      }),
+      updateFeatures: stripeMethod21({
+        method: "POST",
+        fullPath: "/v1/treasury/financial_accounts/{financial_account}/features"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/InboundTransfers.js
+var stripeMethod22, InboundTransfers;
+var init_InboundTransfers = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/InboundTransfers.js"() {
+    init_StripeResource();
+    stripeMethod22 = StripeResource.method;
+    InboundTransfers = StripeResource.extend({
+      fail: stripeMethod22({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/inbound_transfers/{id}/fail"
+      }),
+      returnInboundTransfer: stripeMethod22({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/inbound_transfers/{id}/return"
+      }),
+      succeed: stripeMethod22({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/inbound_transfers/{id}/succeed"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/InboundTransfers.js
+var stripeMethod23, InboundTransfers2;
+var init_InboundTransfers2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/InboundTransfers.js"() {
+    init_StripeResource();
+    stripeMethod23 = StripeResource.method;
+    InboundTransfers2 = StripeResource.extend({
+      create: stripeMethod23({
+        method: "POST",
+        fullPath: "/v1/treasury/inbound_transfers"
+      }),
+      retrieve: stripeMethod23({
+        method: "GET",
+        fullPath: "/v1/treasury/inbound_transfers/{id}"
+      }),
+      list: stripeMethod23({
+        method: "GET",
+        fullPath: "/v1/treasury/inbound_transfers",
+        methodType: "list"
+      }),
+      cancel: stripeMethod23({
+        method: "POST",
+        fullPath: "/v1/treasury/inbound_transfers/{inbound_transfer}/cancel"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Terminal/Locations.js
+var stripeMethod24, Locations;
+var init_Locations = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Terminal/Locations.js"() {
+    init_StripeResource();
+    stripeMethod24 = StripeResource.method;
+    Locations = StripeResource.extend({
+      create: stripeMethod24({ method: "POST", fullPath: "/v1/terminal/locations" }),
+      retrieve: stripeMethod24({
+        method: "GET",
+        fullPath: "/v1/terminal/locations/{location}"
+      }),
+      update: stripeMethod24({
+        method: "POST",
+        fullPath: "/v1/terminal/locations/{location}"
+      }),
+      list: stripeMethod24({
+        method: "GET",
+        fullPath: "/v1/terminal/locations",
+        methodType: "list"
+      }),
+      del: stripeMethod24({
+        method: "DELETE",
+        fullPath: "/v1/terminal/locations/{location}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Billing/MeterEventAdjustments.js
+var stripeMethod25, MeterEventAdjustments;
+var init_MeterEventAdjustments = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Billing/MeterEventAdjustments.js"() {
+    init_StripeResource();
+    stripeMethod25 = StripeResource.method;
+    MeterEventAdjustments = StripeResource.extend({
+      create: stripeMethod25({
+        method: "POST",
+        fullPath: "/v1/billing/meter_event_adjustments"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Billing/MeterEvents.js
+var stripeMethod26, MeterEvents;
+var init_MeterEvents = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Billing/MeterEvents.js"() {
+    init_StripeResource();
+    stripeMethod26 = StripeResource.method;
+    MeterEvents = StripeResource.extend({
+      create: stripeMethod26({ method: "POST", fullPath: "/v1/billing/meter_events" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Billing/Meters.js
+var stripeMethod27, Meters;
+var init_Meters = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Billing/Meters.js"() {
+    init_StripeResource();
+    stripeMethod27 = StripeResource.method;
+    Meters = StripeResource.extend({
+      create: stripeMethod27({ method: "POST", fullPath: "/v1/billing/meters" }),
+      retrieve: stripeMethod27({ method: "GET", fullPath: "/v1/billing/meters/{id}" }),
+      update: stripeMethod27({ method: "POST", fullPath: "/v1/billing/meters/{id}" }),
+      list: stripeMethod27({
+        method: "GET",
+        fullPath: "/v1/billing/meters",
+        methodType: "list"
+      }),
+      deactivate: stripeMethod27({
+        method: "POST",
+        fullPath: "/v1/billing/meters/{id}/deactivate"
+      }),
+      listEventSummaries: stripeMethod27({
+        method: "GET",
+        fullPath: "/v1/billing/meters/{id}/event_summaries",
+        methodType: "list"
+      }),
+      reactivate: stripeMethod27({
+        method: "POST",
+        fullPath: "/v1/billing/meters/{id}/reactivate"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Climate/Orders.js
+var stripeMethod28, Orders;
+var init_Orders = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Climate/Orders.js"() {
+    init_StripeResource();
+    stripeMethod28 = StripeResource.method;
+    Orders = StripeResource.extend({
+      create: stripeMethod28({ method: "POST", fullPath: "/v1/climate/orders" }),
+      retrieve: stripeMethod28({
+        method: "GET",
+        fullPath: "/v1/climate/orders/{order}"
+      }),
+      update: stripeMethod28({
+        method: "POST",
+        fullPath: "/v1/climate/orders/{order}"
+      }),
+      list: stripeMethod28({
+        method: "GET",
+        fullPath: "/v1/climate/orders",
+        methodType: "list"
+      }),
+      cancel: stripeMethod28({
+        method: "POST",
+        fullPath: "/v1/climate/orders/{order}/cancel"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundPayments.js
+var stripeMethod29, OutboundPayments;
+var init_OutboundPayments = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundPayments.js"() {
+    init_StripeResource();
+    stripeMethod29 = StripeResource.method;
+    OutboundPayments = StripeResource.extend({
+      update: stripeMethod29({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/outbound_payments/{id}"
+      }),
+      fail: stripeMethod29({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/outbound_payments/{id}/fail"
+      }),
+      post: stripeMethod29({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/outbound_payments/{id}/post"
+      }),
+      returnOutboundPayment: stripeMethod29({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/outbound_payments/{id}/return"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/OutboundPayments.js
+var stripeMethod30, OutboundPayments2;
+var init_OutboundPayments2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/OutboundPayments.js"() {
+    init_StripeResource();
+    stripeMethod30 = StripeResource.method;
+    OutboundPayments2 = StripeResource.extend({
+      create: stripeMethod30({
+        method: "POST",
+        fullPath: "/v1/treasury/outbound_payments"
+      }),
+      retrieve: stripeMethod30({
+        method: "GET",
+        fullPath: "/v1/treasury/outbound_payments/{id}"
+      }),
+      list: stripeMethod30({
+        method: "GET",
+        fullPath: "/v1/treasury/outbound_payments",
+        methodType: "list"
+      }),
+      cancel: stripeMethod30({
+        method: "POST",
+        fullPath: "/v1/treasury/outbound_payments/{id}/cancel"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundTransfers.js
+var stripeMethod31, OutboundTransfers;
+var init_OutboundTransfers = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/OutboundTransfers.js"() {
+    init_StripeResource();
+    stripeMethod31 = StripeResource.method;
+    OutboundTransfers = StripeResource.extend({
+      update: stripeMethod31({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/outbound_transfers/{outbound_transfer}"
+      }),
+      fail: stripeMethod31({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/outbound_transfers/{outbound_transfer}/fail"
+      }),
+      post: stripeMethod31({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/outbound_transfers/{outbound_transfer}/post"
+      }),
+      returnOutboundTransfer: stripeMethod31({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/outbound_transfers/{outbound_transfer}/return"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/OutboundTransfers.js
+var stripeMethod32, OutboundTransfers2;
+var init_OutboundTransfers2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/OutboundTransfers.js"() {
+    init_StripeResource();
+    stripeMethod32 = StripeResource.method;
+    OutboundTransfers2 = StripeResource.extend({
+      create: stripeMethod32({
+        method: "POST",
+        fullPath: "/v1/treasury/outbound_transfers"
+      }),
+      retrieve: stripeMethod32({
+        method: "GET",
+        fullPath: "/v1/treasury/outbound_transfers/{outbound_transfer}"
+      }),
+      list: stripeMethod32({
+        method: "GET",
+        fullPath: "/v1/treasury/outbound_transfers",
+        methodType: "list"
+      }),
+      cancel: stripeMethod32({
+        method: "POST",
+        fullPath: "/v1/treasury/outbound_transfers/{outbound_transfer}/cancel"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Issuing/PersonalizationDesigns.js
+var stripeMethod33, PersonalizationDesigns;
+var init_PersonalizationDesigns = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Issuing/PersonalizationDesigns.js"() {
+    init_StripeResource();
+    stripeMethod33 = StripeResource.method;
+    PersonalizationDesigns = StripeResource.extend({
+      activate: stripeMethod33({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/personalization_designs/{personalization_design}/activate"
+      }),
+      deactivate: stripeMethod33({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/personalization_designs/{personalization_design}/deactivate"
+      }),
+      reject: stripeMethod33({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/personalization_designs/{personalization_design}/reject"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/PersonalizationDesigns.js
+var stripeMethod34, PersonalizationDesigns2;
+var init_PersonalizationDesigns2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/PersonalizationDesigns.js"() {
+    init_StripeResource();
+    stripeMethod34 = StripeResource.method;
+    PersonalizationDesigns2 = StripeResource.extend({
+      create: stripeMethod34({
+        method: "POST",
+        fullPath: "/v1/issuing/personalization_designs"
+      }),
+      retrieve: stripeMethod34({
+        method: "GET",
+        fullPath: "/v1/issuing/personalization_designs/{personalization_design}"
+      }),
+      update: stripeMethod34({
+        method: "POST",
+        fullPath: "/v1/issuing/personalization_designs/{personalization_design}"
+      }),
+      list: stripeMethod34({
+        method: "GET",
+        fullPath: "/v1/issuing/personalization_designs",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/PhysicalBundles.js
+var stripeMethod35, PhysicalBundles;
+var init_PhysicalBundles = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/PhysicalBundles.js"() {
+    init_StripeResource();
+    stripeMethod35 = StripeResource.method;
+    PhysicalBundles = StripeResource.extend({
+      retrieve: stripeMethod35({
+        method: "GET",
+        fullPath: "/v1/issuing/physical_bundles/{physical_bundle}"
+      }),
+      list: stripeMethod35({
+        method: "GET",
+        fullPath: "/v1/issuing/physical_bundles",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Climate/Products.js
+var stripeMethod36, Products;
+var init_Products = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Climate/Products.js"() {
+    init_StripeResource();
+    stripeMethod36 = StripeResource.method;
+    Products = StripeResource.extend({
+      retrieve: stripeMethod36({
+        method: "GET",
+        fullPath: "/v1/climate/products/{product}"
+      }),
+      list: stripeMethod36({
+        method: "GET",
+        fullPath: "/v1/climate/products",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Terminal/Readers.js
+var stripeMethod37, Readers;
+var init_Readers = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Terminal/Readers.js"() {
+    init_StripeResource();
+    stripeMethod37 = StripeResource.method;
+    Readers = StripeResource.extend({
+      presentPaymentMethod: stripeMethod37({
+        method: "POST",
+        fullPath: "/v1/test_helpers/terminal/readers/{reader}/present_payment_method"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Terminal/Readers.js
+var stripeMethod38, Readers2;
+var init_Readers2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Terminal/Readers.js"() {
+    init_StripeResource();
+    stripeMethod38 = StripeResource.method;
+    Readers2 = StripeResource.extend({
+      create: stripeMethod38({ method: "POST", fullPath: "/v1/terminal/readers" }),
+      retrieve: stripeMethod38({
+        method: "GET",
+        fullPath: "/v1/terminal/readers/{reader}"
+      }),
+      update: stripeMethod38({
+        method: "POST",
+        fullPath: "/v1/terminal/readers/{reader}"
+      }),
+      list: stripeMethod38({
+        method: "GET",
+        fullPath: "/v1/terminal/readers",
+        methodType: "list"
+      }),
+      del: stripeMethod38({
+        method: "DELETE",
+        fullPath: "/v1/terminal/readers/{reader}"
+      }),
+      cancelAction: stripeMethod38({
+        method: "POST",
+        fullPath: "/v1/terminal/readers/{reader}/cancel_action"
+      }),
+      processPaymentIntent: stripeMethod38({
+        method: "POST",
+        fullPath: "/v1/terminal/readers/{reader}/process_payment_intent"
+      }),
+      processSetupIntent: stripeMethod38({
+        method: "POST",
+        fullPath: "/v1/terminal/readers/{reader}/process_setup_intent"
+      }),
+      refundPayment: stripeMethod38({
+        method: "POST",
+        fullPath: "/v1/terminal/readers/{reader}/refund_payment"
+      }),
+      setReaderDisplay: stripeMethod38({
+        method: "POST",
+        fullPath: "/v1/terminal/readers/{reader}/set_reader_display"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedCredits.js
+var stripeMethod39, ReceivedCredits;
+var init_ReceivedCredits = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedCredits.js"() {
+    init_StripeResource();
+    stripeMethod39 = StripeResource.method;
+    ReceivedCredits = StripeResource.extend({
+      create: stripeMethod39({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/received_credits"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/ReceivedCredits.js
+var stripeMethod40, ReceivedCredits2;
+var init_ReceivedCredits2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/ReceivedCredits.js"() {
+    init_StripeResource();
+    stripeMethod40 = StripeResource.method;
+    ReceivedCredits2 = StripeResource.extend({
+      retrieve: stripeMethod40({
+        method: "GET",
+        fullPath: "/v1/treasury/received_credits/{id}"
+      }),
+      list: stripeMethod40({
+        method: "GET",
+        fullPath: "/v1/treasury/received_credits",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedDebits.js
+var stripeMethod41, ReceivedDebits;
+var init_ReceivedDebits = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Treasury/ReceivedDebits.js"() {
+    init_StripeResource();
+    stripeMethod41 = StripeResource.method;
+    ReceivedDebits = StripeResource.extend({
+      create: stripeMethod41({
+        method: "POST",
+        fullPath: "/v1/test_helpers/treasury/received_debits"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/ReceivedDebits.js
+var stripeMethod42, ReceivedDebits2;
+var init_ReceivedDebits2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/ReceivedDebits.js"() {
+    init_StripeResource();
+    stripeMethod42 = StripeResource.method;
+    ReceivedDebits2 = StripeResource.extend({
+      retrieve: stripeMethod42({
+        method: "GET",
+        fullPath: "/v1/treasury/received_debits/{id}"
+      }),
+      list: stripeMethod42({
+        method: "GET",
+        fullPath: "/v1/treasury/received_debits",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Refunds.js
+var stripeMethod43, Refunds;
+var init_Refunds = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Refunds.js"() {
+    init_StripeResource();
+    stripeMethod43 = StripeResource.method;
+    Refunds = StripeResource.extend({
+      expire: stripeMethod43({
+        method: "POST",
+        fullPath: "/v1/test_helpers/refunds/{refund}/expire"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tax/Registrations.js
+var stripeMethod44, Registrations;
+var init_Registrations = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tax/Registrations.js"() {
+    init_StripeResource();
+    stripeMethod44 = StripeResource.method;
+    Registrations = StripeResource.extend({
+      create: stripeMethod44({ method: "POST", fullPath: "/v1/tax/registrations" }),
+      retrieve: stripeMethod44({
+        method: "GET",
+        fullPath: "/v1/tax/registrations/{id}"
+      }),
+      update: stripeMethod44({
+        method: "POST",
+        fullPath: "/v1/tax/registrations/{id}"
+      }),
+      list: stripeMethod44({
+        method: "GET",
+        fullPath: "/v1/tax/registrations",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Reporting/ReportRuns.js
+var stripeMethod45, ReportRuns;
+var init_ReportRuns = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Reporting/ReportRuns.js"() {
+    init_StripeResource();
+    stripeMethod45 = StripeResource.method;
+    ReportRuns = StripeResource.extend({
+      create: stripeMethod45({ method: "POST", fullPath: "/v1/reporting/report_runs" }),
+      retrieve: stripeMethod45({
+        method: "GET",
+        fullPath: "/v1/reporting/report_runs/{report_run}"
+      }),
+      list: stripeMethod45({
+        method: "GET",
+        fullPath: "/v1/reporting/report_runs",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Reporting/ReportTypes.js
+var stripeMethod46, ReportTypes;
+var init_ReportTypes = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Reporting/ReportTypes.js"() {
+    init_StripeResource();
+    stripeMethod46 = StripeResource.method;
+    ReportTypes = StripeResource.extend({
+      retrieve: stripeMethod46({
+        method: "GET",
+        fullPath: "/v1/reporting/report_types/{report_type}"
+      }),
+      list: stripeMethod46({
+        method: "GET",
+        fullPath: "/v1/reporting/report_types",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Forwarding/Requests.js
+var stripeMethod47, Requests;
+var init_Requests = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Forwarding/Requests.js"() {
+    init_StripeResource();
+    stripeMethod47 = StripeResource.method;
+    Requests = StripeResource.extend({
+      create: stripeMethod47({ method: "POST", fullPath: "/v1/forwarding/requests" }),
+      retrieve: stripeMethod47({
+        method: "GET",
+        fullPath: "/v1/forwarding/requests/{id}"
+      }),
+      list: stripeMethod47({
+        method: "GET",
+        fullPath: "/v1/forwarding/requests",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Sigma/ScheduledQueryRuns.js
+var stripeMethod48, ScheduledQueryRuns;
+var init_ScheduledQueryRuns = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Sigma/ScheduledQueryRuns.js"() {
+    init_StripeResource();
+    stripeMethod48 = StripeResource.method;
+    ScheduledQueryRuns = StripeResource.extend({
+      retrieve: stripeMethod48({
+        method: "GET",
+        fullPath: "/v1/sigma/scheduled_query_runs/{scheduled_query_run}"
+      }),
+      list: stripeMethod48({
+        method: "GET",
+        fullPath: "/v1/sigma/scheduled_query_runs",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Apps/Secrets.js
+var stripeMethod49, Secrets;
+var init_Secrets = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Apps/Secrets.js"() {
+    init_StripeResource();
+    stripeMethod49 = StripeResource.method;
+    Secrets = StripeResource.extend({
+      create: stripeMethod49({ method: "POST", fullPath: "/v1/apps/secrets" }),
+      list: stripeMethod49({
+        method: "GET",
+        fullPath: "/v1/apps/secrets",
+        methodType: "list"
+      }),
+      deleteWhere: stripeMethod49({
+        method: "POST",
+        fullPath: "/v1/apps/secrets/delete"
+      }),
+      find: stripeMethod49({ method: "GET", fullPath: "/v1/apps/secrets/find" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/BillingPortal/Sessions.js
+var stripeMethod50, Sessions;
+var init_Sessions = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/BillingPortal/Sessions.js"() {
+    init_StripeResource();
+    stripeMethod50 = StripeResource.method;
+    Sessions = StripeResource.extend({
+      create: stripeMethod50({
+        method: "POST",
+        fullPath: "/v1/billing_portal/sessions"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Checkout/Sessions.js
+var stripeMethod51, Sessions2;
+var init_Sessions2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Checkout/Sessions.js"() {
+    init_StripeResource();
+    stripeMethod51 = StripeResource.method;
+    Sessions2 = StripeResource.extend({
+      create: stripeMethod51({ method: "POST", fullPath: "/v1/checkout/sessions" }),
+      retrieve: stripeMethod51({
+        method: "GET",
+        fullPath: "/v1/checkout/sessions/{session}"
+      }),
+      update: stripeMethod51({
+        method: "POST",
+        fullPath: "/v1/checkout/sessions/{session}"
+      }),
+      list: stripeMethod51({
+        method: "GET",
+        fullPath: "/v1/checkout/sessions",
+        methodType: "list"
+      }),
+      expire: stripeMethod51({
+        method: "POST",
+        fullPath: "/v1/checkout/sessions/{session}/expire"
+      }),
+      listLineItems: stripeMethod51({
+        method: "GET",
+        fullPath: "/v1/checkout/sessions/{session}/line_items",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/FinancialConnections/Sessions.js
+var stripeMethod52, Sessions3;
+var init_Sessions3 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/FinancialConnections/Sessions.js"() {
+    init_StripeResource();
+    stripeMethod52 = StripeResource.method;
+    Sessions3 = StripeResource.extend({
+      create: stripeMethod52({
+        method: "POST",
+        fullPath: "/v1/financial_connections/sessions"
+      }),
+      retrieve: stripeMethod52({
+        method: "GET",
+        fullPath: "/v1/financial_connections/sessions/{session}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tax/Settings.js
+var stripeMethod53, Settings;
+var init_Settings = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tax/Settings.js"() {
+    init_StripeResource();
+    stripeMethod53 = StripeResource.method;
+    Settings = StripeResource.extend({
+      retrieve: stripeMethod53({ method: "GET", fullPath: "/v1/tax/settings" }),
+      update: stripeMethod53({ method: "POST", fullPath: "/v1/tax/settings" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Climate/Suppliers.js
+var stripeMethod54, Suppliers;
+var init_Suppliers = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Climate/Suppliers.js"() {
+    init_StripeResource();
+    stripeMethod54 = StripeResource.method;
+    Suppliers = StripeResource.extend({
+      retrieve: stripeMethod54({
+        method: "GET",
+        fullPath: "/v1/climate/suppliers/{supplier}"
+      }),
+      list: stripeMethod54({
+        method: "GET",
+        fullPath: "/v1/climate/suppliers",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/TestClocks.js
+var stripeMethod55, TestClocks;
+var init_TestClocks = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/TestClocks.js"() {
+    init_StripeResource();
+    stripeMethod55 = StripeResource.method;
+    TestClocks = StripeResource.extend({
+      create: stripeMethod55({
+        method: "POST",
+        fullPath: "/v1/test_helpers/test_clocks"
+      }),
+      retrieve: stripeMethod55({
+        method: "GET",
+        fullPath: "/v1/test_helpers/test_clocks/{test_clock}"
+      }),
+      list: stripeMethod55({
+        method: "GET",
+        fullPath: "/v1/test_helpers/test_clocks",
+        methodType: "list"
+      }),
+      del: stripeMethod55({
+        method: "DELETE",
+        fullPath: "/v1/test_helpers/test_clocks/{test_clock}"
+      }),
+      advance: stripeMethod55({
+        method: "POST",
+        fullPath: "/v1/test_helpers/test_clocks/{test_clock}/advance"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Tokens.js
+var stripeMethod56, Tokens;
+var init_Tokens = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Tokens.js"() {
+    init_StripeResource();
+    stripeMethod56 = StripeResource.method;
+    Tokens = StripeResource.extend({
+      retrieve: stripeMethod56({
+        method: "GET",
+        fullPath: "/v1/issuing/tokens/{token}"
+      }),
+      update: stripeMethod56({
+        method: "POST",
+        fullPath: "/v1/issuing/tokens/{token}"
+      }),
+      list: stripeMethod56({
+        method: "GET",
+        fullPath: "/v1/issuing/tokens",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/TransactionEntries.js
+var stripeMethod57, TransactionEntries;
+var init_TransactionEntries = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/TransactionEntries.js"() {
+    init_StripeResource();
+    stripeMethod57 = StripeResource.method;
+    TransactionEntries = StripeResource.extend({
+      retrieve: stripeMethod57({
+        method: "GET",
+        fullPath: "/v1/treasury/transaction_entries/{id}"
+      }),
+      list: stripeMethod57({
+        method: "GET",
+        fullPath: "/v1/treasury/transaction_entries",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Issuing/Transactions.js
+var stripeMethod58, Transactions;
+var init_Transactions = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TestHelpers/Issuing/Transactions.js"() {
+    init_StripeResource();
+    stripeMethod58 = StripeResource.method;
+    Transactions = StripeResource.extend({
+      createForceCapture: stripeMethod58({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/transactions/create_force_capture"
+      }),
+      createUnlinkedRefund: stripeMethod58({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/transactions/create_unlinked_refund"
+      }),
+      refund: stripeMethod58({
+        method: "POST",
+        fullPath: "/v1/test_helpers/issuing/transactions/{transaction}/refund"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/FinancialConnections/Transactions.js
+var stripeMethod59, Transactions2;
+var init_Transactions2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/FinancialConnections/Transactions.js"() {
+    init_StripeResource();
+    stripeMethod59 = StripeResource.method;
+    Transactions2 = StripeResource.extend({
+      retrieve: stripeMethod59({
+        method: "GET",
+        fullPath: "/v1/financial_connections/transactions/{transaction}"
+      }),
+      list: stripeMethod59({
+        method: "GET",
+        fullPath: "/v1/financial_connections/transactions",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Transactions.js
+var stripeMethod60, Transactions3;
+var init_Transactions3 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Issuing/Transactions.js"() {
+    init_StripeResource();
+    stripeMethod60 = StripeResource.method;
+    Transactions3 = StripeResource.extend({
+      retrieve: stripeMethod60({
+        method: "GET",
+        fullPath: "/v1/issuing/transactions/{transaction}"
+      }),
+      update: stripeMethod60({
+        method: "POST",
+        fullPath: "/v1/issuing/transactions/{transaction}"
+      }),
+      list: stripeMethod60({
+        method: "GET",
+        fullPath: "/v1/issuing/transactions",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tax/Transactions.js
+var stripeMethod61, Transactions4;
+var init_Transactions4 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tax/Transactions.js"() {
+    init_StripeResource();
+    stripeMethod61 = StripeResource.method;
+    Transactions4 = StripeResource.extend({
+      retrieve: stripeMethod61({
+        method: "GET",
+        fullPath: "/v1/tax/transactions/{transaction}"
+      }),
+      createFromCalculation: stripeMethod61({
+        method: "POST",
+        fullPath: "/v1/tax/transactions/create_from_calculation"
+      }),
+      createReversal: stripeMethod61({
+        method: "POST",
+        fullPath: "/v1/tax/transactions/create_reversal"
+      }),
+      listLineItems: stripeMethod61({
+        method: "GET",
+        fullPath: "/v1/tax/transactions/{transaction}/line_items",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/Transactions.js
+var stripeMethod62, Transactions5;
+var init_Transactions5 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Treasury/Transactions.js"() {
+    init_StripeResource();
+    stripeMethod62 = StripeResource.method;
+    Transactions5 = StripeResource.extend({
+      retrieve: stripeMethod62({
+        method: "GET",
+        fullPath: "/v1/treasury/transactions/{id}"
+      }),
+      list: stripeMethod62({
+        method: "GET",
+        fullPath: "/v1/treasury/transactions",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Radar/ValueListItems.js
+var stripeMethod63, ValueListItems;
+var init_ValueListItems = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Radar/ValueListItems.js"() {
+    init_StripeResource();
+    stripeMethod63 = StripeResource.method;
+    ValueListItems = StripeResource.extend({
+      create: stripeMethod63({
+        method: "POST",
+        fullPath: "/v1/radar/value_list_items"
+      }),
+      retrieve: stripeMethod63({
+        method: "GET",
+        fullPath: "/v1/radar/value_list_items/{item}"
+      }),
+      list: stripeMethod63({
+        method: "GET",
+        fullPath: "/v1/radar/value_list_items",
+        methodType: "list"
+      }),
+      del: stripeMethod63({
+        method: "DELETE",
+        fullPath: "/v1/radar/value_list_items/{item}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Radar/ValueLists.js
+var stripeMethod64, ValueLists;
+var init_ValueLists = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Radar/ValueLists.js"() {
+    init_StripeResource();
+    stripeMethod64 = StripeResource.method;
+    ValueLists = StripeResource.extend({
+      create: stripeMethod64({ method: "POST", fullPath: "/v1/radar/value_lists" }),
+      retrieve: stripeMethod64({
+        method: "GET",
+        fullPath: "/v1/radar/value_lists/{value_list}"
+      }),
+      update: stripeMethod64({
+        method: "POST",
+        fullPath: "/v1/radar/value_lists/{value_list}"
+      }),
+      list: stripeMethod64({
+        method: "GET",
+        fullPath: "/v1/radar/value_lists",
+        methodType: "list"
+      }),
+      del: stripeMethod64({
+        method: "DELETE",
+        fullPath: "/v1/radar/value_lists/{value_list}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Identity/VerificationReports.js
+var stripeMethod65, VerificationReports;
+var init_VerificationReports = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Identity/VerificationReports.js"() {
+    init_StripeResource();
+    stripeMethod65 = StripeResource.method;
+    VerificationReports = StripeResource.extend({
+      retrieve: stripeMethod65({
+        method: "GET",
+        fullPath: "/v1/identity/verification_reports/{report}"
+      }),
+      list: stripeMethod65({
+        method: "GET",
+        fullPath: "/v1/identity/verification_reports",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Identity/VerificationSessions.js
+var stripeMethod66, VerificationSessions;
+var init_VerificationSessions = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Identity/VerificationSessions.js"() {
+    init_StripeResource();
+    stripeMethod66 = StripeResource.method;
+    VerificationSessions = StripeResource.extend({
+      create: stripeMethod66({
+        method: "POST",
+        fullPath: "/v1/identity/verification_sessions"
+      }),
+      retrieve: stripeMethod66({
+        method: "GET",
+        fullPath: "/v1/identity/verification_sessions/{session}"
+      }),
+      update: stripeMethod66({
+        method: "POST",
+        fullPath: "/v1/identity/verification_sessions/{session}"
+      }),
+      list: stripeMethod66({
+        method: "GET",
+        fullPath: "/v1/identity/verification_sessions",
+        methodType: "list"
+      }),
+      cancel: stripeMethod66({
+        method: "POST",
+        fullPath: "/v1/identity/verification_sessions/{session}/cancel"
+      }),
+      redact: stripeMethod66({
+        method: "POST",
+        fullPath: "/v1/identity/verification_sessions/{session}/redact"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Accounts.js
+var stripeMethod67, Accounts2;
+var init_Accounts2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Accounts.js"() {
+    init_StripeResource();
+    stripeMethod67 = StripeResource.method;
+    Accounts2 = StripeResource.extend({
+      create: stripeMethod67({ method: "POST", fullPath: "/v1/accounts" }),
+      retrieve(id, ...args) {
+        if (typeof id === "string") {
+          return stripeMethod67({
+            method: "GET",
+            fullPath: "/v1/accounts/{id}"
+          }).apply(this, [id, ...args]);
+        } else {
+          if (id === null || id === void 0) {
+            [].shift.apply([id, ...args]);
+          }
+          return stripeMethod67({
+            method: "GET",
+            fullPath: "/v1/account"
+          }).apply(this, [id, ...args]);
+        }
+      },
+      update: stripeMethod67({ method: "POST", fullPath: "/v1/accounts/{account}" }),
+      list: stripeMethod67({
+        method: "GET",
+        fullPath: "/v1/accounts",
+        methodType: "list"
+      }),
+      del: stripeMethod67({ method: "DELETE", fullPath: "/v1/accounts/{account}" }),
+      createExternalAccount: stripeMethod67({
+        method: "POST",
+        fullPath: "/v1/accounts/{account}/external_accounts"
+      }),
+      createLoginLink: stripeMethod67({
+        method: "POST",
+        fullPath: "/v1/accounts/{account}/login_links"
+      }),
+      createPerson: stripeMethod67({
+        method: "POST",
+        fullPath: "/v1/accounts/{account}/persons"
+      }),
+      deleteExternalAccount: stripeMethod67({
+        method: "DELETE",
+        fullPath: "/v1/accounts/{account}/external_accounts/{id}"
+      }),
+      deletePerson: stripeMethod67({
+        method: "DELETE",
+        fullPath: "/v1/accounts/{account}/persons/{person}"
+      }),
+      listCapabilities: stripeMethod67({
+        method: "GET",
+        fullPath: "/v1/accounts/{account}/capabilities",
+        methodType: "list"
+      }),
+      listExternalAccounts: stripeMethod67({
+        method: "GET",
+        fullPath: "/v1/accounts/{account}/external_accounts",
+        methodType: "list"
+      }),
+      listPersons: stripeMethod67({
+        method: "GET",
+        fullPath: "/v1/accounts/{account}/persons",
+        methodType: "list"
+      }),
+      reject: stripeMethod67({
+        method: "POST",
+        fullPath: "/v1/accounts/{account}/reject"
+      }),
+      retrieveCurrent: stripeMethod67({ method: "GET", fullPath: "/v1/account" }),
+      retrieveCapability: stripeMethod67({
+        method: "GET",
+        fullPath: "/v1/accounts/{account}/capabilities/{capability}"
+      }),
+      retrieveExternalAccount: stripeMethod67({
+        method: "GET",
+        fullPath: "/v1/accounts/{account}/external_accounts/{id}"
+      }),
+      retrievePerson: stripeMethod67({
+        method: "GET",
+        fullPath: "/v1/accounts/{account}/persons/{person}"
+      }),
+      updateCapability: stripeMethod67({
+        method: "POST",
+        fullPath: "/v1/accounts/{account}/capabilities/{capability}"
+      }),
+      updateExternalAccount: stripeMethod67({
+        method: "POST",
+        fullPath: "/v1/accounts/{account}/external_accounts/{id}"
+      }),
+      updatePerson: stripeMethod67({
+        method: "POST",
+        fullPath: "/v1/accounts/{account}/persons/{person}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/AccountLinks.js
+var stripeMethod68, AccountLinks;
+var init_AccountLinks = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/AccountLinks.js"() {
+    init_StripeResource();
+    stripeMethod68 = StripeResource.method;
+    AccountLinks = StripeResource.extend({
+      create: stripeMethod68({ method: "POST", fullPath: "/v1/account_links" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/AccountSessions.js
+var stripeMethod69, AccountSessions;
+var init_AccountSessions = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/AccountSessions.js"() {
+    init_StripeResource();
+    stripeMethod69 = StripeResource.method;
+    AccountSessions = StripeResource.extend({
+      create: stripeMethod69({ method: "POST", fullPath: "/v1/account_sessions" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ApplePayDomains.js
+var stripeMethod70, ApplePayDomains;
+var init_ApplePayDomains = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ApplePayDomains.js"() {
+    init_StripeResource();
+    stripeMethod70 = StripeResource.method;
+    ApplePayDomains = StripeResource.extend({
+      create: stripeMethod70({ method: "POST", fullPath: "/v1/apple_pay/domains" }),
+      retrieve: stripeMethod70({
+        method: "GET",
+        fullPath: "/v1/apple_pay/domains/{domain}"
+      }),
+      list: stripeMethod70({
+        method: "GET",
+        fullPath: "/v1/apple_pay/domains",
+        methodType: "list"
+      }),
+      del: stripeMethod70({
+        method: "DELETE",
+        fullPath: "/v1/apple_pay/domains/{domain}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ApplicationFees.js
+var stripeMethod71, ApplicationFees;
+var init_ApplicationFees = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ApplicationFees.js"() {
+    init_StripeResource();
+    stripeMethod71 = StripeResource.method;
+    ApplicationFees = StripeResource.extend({
+      retrieve: stripeMethod71({
+        method: "GET",
+        fullPath: "/v1/application_fees/{id}"
+      }),
+      list: stripeMethod71({
+        method: "GET",
+        fullPath: "/v1/application_fees",
+        methodType: "list"
+      }),
+      createRefund: stripeMethod71({
+        method: "POST",
+        fullPath: "/v1/application_fees/{id}/refunds"
+      }),
+      listRefunds: stripeMethod71({
+        method: "GET",
+        fullPath: "/v1/application_fees/{id}/refunds",
+        methodType: "list"
+      }),
+      retrieveRefund: stripeMethod71({
+        method: "GET",
+        fullPath: "/v1/application_fees/{fee}/refunds/{id}"
+      }),
+      updateRefund: stripeMethod71({
+        method: "POST",
+        fullPath: "/v1/application_fees/{fee}/refunds/{id}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Balance.js
+var stripeMethod72, Balance;
+var init_Balance = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Balance.js"() {
+    init_StripeResource();
+    stripeMethod72 = StripeResource.method;
+    Balance = StripeResource.extend({
+      retrieve: stripeMethod72({ method: "GET", fullPath: "/v1/balance" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/BalanceTransactions.js
+var stripeMethod73, BalanceTransactions;
+var init_BalanceTransactions = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/BalanceTransactions.js"() {
+    init_StripeResource();
+    stripeMethod73 = StripeResource.method;
+    BalanceTransactions = StripeResource.extend({
+      retrieve: stripeMethod73({
+        method: "GET",
+        fullPath: "/v1/balance_transactions/{id}"
+      }),
+      list: stripeMethod73({
+        method: "GET",
+        fullPath: "/v1/balance_transactions",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Charges.js
+var stripeMethod74, Charges;
+var init_Charges = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Charges.js"() {
+    init_StripeResource();
+    stripeMethod74 = StripeResource.method;
+    Charges = StripeResource.extend({
+      create: stripeMethod74({ method: "POST", fullPath: "/v1/charges" }),
+      retrieve: stripeMethod74({ method: "GET", fullPath: "/v1/charges/{charge}" }),
+      update: stripeMethod74({ method: "POST", fullPath: "/v1/charges/{charge}" }),
+      list: stripeMethod74({
+        method: "GET",
+        fullPath: "/v1/charges",
+        methodType: "list"
+      }),
+      capture: stripeMethod74({
+        method: "POST",
+        fullPath: "/v1/charges/{charge}/capture"
+      }),
+      search: stripeMethod74({
+        method: "GET",
+        fullPath: "/v1/charges/search",
+        methodType: "search"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ConfirmationTokens.js
+var stripeMethod75, ConfirmationTokens2;
+var init_ConfirmationTokens2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ConfirmationTokens.js"() {
+    init_StripeResource();
+    stripeMethod75 = StripeResource.method;
+    ConfirmationTokens2 = StripeResource.extend({
+      retrieve: stripeMethod75({
+        method: "GET",
+        fullPath: "/v1/confirmation_tokens/{confirmation_token}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/CountrySpecs.js
+var stripeMethod76, CountrySpecs;
+var init_CountrySpecs = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/CountrySpecs.js"() {
+    init_StripeResource();
+    stripeMethod76 = StripeResource.method;
+    CountrySpecs = StripeResource.extend({
+      retrieve: stripeMethod76({
+        method: "GET",
+        fullPath: "/v1/country_specs/{country}"
+      }),
+      list: stripeMethod76({
+        method: "GET",
+        fullPath: "/v1/country_specs",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Coupons.js
+var stripeMethod77, Coupons;
+var init_Coupons = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Coupons.js"() {
+    init_StripeResource();
+    stripeMethod77 = StripeResource.method;
+    Coupons = StripeResource.extend({
+      create: stripeMethod77({ method: "POST", fullPath: "/v1/coupons" }),
+      retrieve: stripeMethod77({ method: "GET", fullPath: "/v1/coupons/{coupon}" }),
+      update: stripeMethod77({ method: "POST", fullPath: "/v1/coupons/{coupon}" }),
+      list: stripeMethod77({
+        method: "GET",
+        fullPath: "/v1/coupons",
+        methodType: "list"
+      }),
+      del: stripeMethod77({ method: "DELETE", fullPath: "/v1/coupons/{coupon}" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/CreditNotes.js
+var stripeMethod78, CreditNotes;
+var init_CreditNotes = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/CreditNotes.js"() {
+    init_StripeResource();
+    stripeMethod78 = StripeResource.method;
+    CreditNotes = StripeResource.extend({
+      create: stripeMethod78({ method: "POST", fullPath: "/v1/credit_notes" }),
+      retrieve: stripeMethod78({ method: "GET", fullPath: "/v1/credit_notes/{id}" }),
+      update: stripeMethod78({ method: "POST", fullPath: "/v1/credit_notes/{id}" }),
+      list: stripeMethod78({
+        method: "GET",
+        fullPath: "/v1/credit_notes",
+        methodType: "list"
+      }),
+      listLineItems: stripeMethod78({
+        method: "GET",
+        fullPath: "/v1/credit_notes/{credit_note}/lines",
+        methodType: "list"
+      }),
+      listPreviewLineItems: stripeMethod78({
+        method: "GET",
+        fullPath: "/v1/credit_notes/preview/lines",
+        methodType: "list"
+      }),
+      preview: stripeMethod78({ method: "GET", fullPath: "/v1/credit_notes/preview" }),
+      voidCreditNote: stripeMethod78({
+        method: "POST",
+        fullPath: "/v1/credit_notes/{id}/void"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/CustomerSessions.js
+var stripeMethod79, CustomerSessions;
+var init_CustomerSessions = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/CustomerSessions.js"() {
+    init_StripeResource();
+    stripeMethod79 = StripeResource.method;
+    CustomerSessions = StripeResource.extend({
+      create: stripeMethod79({ method: "POST", fullPath: "/v1/customer_sessions" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Customers.js
+var stripeMethod80, Customers2;
+var init_Customers2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Customers.js"() {
+    init_StripeResource();
+    stripeMethod80 = StripeResource.method;
+    Customers2 = StripeResource.extend({
+      create: stripeMethod80({ method: "POST", fullPath: "/v1/customers" }),
+      retrieve: stripeMethod80({ method: "GET", fullPath: "/v1/customers/{customer}" }),
+      update: stripeMethod80({ method: "POST", fullPath: "/v1/customers/{customer}" }),
+      list: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers",
+        methodType: "list"
+      }),
+      del: stripeMethod80({ method: "DELETE", fullPath: "/v1/customers/{customer}" }),
+      createBalanceTransaction: stripeMethod80({
+        method: "POST",
+        fullPath: "/v1/customers/{customer}/balance_transactions"
+      }),
+      createFundingInstructions: stripeMethod80({
+        method: "POST",
+        fullPath: "/v1/customers/{customer}/funding_instructions"
+      }),
+      createSource: stripeMethod80({
+        method: "POST",
+        fullPath: "/v1/customers/{customer}/sources"
+      }),
+      createTaxId: stripeMethod80({
+        method: "POST",
+        fullPath: "/v1/customers/{customer}/tax_ids"
+      }),
+      deleteDiscount: stripeMethod80({
+        method: "DELETE",
+        fullPath: "/v1/customers/{customer}/discount"
+      }),
+      deleteSource: stripeMethod80({
+        method: "DELETE",
+        fullPath: "/v1/customers/{customer}/sources/{id}"
+      }),
+      deleteTaxId: stripeMethod80({
+        method: "DELETE",
+        fullPath: "/v1/customers/{customer}/tax_ids/{id}"
+      }),
+      listBalanceTransactions: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/balance_transactions",
+        methodType: "list"
+      }),
+      listCashBalanceTransactions: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/cash_balance_transactions",
+        methodType: "list"
+      }),
+      listPaymentMethods: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/payment_methods",
+        methodType: "list"
+      }),
+      listSources: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/sources",
+        methodType: "list"
+      }),
+      listTaxIds: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/tax_ids",
+        methodType: "list"
+      }),
+      retrieveBalanceTransaction: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/balance_transactions/{transaction}"
+      }),
+      retrieveCashBalance: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/cash_balance"
+      }),
+      retrieveCashBalanceTransaction: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/cash_balance_transactions/{transaction}"
+      }),
+      retrievePaymentMethod: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/payment_methods/{payment_method}"
+      }),
+      retrieveSource: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/sources/{id}"
+      }),
+      retrieveTaxId: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/{customer}/tax_ids/{id}"
+      }),
+      search: stripeMethod80({
+        method: "GET",
+        fullPath: "/v1/customers/search",
+        methodType: "search"
+      }),
+      updateBalanceTransaction: stripeMethod80({
+        method: "POST",
+        fullPath: "/v1/customers/{customer}/balance_transactions/{transaction}"
+      }),
+      updateCashBalance: stripeMethod80({
+        method: "POST",
+        fullPath: "/v1/customers/{customer}/cash_balance"
+      }),
+      updateSource: stripeMethod80({
+        method: "POST",
+        fullPath: "/v1/customers/{customer}/sources/{id}"
+      }),
+      verifySource: stripeMethod80({
+        method: "POST",
+        fullPath: "/v1/customers/{customer}/sources/{id}/verify"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Disputes.js
+var stripeMethod81, Disputes2;
+var init_Disputes2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Disputes.js"() {
+    init_StripeResource();
+    stripeMethod81 = StripeResource.method;
+    Disputes2 = StripeResource.extend({
+      retrieve: stripeMethod81({ method: "GET", fullPath: "/v1/disputes/{dispute}" }),
+      update: stripeMethod81({ method: "POST", fullPath: "/v1/disputes/{dispute}" }),
+      list: stripeMethod81({
+        method: "GET",
+        fullPath: "/v1/disputes",
+        methodType: "list"
+      }),
+      close: stripeMethod81({
+        method: "POST",
+        fullPath: "/v1/disputes/{dispute}/close"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/EphemeralKeys.js
+var stripeMethod82, EphemeralKeys;
+var init_EphemeralKeys = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/EphemeralKeys.js"() {
+    init_StripeResource();
+    stripeMethod82 = StripeResource.method;
+    EphemeralKeys = StripeResource.extend({
+      create: stripeMethod82({
+        method: "POST",
+        fullPath: "/v1/ephemeral_keys",
+        validator: (data, options) => {
+          if (!options.headers || !options.headers["Stripe-Version"]) {
+            throw new Error("Passing apiVersion in a separate options hash is required to create an ephemeral key. See https://stripe.com/docs/api/versioning?lang=node");
+          }
+        }
+      }),
+      del: stripeMethod82({ method: "DELETE", fullPath: "/v1/ephemeral_keys/{key}" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Events.js
+var stripeMethod83, Events;
+var init_Events = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Events.js"() {
+    init_StripeResource();
+    stripeMethod83 = StripeResource.method;
+    Events = StripeResource.extend({
+      retrieve: stripeMethod83({ method: "GET", fullPath: "/v1/events/{id}" }),
+      list: stripeMethod83({
+        method: "GET",
+        fullPath: "/v1/events",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ExchangeRates.js
+var stripeMethod84, ExchangeRates;
+var init_ExchangeRates = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ExchangeRates.js"() {
+    init_StripeResource();
+    stripeMethod84 = StripeResource.method;
+    ExchangeRates = StripeResource.extend({
+      retrieve: stripeMethod84({
+        method: "GET",
+        fullPath: "/v1/exchange_rates/{rate_id}"
+      }),
+      list: stripeMethod84({
+        method: "GET",
+        fullPath: "/v1/exchange_rates",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/FileLinks.js
+var stripeMethod85, FileLinks;
+var init_FileLinks = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/FileLinks.js"() {
+    init_StripeResource();
+    stripeMethod85 = StripeResource.method;
+    FileLinks = StripeResource.extend({
+      create: stripeMethod85({ method: "POST", fullPath: "/v1/file_links" }),
+      retrieve: stripeMethod85({ method: "GET", fullPath: "/v1/file_links/{link}" }),
+      update: stripeMethod85({ method: "POST", fullPath: "/v1/file_links/{link}" }),
+      list: stripeMethod85({
+        method: "GET",
+        fullPath: "/v1/file_links",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/multipart.js
+function multipartRequestDataProcessor(method, data, headers, callback) {
+  data = data || {};
+  if (method !== "POST") {
+    return callback(null, stringifyRequestData(data));
+  }
+  this._stripe._platformFunctions.tryBufferData(data).then((bufferedData) => {
+    const buffer = multipartDataGenerator(method, bufferedData, headers);
+    return callback(null, buffer);
+  }).catch((err) => callback(err, null));
+}
+var multipartDataGenerator;
+var init_multipart = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/multipart.js"() {
+    init_utils();
+    multipartDataGenerator = (method, data, headers) => {
+      const segno = (Math.round(Math.random() * 1e16) + Math.round(Math.random() * 1e16)).toString();
+      headers["Content-Type"] = `multipart/form-data; boundary=${segno}`;
+      const textEncoder = new TextEncoder();
+      let buffer = new Uint8Array(0);
+      const endBuffer = textEncoder.encode("\r\n");
+      function push(l) {
+        const prevBuffer = buffer;
+        const newBuffer = l instanceof Uint8Array ? l : new Uint8Array(textEncoder.encode(l));
+        buffer = new Uint8Array(prevBuffer.length + newBuffer.length + 2);
+        buffer.set(prevBuffer);
+        buffer.set(newBuffer, prevBuffer.length);
+        buffer.set(endBuffer, buffer.length - 2);
+      }
+      function q(s) {
+        return `"${s.replace(/"|"/g, "%22").replace(/\r\n|\r|\n/g, " ")}"`;
+      }
+      const flattenedData = flattenAndStringify(data);
+      for (const k in flattenedData) {
+        if (!Object.prototype.hasOwnProperty.call(flattenedData, k)) {
+          continue;
+        }
+        const v = flattenedData[k];
+        push(`--${segno}`);
+        if (Object.prototype.hasOwnProperty.call(v, "data")) {
+          const typedEntry = v;
+          push(`Content-Disposition: form-data; name=${q(k)}; filename=${q(typedEntry.name || "blob")}`);
+          push(`Content-Type: ${typedEntry.type || "application/octet-stream"}`);
+          push("");
+          push(typedEntry.data);
+        } else {
+          push(`Content-Disposition: form-data; name=${q(k)}`);
+          push("");
+          push(v);
+        }
+      }
+      push(`--${segno}--`);
+      return buffer;
+    };
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Files.js
+var stripeMethod86, Files;
+var init_Files = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Files.js"() {
+    init_multipart();
+    init_StripeResource();
+    stripeMethod86 = StripeResource.method;
+    Files = StripeResource.extend({
+      create: stripeMethod86({
+        method: "POST",
+        fullPath: "/v1/files",
+        headers: {
+          "Content-Type": "multipart/form-data"
+        },
+        host: "files.stripe.com"
+      }),
+      retrieve: stripeMethod86({ method: "GET", fullPath: "/v1/files/{file}" }),
+      list: stripeMethod86({
+        method: "GET",
+        fullPath: "/v1/files",
+        methodType: "list"
+      }),
+      requestDataProcessor: multipartRequestDataProcessor
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/InvoiceItems.js
+var stripeMethod87, InvoiceItems;
+var init_InvoiceItems = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/InvoiceItems.js"() {
+    init_StripeResource();
+    stripeMethod87 = StripeResource.method;
+    InvoiceItems = StripeResource.extend({
+      create: stripeMethod87({ method: "POST", fullPath: "/v1/invoiceitems" }),
+      retrieve: stripeMethod87({
+        method: "GET",
+        fullPath: "/v1/invoiceitems/{invoiceitem}"
+      }),
+      update: stripeMethod87({
+        method: "POST",
+        fullPath: "/v1/invoiceitems/{invoiceitem}"
+      }),
+      list: stripeMethod87({
+        method: "GET",
+        fullPath: "/v1/invoiceitems",
+        methodType: "list"
+      }),
+      del: stripeMethod87({
+        method: "DELETE",
+        fullPath: "/v1/invoiceitems/{invoiceitem}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/InvoiceRenderingTemplates.js
+var stripeMethod88, InvoiceRenderingTemplates;
+var init_InvoiceRenderingTemplates = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/InvoiceRenderingTemplates.js"() {
+    init_StripeResource();
+    stripeMethod88 = StripeResource.method;
+    InvoiceRenderingTemplates = StripeResource.extend({
+      retrieve: stripeMethod88({
+        method: "GET",
+        fullPath: "/v1/invoice_rendering_templates/{template}"
+      }),
+      list: stripeMethod88({
+        method: "GET",
+        fullPath: "/v1/invoice_rendering_templates",
+        methodType: "list"
+      }),
+      archive: stripeMethod88({
+        method: "POST",
+        fullPath: "/v1/invoice_rendering_templates/{template}/archive"
+      }),
+      unarchive: stripeMethod88({
+        method: "POST",
+        fullPath: "/v1/invoice_rendering_templates/{template}/unarchive"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Invoices.js
+var stripeMethod89, Invoices;
+var init_Invoices = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Invoices.js"() {
+    init_StripeResource();
+    stripeMethod89 = StripeResource.method;
+    Invoices = StripeResource.extend({
+      create: stripeMethod89({ method: "POST", fullPath: "/v1/invoices" }),
+      retrieve: stripeMethod89({ method: "GET", fullPath: "/v1/invoices/{invoice}" }),
+      update: stripeMethod89({ method: "POST", fullPath: "/v1/invoices/{invoice}" }),
+      list: stripeMethod89({
+        method: "GET",
+        fullPath: "/v1/invoices",
+        methodType: "list"
+      }),
+      del: stripeMethod89({ method: "DELETE", fullPath: "/v1/invoices/{invoice}" }),
+      addLines: stripeMethod89({
+        method: "POST",
+        fullPath: "/v1/invoices/{invoice}/add_lines"
+      }),
+      createPreview: stripeMethod89({
+        method: "POST",
+        fullPath: "/v1/invoices/create_preview"
+      }),
+      finalizeInvoice: stripeMethod89({
+        method: "POST",
+        fullPath: "/v1/invoices/{invoice}/finalize"
+      }),
+      listLineItems: stripeMethod89({
+        method: "GET",
+        fullPath: "/v1/invoices/{invoice}/lines",
+        methodType: "list"
+      }),
+      listUpcomingLines: stripeMethod89({
+        method: "GET",
+        fullPath: "/v1/invoices/upcoming/lines",
+        methodType: "list"
+      }),
+      markUncollectible: stripeMethod89({
+        method: "POST",
+        fullPath: "/v1/invoices/{invoice}/mark_uncollectible"
+      }),
+      pay: stripeMethod89({ method: "POST", fullPath: "/v1/invoices/{invoice}/pay" }),
+      removeLines: stripeMethod89({
+        method: "POST",
+        fullPath: "/v1/invoices/{invoice}/remove_lines"
+      }),
+      retrieveUpcoming: stripeMethod89({
+        method: "GET",
+        fullPath: "/v1/invoices/upcoming"
+      }),
+      search: stripeMethod89({
+        method: "GET",
+        fullPath: "/v1/invoices/search",
+        methodType: "search"
+      }),
+      sendInvoice: stripeMethod89({
+        method: "POST",
+        fullPath: "/v1/invoices/{invoice}/send"
+      }),
+      updateLines: stripeMethod89({
+        method: "POST",
+        fullPath: "/v1/invoices/{invoice}/update_lines"
+      }),
+      updateLineItem: stripeMethod89({
+        method: "POST",
+        fullPath: "/v1/invoices/{invoice}/lines/{line_item_id}"
+      }),
+      voidInvoice: stripeMethod89({
+        method: "POST",
+        fullPath: "/v1/invoices/{invoice}/void"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Mandates.js
+var stripeMethod90, Mandates;
+var init_Mandates = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Mandates.js"() {
+    init_StripeResource();
+    stripeMethod90 = StripeResource.method;
+    Mandates = StripeResource.extend({
+      retrieve: stripeMethod90({ method: "GET", fullPath: "/v1/mandates/{mandate}" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/OAuth.js
+var stripeMethod91, oAuthHost, OAuth;
+var init_OAuth = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/OAuth.js"() {
+    "use strict";
+    init_StripeResource();
+    init_utils();
+    stripeMethod91 = StripeResource.method;
+    oAuthHost = "connect.stripe.com";
+    OAuth = StripeResource.extend({
+      basePath: "/",
+      authorizeUrl(params, options) {
+        params = params || {};
+        options = options || {};
+        let path2 = "oauth/authorize";
+        if (options.express) {
+          path2 = `express/${path2}`;
+        }
+        if (!params.response_type) {
+          params.response_type = "code";
+        }
+        if (!params.client_id) {
+          params.client_id = this._stripe.getClientId();
+        }
+        if (!params.scope) {
+          params.scope = "read_write";
+        }
+        return `https://${oAuthHost}/${path2}?${stringifyRequestData(params)}`;
+      },
+      token: stripeMethod91({
+        method: "POST",
+        path: "oauth/token",
+        host: oAuthHost
+      }),
+      deauthorize(spec, ...args) {
+        if (!spec.client_id) {
+          spec.client_id = this._stripe.getClientId();
+        }
+        return stripeMethod91({
+          method: "POST",
+          path: "oauth/deauthorize",
+          host: oAuthHost
+        }).apply(this, [spec, ...args]);
+      }
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentIntents.js
+var stripeMethod92, PaymentIntents;
+var init_PaymentIntents = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentIntents.js"() {
+    init_StripeResource();
+    stripeMethod92 = StripeResource.method;
+    PaymentIntents = StripeResource.extend({
+      create: stripeMethod92({ method: "POST", fullPath: "/v1/payment_intents" }),
+      retrieve: stripeMethod92({
+        method: "GET",
+        fullPath: "/v1/payment_intents/{intent}"
+      }),
+      update: stripeMethod92({
+        method: "POST",
+        fullPath: "/v1/payment_intents/{intent}"
+      }),
+      list: stripeMethod92({
+        method: "GET",
+        fullPath: "/v1/payment_intents",
+        methodType: "list"
+      }),
+      applyCustomerBalance: stripeMethod92({
+        method: "POST",
+        fullPath: "/v1/payment_intents/{intent}/apply_customer_balance"
+      }),
+      cancel: stripeMethod92({
+        method: "POST",
+        fullPath: "/v1/payment_intents/{intent}/cancel"
+      }),
+      capture: stripeMethod92({
+        method: "POST",
+        fullPath: "/v1/payment_intents/{intent}/capture"
+      }),
+      confirm: stripeMethod92({
+        method: "POST",
+        fullPath: "/v1/payment_intents/{intent}/confirm"
+      }),
+      incrementAuthorization: stripeMethod92({
+        method: "POST",
+        fullPath: "/v1/payment_intents/{intent}/increment_authorization"
+      }),
+      search: stripeMethod92({
+        method: "GET",
+        fullPath: "/v1/payment_intents/search",
+        methodType: "search"
+      }),
+      verifyMicrodeposits: stripeMethod92({
+        method: "POST",
+        fullPath: "/v1/payment_intents/{intent}/verify_microdeposits"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentLinks.js
+var stripeMethod93, PaymentLinks;
+var init_PaymentLinks = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentLinks.js"() {
+    init_StripeResource();
+    stripeMethod93 = StripeResource.method;
+    PaymentLinks = StripeResource.extend({
+      create: stripeMethod93({ method: "POST", fullPath: "/v1/payment_links" }),
+      retrieve: stripeMethod93({
+        method: "GET",
+        fullPath: "/v1/payment_links/{payment_link}"
+      }),
+      update: stripeMethod93({
+        method: "POST",
+        fullPath: "/v1/payment_links/{payment_link}"
+      }),
+      list: stripeMethod93({
+        method: "GET",
+        fullPath: "/v1/payment_links",
+        methodType: "list"
+      }),
+      listLineItems: stripeMethod93({
+        method: "GET",
+        fullPath: "/v1/payment_links/{payment_link}/line_items",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentMethodConfigurations.js
+var stripeMethod94, PaymentMethodConfigurations;
+var init_PaymentMethodConfigurations = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentMethodConfigurations.js"() {
+    init_StripeResource();
+    stripeMethod94 = StripeResource.method;
+    PaymentMethodConfigurations = StripeResource.extend({
+      create: stripeMethod94({
+        method: "POST",
+        fullPath: "/v1/payment_method_configurations"
+      }),
+      retrieve: stripeMethod94({
+        method: "GET",
+        fullPath: "/v1/payment_method_configurations/{configuration}"
+      }),
+      update: stripeMethod94({
+        method: "POST",
+        fullPath: "/v1/payment_method_configurations/{configuration}"
+      }),
+      list: stripeMethod94({
+        method: "GET",
+        fullPath: "/v1/payment_method_configurations",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentMethodDomains.js
+var stripeMethod95, PaymentMethodDomains;
+var init_PaymentMethodDomains = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentMethodDomains.js"() {
+    init_StripeResource();
+    stripeMethod95 = StripeResource.method;
+    PaymentMethodDomains = StripeResource.extend({
+      create: stripeMethod95({
+        method: "POST",
+        fullPath: "/v1/payment_method_domains"
+      }),
+      retrieve: stripeMethod95({
+        method: "GET",
+        fullPath: "/v1/payment_method_domains/{payment_method_domain}"
+      }),
+      update: stripeMethod95({
+        method: "POST",
+        fullPath: "/v1/payment_method_domains/{payment_method_domain}"
+      }),
+      list: stripeMethod95({
+        method: "GET",
+        fullPath: "/v1/payment_method_domains",
+        methodType: "list"
+      }),
+      validate: stripeMethod95({
+        method: "POST",
+        fullPath: "/v1/payment_method_domains/{payment_method_domain}/validate"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentMethods.js
+var stripeMethod96, PaymentMethods;
+var init_PaymentMethods = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PaymentMethods.js"() {
+    init_StripeResource();
+    stripeMethod96 = StripeResource.method;
+    PaymentMethods = StripeResource.extend({
+      create: stripeMethod96({ method: "POST", fullPath: "/v1/payment_methods" }),
+      retrieve: stripeMethod96({
+        method: "GET",
+        fullPath: "/v1/payment_methods/{payment_method}"
+      }),
+      update: stripeMethod96({
+        method: "POST",
+        fullPath: "/v1/payment_methods/{payment_method}"
+      }),
+      list: stripeMethod96({
+        method: "GET",
+        fullPath: "/v1/payment_methods",
+        methodType: "list"
+      }),
+      attach: stripeMethod96({
+        method: "POST",
+        fullPath: "/v1/payment_methods/{payment_method}/attach"
+      }),
+      detach: stripeMethod96({
+        method: "POST",
+        fullPath: "/v1/payment_methods/{payment_method}/detach"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Payouts.js
+var stripeMethod97, Payouts;
+var init_Payouts = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Payouts.js"() {
+    init_StripeResource();
+    stripeMethod97 = StripeResource.method;
+    Payouts = StripeResource.extend({
+      create: stripeMethod97({ method: "POST", fullPath: "/v1/payouts" }),
+      retrieve: stripeMethod97({ method: "GET", fullPath: "/v1/payouts/{payout}" }),
+      update: stripeMethod97({ method: "POST", fullPath: "/v1/payouts/{payout}" }),
+      list: stripeMethod97({
+        method: "GET",
+        fullPath: "/v1/payouts",
+        methodType: "list"
+      }),
+      cancel: stripeMethod97({
+        method: "POST",
+        fullPath: "/v1/payouts/{payout}/cancel"
+      }),
+      reverse: stripeMethod97({
+        method: "POST",
+        fullPath: "/v1/payouts/{payout}/reverse"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Plans.js
+var stripeMethod98, Plans;
+var init_Plans = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Plans.js"() {
+    init_StripeResource();
+    stripeMethod98 = StripeResource.method;
+    Plans = StripeResource.extend({
+      create: stripeMethod98({ method: "POST", fullPath: "/v1/plans" }),
+      retrieve: stripeMethod98({ method: "GET", fullPath: "/v1/plans/{plan}" }),
+      update: stripeMethod98({ method: "POST", fullPath: "/v1/plans/{plan}" }),
+      list: stripeMethod98({
+        method: "GET",
+        fullPath: "/v1/plans",
+        methodType: "list"
+      }),
+      del: stripeMethod98({ method: "DELETE", fullPath: "/v1/plans/{plan}" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Prices.js
+var stripeMethod99, Prices;
+var init_Prices = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Prices.js"() {
+    init_StripeResource();
+    stripeMethod99 = StripeResource.method;
+    Prices = StripeResource.extend({
+      create: stripeMethod99({ method: "POST", fullPath: "/v1/prices" }),
+      retrieve: stripeMethod99({ method: "GET", fullPath: "/v1/prices/{price}" }),
+      update: stripeMethod99({ method: "POST", fullPath: "/v1/prices/{price}" }),
+      list: stripeMethod99({
+        method: "GET",
+        fullPath: "/v1/prices",
+        methodType: "list"
+      }),
+      search: stripeMethod99({
+        method: "GET",
+        fullPath: "/v1/prices/search",
+        methodType: "search"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Products.js
+var stripeMethod100, Products2;
+var init_Products2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Products.js"() {
+    init_StripeResource();
+    stripeMethod100 = StripeResource.method;
+    Products2 = StripeResource.extend({
+      create: stripeMethod100({ method: "POST", fullPath: "/v1/products" }),
+      retrieve: stripeMethod100({ method: "GET", fullPath: "/v1/products/{id}" }),
+      update: stripeMethod100({ method: "POST", fullPath: "/v1/products/{id}" }),
+      list: stripeMethod100({
+        method: "GET",
+        fullPath: "/v1/products",
+        methodType: "list"
+      }),
+      del: stripeMethod100({ method: "DELETE", fullPath: "/v1/products/{id}" }),
+      createFeature: stripeMethod100({
+        method: "POST",
+        fullPath: "/v1/products/{product}/features"
+      }),
+      deleteFeature: stripeMethod100({
+        method: "DELETE",
+        fullPath: "/v1/products/{product}/features/{id}"
+      }),
+      listFeatures: stripeMethod100({
+        method: "GET",
+        fullPath: "/v1/products/{product}/features",
+        methodType: "list"
+      }),
+      retrieveFeature: stripeMethod100({
+        method: "GET",
+        fullPath: "/v1/products/{product}/features/{id}"
+      }),
+      search: stripeMethod100({
+        method: "GET",
+        fullPath: "/v1/products/search",
+        methodType: "search"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PromotionCodes.js
+var stripeMethod101, PromotionCodes;
+var init_PromotionCodes = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/PromotionCodes.js"() {
+    init_StripeResource();
+    stripeMethod101 = StripeResource.method;
+    PromotionCodes = StripeResource.extend({
+      create: stripeMethod101({ method: "POST", fullPath: "/v1/promotion_codes" }),
+      retrieve: stripeMethod101({
+        method: "GET",
+        fullPath: "/v1/promotion_codes/{promotion_code}"
+      }),
+      update: stripeMethod101({
+        method: "POST",
+        fullPath: "/v1/promotion_codes/{promotion_code}"
+      }),
+      list: stripeMethod101({
+        method: "GET",
+        fullPath: "/v1/promotion_codes",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Quotes.js
+var stripeMethod102, Quotes;
+var init_Quotes = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Quotes.js"() {
+    init_StripeResource();
+    stripeMethod102 = StripeResource.method;
+    Quotes = StripeResource.extend({
+      create: stripeMethod102({ method: "POST", fullPath: "/v1/quotes" }),
+      retrieve: stripeMethod102({ method: "GET", fullPath: "/v1/quotes/{quote}" }),
+      update: stripeMethod102({ method: "POST", fullPath: "/v1/quotes/{quote}" }),
+      list: stripeMethod102({
+        method: "GET",
+        fullPath: "/v1/quotes",
+        methodType: "list"
+      }),
+      accept: stripeMethod102({ method: "POST", fullPath: "/v1/quotes/{quote}/accept" }),
+      cancel: stripeMethod102({ method: "POST", fullPath: "/v1/quotes/{quote}/cancel" }),
+      finalizeQuote: stripeMethod102({
+        method: "POST",
+        fullPath: "/v1/quotes/{quote}/finalize"
+      }),
+      listComputedUpfrontLineItems: stripeMethod102({
+        method: "GET",
+        fullPath: "/v1/quotes/{quote}/computed_upfront_line_items",
+        methodType: "list"
+      }),
+      listLineItems: stripeMethod102({
+        method: "GET",
+        fullPath: "/v1/quotes/{quote}/line_items",
+        methodType: "list"
+      }),
+      pdf: stripeMethod102({
+        method: "GET",
+        fullPath: "/v1/quotes/{quote}/pdf",
+        host: "files.stripe.com",
+        streaming: true
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Refunds.js
+var stripeMethod103, Refunds2;
+var init_Refunds2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Refunds.js"() {
+    init_StripeResource();
+    stripeMethod103 = StripeResource.method;
+    Refunds2 = StripeResource.extend({
+      create: stripeMethod103({ method: "POST", fullPath: "/v1/refunds" }),
+      retrieve: stripeMethod103({ method: "GET", fullPath: "/v1/refunds/{refund}" }),
+      update: stripeMethod103({ method: "POST", fullPath: "/v1/refunds/{refund}" }),
+      list: stripeMethod103({
+        method: "GET",
+        fullPath: "/v1/refunds",
+        methodType: "list"
+      }),
+      cancel: stripeMethod103({
+        method: "POST",
+        fullPath: "/v1/refunds/{refund}/cancel"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Reviews.js
+var stripeMethod104, Reviews;
+var init_Reviews = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Reviews.js"() {
+    init_StripeResource();
+    stripeMethod104 = StripeResource.method;
+    Reviews = StripeResource.extend({
+      retrieve: stripeMethod104({ method: "GET", fullPath: "/v1/reviews/{review}" }),
+      list: stripeMethod104({
+        method: "GET",
+        fullPath: "/v1/reviews",
+        methodType: "list"
+      }),
+      approve: stripeMethod104({
+        method: "POST",
+        fullPath: "/v1/reviews/{review}/approve"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/SetupAttempts.js
+var stripeMethod105, SetupAttempts;
+var init_SetupAttempts = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/SetupAttempts.js"() {
+    init_StripeResource();
+    stripeMethod105 = StripeResource.method;
+    SetupAttempts = StripeResource.extend({
+      list: stripeMethod105({
+        method: "GET",
+        fullPath: "/v1/setup_attempts",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/SetupIntents.js
+var stripeMethod106, SetupIntents;
+var init_SetupIntents = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/SetupIntents.js"() {
+    init_StripeResource();
+    stripeMethod106 = StripeResource.method;
+    SetupIntents = StripeResource.extend({
+      create: stripeMethod106({ method: "POST", fullPath: "/v1/setup_intents" }),
+      retrieve: stripeMethod106({
+        method: "GET",
+        fullPath: "/v1/setup_intents/{intent}"
+      }),
+      update: stripeMethod106({
+        method: "POST",
+        fullPath: "/v1/setup_intents/{intent}"
+      }),
+      list: stripeMethod106({
+        method: "GET",
+        fullPath: "/v1/setup_intents",
+        methodType: "list"
+      }),
+      cancel: stripeMethod106({
+        method: "POST",
+        fullPath: "/v1/setup_intents/{intent}/cancel"
+      }),
+      confirm: stripeMethod106({
+        method: "POST",
+        fullPath: "/v1/setup_intents/{intent}/confirm"
+      }),
+      verifyMicrodeposits: stripeMethod106({
+        method: "POST",
+        fullPath: "/v1/setup_intents/{intent}/verify_microdeposits"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ShippingRates.js
+var stripeMethod107, ShippingRates;
+var init_ShippingRates = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/ShippingRates.js"() {
+    init_StripeResource();
+    stripeMethod107 = StripeResource.method;
+    ShippingRates = StripeResource.extend({
+      create: stripeMethod107({ method: "POST", fullPath: "/v1/shipping_rates" }),
+      retrieve: stripeMethod107({
+        method: "GET",
+        fullPath: "/v1/shipping_rates/{shipping_rate_token}"
+      }),
+      update: stripeMethod107({
+        method: "POST",
+        fullPath: "/v1/shipping_rates/{shipping_rate_token}"
+      }),
+      list: stripeMethod107({
+        method: "GET",
+        fullPath: "/v1/shipping_rates",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Sources.js
+var stripeMethod108, Sources;
+var init_Sources = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Sources.js"() {
+    init_StripeResource();
+    stripeMethod108 = StripeResource.method;
+    Sources = StripeResource.extend({
+      create: stripeMethod108({ method: "POST", fullPath: "/v1/sources" }),
+      retrieve: stripeMethod108({ method: "GET", fullPath: "/v1/sources/{source}" }),
+      update: stripeMethod108({ method: "POST", fullPath: "/v1/sources/{source}" }),
+      listSourceTransactions: stripeMethod108({
+        method: "GET",
+        fullPath: "/v1/sources/{source}/source_transactions",
+        methodType: "list"
+      }),
+      verify: stripeMethod108({
+        method: "POST",
+        fullPath: "/v1/sources/{source}/verify"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/SubscriptionItems.js
+var stripeMethod109, SubscriptionItems;
+var init_SubscriptionItems = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/SubscriptionItems.js"() {
+    init_StripeResource();
+    stripeMethod109 = StripeResource.method;
+    SubscriptionItems = StripeResource.extend({
+      create: stripeMethod109({ method: "POST", fullPath: "/v1/subscription_items" }),
+      retrieve: stripeMethod109({
+        method: "GET",
+        fullPath: "/v1/subscription_items/{item}"
+      }),
+      update: stripeMethod109({
+        method: "POST",
+        fullPath: "/v1/subscription_items/{item}"
+      }),
+      list: stripeMethod109({
+        method: "GET",
+        fullPath: "/v1/subscription_items",
+        methodType: "list"
+      }),
+      del: stripeMethod109({
+        method: "DELETE",
+        fullPath: "/v1/subscription_items/{item}"
+      }),
+      createUsageRecord: stripeMethod109({
+        method: "POST",
+        fullPath: "/v1/subscription_items/{subscription_item}/usage_records"
+      }),
+      listUsageRecordSummaries: stripeMethod109({
+        method: "GET",
+        fullPath: "/v1/subscription_items/{subscription_item}/usage_record_summaries",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/SubscriptionSchedules.js
+var stripeMethod110, SubscriptionSchedules;
+var init_SubscriptionSchedules = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/SubscriptionSchedules.js"() {
+    init_StripeResource();
+    stripeMethod110 = StripeResource.method;
+    SubscriptionSchedules = StripeResource.extend({
+      create: stripeMethod110({
+        method: "POST",
+        fullPath: "/v1/subscription_schedules"
+      }),
+      retrieve: stripeMethod110({
+        method: "GET",
+        fullPath: "/v1/subscription_schedules/{schedule}"
+      }),
+      update: stripeMethod110({
+        method: "POST",
+        fullPath: "/v1/subscription_schedules/{schedule}"
+      }),
+      list: stripeMethod110({
+        method: "GET",
+        fullPath: "/v1/subscription_schedules",
+        methodType: "list"
+      }),
+      cancel: stripeMethod110({
+        method: "POST",
+        fullPath: "/v1/subscription_schedules/{schedule}/cancel"
+      }),
+      release: stripeMethod110({
+        method: "POST",
+        fullPath: "/v1/subscription_schedules/{schedule}/release"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Subscriptions.js
+var stripeMethod111, Subscriptions;
+var init_Subscriptions = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Subscriptions.js"() {
+    init_StripeResource();
+    stripeMethod111 = StripeResource.method;
+    Subscriptions = StripeResource.extend({
+      create: stripeMethod111({ method: "POST", fullPath: "/v1/subscriptions" }),
+      retrieve: stripeMethod111({
+        method: "GET",
+        fullPath: "/v1/subscriptions/{subscription_exposed_id}"
+      }),
+      update: stripeMethod111({
+        method: "POST",
+        fullPath: "/v1/subscriptions/{subscription_exposed_id}"
+      }),
+      list: stripeMethod111({
+        method: "GET",
+        fullPath: "/v1/subscriptions",
+        methodType: "list"
+      }),
+      cancel: stripeMethod111({
+        method: "DELETE",
+        fullPath: "/v1/subscriptions/{subscription_exposed_id}"
+      }),
+      deleteDiscount: stripeMethod111({
+        method: "DELETE",
+        fullPath: "/v1/subscriptions/{subscription_exposed_id}/discount"
+      }),
+      resume: stripeMethod111({
+        method: "POST",
+        fullPath: "/v1/subscriptions/{subscription}/resume"
+      }),
+      search: stripeMethod111({
+        method: "GET",
+        fullPath: "/v1/subscriptions/search",
+        methodType: "search"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TaxCodes.js
+var stripeMethod112, TaxCodes;
+var init_TaxCodes = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TaxCodes.js"() {
+    init_StripeResource();
+    stripeMethod112 = StripeResource.method;
+    TaxCodes = StripeResource.extend({
+      retrieve: stripeMethod112({ method: "GET", fullPath: "/v1/tax_codes/{id}" }),
+      list: stripeMethod112({
+        method: "GET",
+        fullPath: "/v1/tax_codes",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TaxIds.js
+var stripeMethod113, TaxIds;
+var init_TaxIds = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TaxIds.js"() {
+    init_StripeResource();
+    stripeMethod113 = StripeResource.method;
+    TaxIds = StripeResource.extend({
+      create: stripeMethod113({ method: "POST", fullPath: "/v1/tax_ids" }),
+      retrieve: stripeMethod113({ method: "GET", fullPath: "/v1/tax_ids/{id}" }),
+      list: stripeMethod113({
+        method: "GET",
+        fullPath: "/v1/tax_ids",
+        methodType: "list"
+      }),
+      del: stripeMethod113({ method: "DELETE", fullPath: "/v1/tax_ids/{id}" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TaxRates.js
+var stripeMethod114, TaxRates;
+var init_TaxRates = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/TaxRates.js"() {
+    init_StripeResource();
+    stripeMethod114 = StripeResource.method;
+    TaxRates = StripeResource.extend({
+      create: stripeMethod114({ method: "POST", fullPath: "/v1/tax_rates" }),
+      retrieve: stripeMethod114({ method: "GET", fullPath: "/v1/tax_rates/{tax_rate}" }),
+      update: stripeMethod114({ method: "POST", fullPath: "/v1/tax_rates/{tax_rate}" }),
+      list: stripeMethod114({
+        method: "GET",
+        fullPath: "/v1/tax_rates",
+        methodType: "list"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tokens.js
+var stripeMethod115, Tokens2;
+var init_Tokens2 = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Tokens.js"() {
+    init_StripeResource();
+    stripeMethod115 = StripeResource.method;
+    Tokens2 = StripeResource.extend({
+      create: stripeMethod115({ method: "POST", fullPath: "/v1/tokens" }),
+      retrieve: stripeMethod115({ method: "GET", fullPath: "/v1/tokens/{token}" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Topups.js
+var stripeMethod116, Topups;
+var init_Topups = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Topups.js"() {
+    init_StripeResource();
+    stripeMethod116 = StripeResource.method;
+    Topups = StripeResource.extend({
+      create: stripeMethod116({ method: "POST", fullPath: "/v1/topups" }),
+      retrieve: stripeMethod116({ method: "GET", fullPath: "/v1/topups/{topup}" }),
+      update: stripeMethod116({ method: "POST", fullPath: "/v1/topups/{topup}" }),
+      list: stripeMethod116({
+        method: "GET",
+        fullPath: "/v1/topups",
+        methodType: "list"
+      }),
+      cancel: stripeMethod116({ method: "POST", fullPath: "/v1/topups/{topup}/cancel" })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Transfers.js
+var stripeMethod117, Transfers;
+var init_Transfers = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/Transfers.js"() {
+    init_StripeResource();
+    stripeMethod117 = StripeResource.method;
+    Transfers = StripeResource.extend({
+      create: stripeMethod117({ method: "POST", fullPath: "/v1/transfers" }),
+      retrieve: stripeMethod117({ method: "GET", fullPath: "/v1/transfers/{transfer}" }),
+      update: stripeMethod117({ method: "POST", fullPath: "/v1/transfers/{transfer}" }),
+      list: stripeMethod117({
+        method: "GET",
+        fullPath: "/v1/transfers",
+        methodType: "list"
+      }),
+      createReversal: stripeMethod117({
+        method: "POST",
+        fullPath: "/v1/transfers/{id}/reversals"
+      }),
+      listReversals: stripeMethod117({
+        method: "GET",
+        fullPath: "/v1/transfers/{id}/reversals",
+        methodType: "list"
+      }),
+      retrieveReversal: stripeMethod117({
+        method: "GET",
+        fullPath: "/v1/transfers/{transfer}/reversals/{id}"
+      }),
+      updateReversal: stripeMethod117({
+        method: "POST",
+        fullPath: "/v1/transfers/{transfer}/reversals/{id}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/WebhookEndpoints.js
+var stripeMethod118, WebhookEndpoints;
+var init_WebhookEndpoints = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources/WebhookEndpoints.js"() {
+    init_StripeResource();
+    stripeMethod118 = StripeResource.method;
+    WebhookEndpoints = StripeResource.extend({
+      create: stripeMethod118({ method: "POST", fullPath: "/v1/webhook_endpoints" }),
+      retrieve: stripeMethod118({
+        method: "GET",
+        fullPath: "/v1/webhook_endpoints/{webhook_endpoint}"
+      }),
+      update: stripeMethod118({
+        method: "POST",
+        fullPath: "/v1/webhook_endpoints/{webhook_endpoint}"
+      }),
+      list: stripeMethod118({
+        method: "GET",
+        fullPath: "/v1/webhook_endpoints",
+        methodType: "list"
+      }),
+      del: stripeMethod118({
+        method: "DELETE",
+        fullPath: "/v1/webhook_endpoints/{webhook_endpoint}"
+      })
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources.js
+var resources_exports = {};
+__export(resources_exports, {
+  Account: () => Accounts2,
+  AccountLinks: () => AccountLinks,
+  AccountSessions: () => AccountSessions,
+  Accounts: () => Accounts2,
+  ApplePayDomains: () => ApplePayDomains,
+  ApplicationFees: () => ApplicationFees,
+  Apps: () => Apps,
+  Balance: () => Balance,
+  BalanceTransactions: () => BalanceTransactions,
+  Billing: () => Billing,
+  BillingPortal: () => BillingPortal,
+  Charges: () => Charges,
+  Checkout: () => Checkout,
+  Climate: () => Climate,
+  ConfirmationTokens: () => ConfirmationTokens2,
+  CountrySpecs: () => CountrySpecs,
+  Coupons: () => Coupons,
+  CreditNotes: () => CreditNotes,
+  CustomerSessions: () => CustomerSessions,
+  Customers: () => Customers2,
+  Disputes: () => Disputes2,
+  Entitlements: () => Entitlements,
+  EphemeralKeys: () => EphemeralKeys,
+  Events: () => Events,
+  ExchangeRates: () => ExchangeRates,
+  FileLinks: () => FileLinks,
+  Files: () => Files,
+  FinancialConnections: () => FinancialConnections,
+  Forwarding: () => Forwarding,
+  Identity: () => Identity,
+  InvoiceItems: () => InvoiceItems,
+  InvoiceRenderingTemplates: () => InvoiceRenderingTemplates,
+  Invoices: () => Invoices,
+  Issuing: () => Issuing,
+  Mandates: () => Mandates,
+  OAuth: () => OAuth,
+  PaymentIntents: () => PaymentIntents,
+  PaymentLinks: () => PaymentLinks,
+  PaymentMethodConfigurations: () => PaymentMethodConfigurations,
+  PaymentMethodDomains: () => PaymentMethodDomains,
+  PaymentMethods: () => PaymentMethods,
+  Payouts: () => Payouts,
+  Plans: () => Plans,
+  Prices: () => Prices,
+  Products: () => Products2,
+  PromotionCodes: () => PromotionCodes,
+  Quotes: () => Quotes,
+  Radar: () => Radar,
+  Refunds: () => Refunds2,
+  Reporting: () => Reporting,
+  Reviews: () => Reviews,
+  SetupAttempts: () => SetupAttempts,
+  SetupIntents: () => SetupIntents,
+  ShippingRates: () => ShippingRates,
+  Sigma: () => Sigma,
+  Sources: () => Sources,
+  SubscriptionItems: () => SubscriptionItems,
+  SubscriptionSchedules: () => SubscriptionSchedules,
+  Subscriptions: () => Subscriptions,
+  Tax: () => Tax,
+  TaxCodes: () => TaxCodes,
+  TaxIds: () => TaxIds,
+  TaxRates: () => TaxRates,
+  Terminal: () => Terminal,
+  TestHelpers: () => TestHelpers,
+  Tokens: () => Tokens2,
+  Topups: () => Topups,
+  Transfers: () => Transfers,
+  Treasury: () => Treasury,
+  WebhookEndpoints: () => WebhookEndpoints
+});
+var Apps, Billing, BillingPortal, Checkout, Climate, Entitlements, FinancialConnections, Forwarding, Identity, Issuing, Radar, Reporting, Sigma, Tax, Terminal, TestHelpers, Treasury;
+var init_resources = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/resources.js"() {
+    init_ResourceNamespace();
+    init_Accounts();
+    init_ActiveEntitlements();
+    init_Alerts();
+    init_Authorizations();
+    init_Authorizations2();
+    init_Calculations();
+    init_Cardholders();
+    init_Cards();
+    init_Cards2();
+    init_Configurations();
+    init_Configurations2();
+    init_ConfirmationTokens();
+    init_ConnectionTokens();
+    init_CreditReversals();
+    init_Customers();
+    init_DebitReversals();
+    init_Disputes();
+    init_EarlyFraudWarnings();
+    init_Features();
+    init_FinancialAccounts();
+    init_InboundTransfers();
+    init_InboundTransfers2();
+    init_Locations();
+    init_MeterEventAdjustments();
+    init_MeterEvents();
+    init_Meters();
+    init_Orders();
+    init_OutboundPayments();
+    init_OutboundPayments2();
+    init_OutboundTransfers();
+    init_OutboundTransfers2();
+    init_PersonalizationDesigns();
+    init_PersonalizationDesigns2();
+    init_PhysicalBundles();
+    init_Products();
+    init_Readers();
+    init_Readers2();
+    init_ReceivedCredits();
+    init_ReceivedCredits2();
+    init_ReceivedDebits();
+    init_ReceivedDebits2();
+    init_Refunds();
+    init_Registrations();
+    init_ReportRuns();
+    init_ReportTypes();
+    init_Requests();
+    init_ScheduledQueryRuns();
+    init_Secrets();
+    init_Sessions();
+    init_Sessions2();
+    init_Sessions3();
+    init_Settings();
+    init_Suppliers();
+    init_TestClocks();
+    init_Tokens();
+    init_TransactionEntries();
+    init_Transactions();
+    init_Transactions2();
+    init_Transactions3();
+    init_Transactions4();
+    init_Transactions5();
+    init_ValueListItems();
+    init_ValueLists();
+    init_VerificationReports();
+    init_VerificationSessions();
+    init_Accounts2();
+    init_AccountLinks();
+    init_AccountSessions();
+    init_Accounts2();
+    init_ApplePayDomains();
+    init_ApplicationFees();
+    init_Balance();
+    init_BalanceTransactions();
+    init_Charges();
+    init_ConfirmationTokens2();
+    init_CountrySpecs();
+    init_Coupons();
+    init_CreditNotes();
+    init_CustomerSessions();
+    init_Customers2();
+    init_Disputes2();
+    init_EphemeralKeys();
+    init_Events();
+    init_ExchangeRates();
+    init_FileLinks();
+    init_Files();
+    init_InvoiceItems();
+    init_InvoiceRenderingTemplates();
+    init_Invoices();
+    init_Mandates();
+    init_OAuth();
+    init_PaymentIntents();
+    init_PaymentLinks();
+    init_PaymentMethodConfigurations();
+    init_PaymentMethodDomains();
+    init_PaymentMethods();
+    init_Payouts();
+    init_Plans();
+    init_Prices();
+    init_Products2();
+    init_PromotionCodes();
+    init_Quotes();
+    init_Refunds2();
+    init_Reviews();
+    init_SetupAttempts();
+    init_SetupIntents();
+    init_ShippingRates();
+    init_Sources();
+    init_SubscriptionItems();
+    init_SubscriptionSchedules();
+    init_Subscriptions();
+    init_TaxCodes();
+    init_TaxIds();
+    init_TaxRates();
+    init_Tokens2();
+    init_Topups();
+    init_Transfers();
+    init_WebhookEndpoints();
+    Apps = resourceNamespace("apps", { Secrets });
+    Billing = resourceNamespace("billing", {
+      Alerts,
+      MeterEventAdjustments,
+      MeterEvents,
+      Meters
+    });
+    BillingPortal = resourceNamespace("billingPortal", {
+      Configurations,
+      Sessions
+    });
+    Checkout = resourceNamespace("checkout", {
+      Sessions: Sessions2
+    });
+    Climate = resourceNamespace("climate", {
+      Orders,
+      Products,
+      Suppliers
+    });
+    Entitlements = resourceNamespace("entitlements", {
+      ActiveEntitlements,
+      Features
+    });
+    FinancialConnections = resourceNamespace("financialConnections", {
+      Accounts,
+      Sessions: Sessions3,
+      Transactions: Transactions2
+    });
+    Forwarding = resourceNamespace("forwarding", {
+      Requests
+    });
+    Identity = resourceNamespace("identity", {
+      VerificationReports,
+      VerificationSessions
+    });
+    Issuing = resourceNamespace("issuing", {
+      Authorizations: Authorizations2,
+      Cardholders,
+      Cards: Cards2,
+      Disputes,
+      PersonalizationDesigns: PersonalizationDesigns2,
+      PhysicalBundles,
+      Tokens,
+      Transactions: Transactions3
+    });
+    Radar = resourceNamespace("radar", {
+      EarlyFraudWarnings,
+      ValueListItems,
+      ValueLists
+    });
+    Reporting = resourceNamespace("reporting", {
+      ReportRuns,
+      ReportTypes
+    });
+    Sigma = resourceNamespace("sigma", {
+      ScheduledQueryRuns
+    });
+    Tax = resourceNamespace("tax", {
+      Calculations,
+      Registrations,
+      Settings,
+      Transactions: Transactions4
+    });
+    Terminal = resourceNamespace("terminal", {
+      Configurations: Configurations2,
+      ConnectionTokens,
+      Locations,
+      Readers: Readers2
+    });
+    TestHelpers = resourceNamespace("testHelpers", {
+      ConfirmationTokens,
+      Customers,
+      Refunds,
+      TestClocks,
+      Issuing: resourceNamespace("issuing", {
+        Authorizations,
+        Cards,
+        PersonalizationDesigns,
+        Transactions
+      }),
+      Terminal: resourceNamespace("terminal", {
+        Readers
+      }),
+      Treasury: resourceNamespace("treasury", {
+        InboundTransfers,
+        OutboundPayments,
+        OutboundTransfers,
+        ReceivedCredits,
+        ReceivedDebits
+      })
+    });
+    Treasury = resourceNamespace("treasury", {
+      CreditReversals,
+      DebitReversals,
+      FinancialAccounts,
+      InboundTransfers: InboundTransfers2,
+      OutboundPayments: OutboundPayments2,
+      OutboundTransfers: OutboundTransfers2,
+      ReceivedCredits: ReceivedCredits2,
+      ReceivedDebits: ReceivedDebits2,
+      TransactionEntries,
+      Transactions: Transactions5
+    });
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/stripe.core.js
+function createStripe(platformFunctions, requestSender = defaultRequestSenderFactory) {
+  Stripe2.PACKAGE_VERSION = "16.12.0";
+  Stripe2.USER_AGENT = Object.assign({ bindings_version: Stripe2.PACKAGE_VERSION, lang: "node", publisher: "stripe", uname: null, typescript: false }, determineProcessUserAgentProperties());
+  Stripe2.StripeResource = StripeResource;
+  Stripe2.resources = resources_exports;
+  Stripe2.HttpClient = HttpClient;
+  Stripe2.HttpClientResponse = HttpClientResponse;
+  Stripe2.CryptoProvider = CryptoProvider;
+  function createWebhooksDefault(fns = platformFunctions) {
+    return createWebhooks(fns);
+  }
+  Stripe2.webhooks = Object.assign(createWebhooksDefault, createWebhooks(platformFunctions));
+  function Stripe2(key, config = {}) {
+    if (!(this instanceof Stripe2)) {
+      return new Stripe2(key, config);
+    }
+    const props = this._getPropsFromConfig(config);
+    this._platformFunctions = platformFunctions;
+    Object.defineProperty(this, "_emitter", {
+      value: this._platformFunctions.createEmitter(),
+      enumerable: false,
+      configurable: false,
+      writable: false
+    });
+    this.VERSION = Stripe2.PACKAGE_VERSION;
+    this.on = this._emitter.on.bind(this._emitter);
+    this.once = this._emitter.once.bind(this._emitter);
+    this.off = this._emitter.removeListener.bind(this._emitter);
+    const agent = props.httpAgent || null;
+    this._api = {
+      auth: null,
+      host: props.host || DEFAULT_HOST,
+      port: props.port || DEFAULT_PORT,
+      protocol: props.protocol || "https",
+      basePath: DEFAULT_BASE_PATH,
+      version: props.apiVersion || DEFAULT_API_VERSION,
+      timeout: validateInteger("timeout", props.timeout, DEFAULT_TIMEOUT),
+      maxNetworkRetries: validateInteger("maxNetworkRetries", props.maxNetworkRetries, 1),
+      agent,
+      httpClient: props.httpClient || (agent ? this._platformFunctions.createNodeHttpClient(agent) : this._platformFunctions.createDefaultHttpClient()),
+      dev: false,
+      stripeAccount: props.stripeAccount || null
+    };
+    const typescript = props.typescript || false;
+    if (typescript !== Stripe2.USER_AGENT.typescript) {
+      Stripe2.USER_AGENT.typescript = typescript;
+    }
+    if (props.appInfo) {
+      this._setAppInfo(props.appInfo);
+    }
+    this._prepResources();
+    this._setApiKey(key);
+    this.errors = Error_exports;
+    this.webhooks = createWebhooksDefault();
+    this._prevRequestMetrics = [];
+    this._enableTelemetry = props.telemetry !== false;
+    this._requestSender = requestSender(this);
+    this.StripeResource = Stripe2.StripeResource;
+  }
+  Stripe2.errors = Error_exports;
+  Stripe2.createNodeHttpClient = platformFunctions.createNodeHttpClient;
+  Stripe2.createFetchHttpClient = platformFunctions.createFetchHttpClient;
+  Stripe2.createNodeCryptoProvider = platformFunctions.createNodeCryptoProvider;
+  Stripe2.createSubtleCryptoProvider = platformFunctions.createSubtleCryptoProvider;
+  Stripe2.prototype = {
+    // Properties are set in the constructor above
+    _appInfo: void 0,
+    on: null,
+    off: null,
+    once: null,
+    VERSION: null,
+    StripeResource: null,
+    webhooks: null,
+    errors: null,
+    _api: null,
+    _prevRequestMetrics: null,
+    _emitter: null,
+    _enableTelemetry: null,
+    _requestSender: null,
+    _platformFunctions: null,
+    /**
+     * @private
+     */
+    _setApiKey(key) {
+      if (key) {
+        this._setApiField("auth", `Bearer ${key}`);
+      }
+    },
+    /**
+     * @private
+     * This may be removed in the future.
+     */
+    _setAppInfo(info) {
+      if (info && typeof info !== "object") {
+        throw new Error("AppInfo must be an object.");
+      }
+      if (info && !info.name) {
+        throw new Error("AppInfo.name is required");
+      }
+      info = info || {};
+      this._appInfo = APP_INFO_PROPERTIES.reduce(
+        (accum, prop) => {
+          if (typeof info[prop] == "string") {
+            accum = accum || {};
+            accum[prop] = info[prop];
+          }
+          return accum;
+        },
+        // @ts-ignore
+        void 0
+      );
+    },
+    /**
+     * @private
+     * This may be removed in the future.
+     */
+    _setApiField(key, value) {
+      this._api[key] = value;
+    },
+    /**
+     * @private
+     * Please open or upvote an issue at github.com/stripe/stripe-node
+     * if you use this, detailing your use-case.
+     *
+     * It may be deprecated and removed in the future.
+     */
+    getApiField(key) {
+      return this._api[key];
+    },
+    setClientId(clientId) {
+      this._clientId = clientId;
+    },
+    getClientId() {
+      return this._clientId;
+    },
+    /**
+     * @private
+     * Please open or upvote an issue at github.com/stripe/stripe-node
+     * if you use this, detailing your use-case.
+     *
+     * It may be deprecated and removed in the future.
+     */
+    getConstant: (c) => {
+      switch (c) {
+        case "DEFAULT_HOST":
+          return DEFAULT_HOST;
+        case "DEFAULT_PORT":
+          return DEFAULT_PORT;
+        case "DEFAULT_BASE_PATH":
+          return DEFAULT_BASE_PATH;
+        case "DEFAULT_API_VERSION":
+          return DEFAULT_API_VERSION;
+        case "DEFAULT_TIMEOUT":
+          return DEFAULT_TIMEOUT;
+        case "MAX_NETWORK_RETRY_DELAY_SEC":
+          return MAX_NETWORK_RETRY_DELAY_SEC;
+        case "INITIAL_NETWORK_RETRY_DELAY_SEC":
+          return INITIAL_NETWORK_RETRY_DELAY_SEC;
+      }
+      return Stripe2[c];
+    },
+    getMaxNetworkRetries() {
+      return this.getApiField("maxNetworkRetries");
+    },
+    /**
+     * @private
+     * This may be removed in the future.
+     */
+    _setApiNumberField(prop, n, defaultVal) {
+      const val = validateInteger(prop, n, defaultVal);
+      this._setApiField(prop, val);
+    },
+    getMaxNetworkRetryDelay() {
+      return MAX_NETWORK_RETRY_DELAY_SEC;
+    },
+    getInitialNetworkRetryDelay() {
+      return INITIAL_NETWORK_RETRY_DELAY_SEC;
+    },
+    /**
+     * @private
+     * Please open or upvote an issue at github.com/stripe/stripe-node
+     * if you use this, detailing your use-case.
+     *
+     * It may be deprecated and removed in the future.
+     *
+     * Gets a JSON version of a User-Agent and uses a cached version for a slight
+     * speed advantage.
+     */
+    getClientUserAgent(cb) {
+      return this.getClientUserAgentSeeded(Stripe2.USER_AGENT, cb);
+    },
+    /**
+     * @private
+     * Please open or upvote an issue at github.com/stripe/stripe-node
+     * if you use this, detailing your use-case.
+     *
+     * It may be deprecated and removed in the future.
+     *
+     * Gets a JSON version of a User-Agent by encoding a seeded object and
+     * fetching a uname from the system.
+     */
+    getClientUserAgentSeeded(seed, cb) {
+      this._platformFunctions.getUname().then((uname) => {
+        var _a;
+        const userAgent = {};
+        for (const field in seed) {
+          if (!Object.prototype.hasOwnProperty.call(seed, field)) {
+            continue;
+          }
+          userAgent[field] = encodeURIComponent((_a = seed[field]) !== null && _a !== void 0 ? _a : "null");
+        }
+        userAgent.uname = encodeURIComponent(uname || "UNKNOWN");
+        const client = this.getApiField("httpClient");
+        if (client) {
+          userAgent.httplib = encodeURIComponent(client.getClientName());
+        }
+        if (this._appInfo) {
+          userAgent.application = this._appInfo;
+        }
+        cb(JSON.stringify(userAgent));
+      });
+    },
+    /**
+     * @private
+     * Please open or upvote an issue at github.com/stripe/stripe-node
+     * if you use this, detailing your use-case.
+     *
+     * It may be deprecated and removed in the future.
+     */
+    getAppInfoAsString() {
+      if (!this._appInfo) {
+        return "";
+      }
+      let formatted = this._appInfo.name;
+      if (this._appInfo.version) {
+        formatted += `/${this._appInfo.version}`;
+      }
+      if (this._appInfo.url) {
+        formatted += ` (${this._appInfo.url})`;
+      }
+      return formatted;
+    },
+    getTelemetryEnabled() {
+      return this._enableTelemetry;
+    },
+    /**
+     * @private
+     * This may be removed in the future.
+     */
+    _prepResources() {
+      for (const name in resources_exports) {
+        if (!Object.prototype.hasOwnProperty.call(resources_exports, name)) {
+          continue;
+        }
+        this[pascalToCamelCase(name)] = new resources_exports[name](this);
+      }
+    },
+    /**
+     * @private
+     * This may be removed in the future.
+     */
+    _getPropsFromConfig(config) {
+      if (!config) {
+        return {};
+      }
+      const isString = typeof config === "string";
+      const isObject2 = config === Object(config) && !Array.isArray(config);
+      if (!isObject2 && !isString) {
+        throw new Error("Config must either be an object or a string");
+      }
+      if (isString) {
+        return {
+          apiVersion: config
+        };
+      }
+      const values = Object.keys(config).filter((value) => !ALLOWED_CONFIG_PROPERTIES.includes(value));
+      if (values.length > 0) {
+        throw new Error(`Config object may only contain the following: ${ALLOWED_CONFIG_PROPERTIES.join(", ")}`);
+      }
+      return config;
+    }
+  };
+  return Stripe2;
+}
+var DEFAULT_HOST, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION, DEFAULT_TIMEOUT, MAX_NETWORK_RETRY_DELAY_SEC, INITIAL_NETWORK_RETRY_DELAY_SEC, APP_INFO_PROPERTIES, ALLOWED_CONFIG_PROPERTIES, defaultRequestSenderFactory;
+var init_stripe_core = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/stripe.core.js"() {
+    init_Error();
+    init_RequestSender();
+    init_StripeResource();
+    init_Webhooks();
+    init_apiVersion();
+    init_CryptoProvider();
+    init_HttpClient();
+    init_resources();
+    init_utils();
+    DEFAULT_HOST = "api.stripe.com";
+    DEFAULT_PORT = "443";
+    DEFAULT_BASE_PATH = "/v1/";
+    DEFAULT_API_VERSION = ApiVersion;
+    DEFAULT_TIMEOUT = 8e4;
+    MAX_NETWORK_RETRY_DELAY_SEC = 2;
+    INITIAL_NETWORK_RETRY_DELAY_SEC = 0.5;
+    APP_INFO_PROPERTIES = ["name", "version", "url", "partner_id"];
+    ALLOWED_CONFIG_PROPERTIES = [
+      "apiVersion",
+      "typescript",
+      "maxNetworkRetries",
+      "httpAgent",
+      "httpClient",
+      "timeout",
+      "host",
+      "port",
+      "protocol",
+      "telemetry",
+      "appInfo",
+      "stripeAccount"
+    ];
+    defaultRequestSenderFactory = (stripe2) => new RequestSender(stripe2, StripeResource.MAX_BUFFERED_REQUEST_METRICS);
+  }
+});
+
+// ../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/stripe.esm.node.js
+var stripe_esm_node_exports = {};
+__export(stripe_esm_node_exports, {
+  Stripe: () => Stripe,
+  default: () => stripe_esm_node_default
+});
+var Stripe, stripe_esm_node_default;
+var init_stripe_esm_node = __esm({
+  "../node_modules/.pnpm/stripe@16.12.0/node_modules/stripe/esm/stripe.esm.node.js"() {
+    init_NodePlatformFunctions();
+    init_stripe_core();
+    Stripe = createStripe(new NodePlatformFunctions());
+    stripe_esm_node_default = Stripe;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/util.js
+var require_util = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/util.js"(exports) {
+    "use strict";
+    exports.getValueAsString = function getValueString(value) {
+      if (Number.isNaN(value)) {
+        return "Nan";
+      } else if (!Number.isFinite(value)) {
+        if (value < 0) {
+          return "-Inf";
+        } else {
+          return "+Inf";
+        }
+      } else {
+        return `${value}`;
+      }
+    };
+    exports.removeLabels = function removeLabels(hashMap, labels, sortedLabelNames) {
+      const hash2 = hashObject(labels, sortedLabelNames);
+      delete hashMap[hash2];
+    };
+    exports.setValue = function setValue(hashMap, value, labels) {
+      const hash2 = hashObject(labels);
+      hashMap[hash2] = {
+        value: typeof value === "number" ? value : 0,
+        labels: labels || {}
+      };
+      return hashMap;
+    };
+    exports.setValueDelta = function setValueDelta(hashMap, deltaValue, labels, hash2 = "") {
+      const value = typeof deltaValue === "number" ? deltaValue : 0;
+      if (hashMap[hash2]) {
+        hashMap[hash2].value += value;
+      } else {
+        hashMap[hash2] = { value, labels };
+      }
+      return hashMap;
+    };
+    exports.getLabels = function(labelNames, args) {
+      if (typeof args[0] === "object") {
+        return args[0];
+      }
+      if (labelNames.length !== args.length) {
+        throw new Error(
+          `Invalid number of arguments (${args.length}): "${args.join(
+            ", "
+          )}" for label names (${labelNames.length}): "${labelNames.join(", ")}".`
+        );
+      }
+      const acc = {};
+      for (let i = 0; i < labelNames.length; i++) {
+        acc[labelNames[i]] = args[i];
+      }
+      return acc;
+    };
+    function fastHashObject(keys, labels) {
+      if (keys.length === 0) {
+        return "";
+      }
+      let hash2 = "";
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const value = labels[key];
+        if (value === void 0) continue;
+        hash2 += `${key}:${value},`;
+      }
+      return hash2;
+    }
+    function hashObject(labels, labelNames) {
+      if (labelNames) {
+        return fastHashObject(labelNames, labels);
+      }
+      const keys = Object.keys(labels);
+      if (keys.length > 1) {
+        keys.sort();
+      }
+      return fastHashObject(keys, labels);
+    }
+    exports.hashObject = hashObject;
+    exports.isObject = function isObject2(obj) {
+      return obj !== null && typeof obj === "object";
+    };
+    exports.nowTimestamp = function nowTimestamp() {
+      return Date.now() / 1e3;
+    };
+    var Grouper = class extends Map {
+      /**
+       * Adds the `value` to the `key`'s array of values.
+       * @param {*} key Key to set.
+       * @param {*} value Value to add to `key`'s array.
+       * @returns {undefined} undefined.
+       */
+      add(key, value) {
+        if (this.has(key)) {
+          this.get(key).push(value);
+        } else {
+          this.set(key, [value]);
+        }
+      }
+    };
+    exports.Grouper = Grouper;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/registry.js
+var require_registry = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/registry.js"(exports, module) {
+    "use strict";
+    var { getValueAsString } = require_util();
+    var Registry2 = class _Registry {
+      static get PROMETHEUS_CONTENT_TYPE() {
+        return "text/plain; version=0.0.4; charset=utf-8";
+      }
+      static get OPENMETRICS_CONTENT_TYPE() {
+        return "application/openmetrics-text; version=1.0.0; charset=utf-8";
+      }
+      constructor(regContentType = _Registry.PROMETHEUS_CONTENT_TYPE) {
+        this._metrics = {};
+        this._collectors = [];
+        this._defaultLabels = {};
+        if (regContentType !== _Registry.PROMETHEUS_CONTENT_TYPE && regContentType !== _Registry.OPENMETRICS_CONTENT_TYPE) {
+          throw new TypeError(`Content type ${regContentType} is unsupported`);
+        }
+        this._contentType = regContentType;
+      }
+      getMetricsAsArray() {
+        return Object.values(this._metrics);
+      }
+      async getMetricsAsString(metrics) {
+        const metric = typeof metrics.getForPromString === "function" ? await metrics.getForPromString() : await metrics.get();
+        const name = escapeString(metric.name);
+        const help = `# HELP ${name} ${escapeString(metric.help)}`;
+        const type = `# TYPE ${name} ${metric.type}`;
+        const values = [help, type];
+        const defaultLabels = Object.keys(this._defaultLabels).length > 0 ? this._defaultLabels : null;
+        const isOpenMetrics = this.contentType === _Registry.OPENMETRICS_CONTENT_TYPE;
+        for (const val of metric.values || []) {
+          let { metricName = name, labels = {} } = val;
+          const { sharedLabels = {} } = val;
+          if (isOpenMetrics && metric.type === "counter") {
+            metricName = `${metricName}_total`;
+          }
+          if (defaultLabels) {
+            labels = { ...labels, ...defaultLabels, ...labels };
+          }
+          const formattedLabels = formatLabels(labels, sharedLabels);
+          const flattenedShared = flattenSharedLabels(sharedLabels);
+          const labelParts = [...formattedLabels, flattenedShared].filter(Boolean);
+          const labelsString = labelParts.length ? `{${labelParts.join(",")}}` : "";
+          let fullMetricLine = `${metricName}${labelsString} ${getValueAsString(
+            val.value
+          )}`;
+          const { exemplar } = val;
+          if (exemplar && isOpenMetrics) {
+            const formattedExemplars = formatLabels(exemplar.labelSet);
+            fullMetricLine += ` # {${formattedExemplars.join(
+              ","
+            )}} ${getValueAsString(exemplar.value)} ${exemplar.timestamp}`;
+          }
+          values.push(fullMetricLine);
+        }
+        return values.join("\n");
+      }
+      async metrics() {
+        const isOpenMetrics = this.contentType === _Registry.OPENMETRICS_CONTENT_TYPE;
+        const promises = this.getMetricsAsArray().map((metric) => {
+          if (isOpenMetrics && metric.type === "counter") {
+            metric.name = standardizeCounterName(metric.name);
+          }
+          return this.getMetricsAsString(metric);
+        });
+        const resolves = await Promise.all(promises);
+        return isOpenMetrics ? `${resolves.join("\n")}
+# EOF
+` : `${resolves.join("\n\n")}
+`;
+      }
+      registerMetric(metric) {
+        if (this._metrics[metric.name] && this._metrics[metric.name] !== metric) {
+          throw new Error(
+            `A metric with the name ${metric.name} has already been registered.`
+          );
+        }
+        this._metrics[metric.name] = metric;
+      }
+      clear() {
+        this._metrics = {};
+        this._defaultLabels = {};
+      }
+      async getMetricsAsJSON() {
+        const metrics = [];
+        const defaultLabelNames = Object.keys(this._defaultLabels);
+        const promises = [];
+        for (const metric of this.getMetricsAsArray()) {
+          promises.push(metric.get());
+        }
+        const resolves = await Promise.all(promises);
+        for (const item of resolves) {
+          if (item.values && defaultLabelNames.length > 0) {
+            for (const val of item.values) {
+              val.labels = Object.assign({}, val.labels);
+              for (const labelName of defaultLabelNames) {
+                val.labels[labelName] = val.labels[labelName] || this._defaultLabels[labelName];
+              }
+            }
+          }
+          metrics.push(item);
+        }
+        return metrics;
+      }
+      removeSingleMetric(name) {
+        delete this._metrics[name];
+      }
+      getSingleMetricAsString(name) {
+        return this.getMetricsAsString(this._metrics[name]);
+      }
+      getSingleMetric(name) {
+        return this._metrics[name];
+      }
+      setDefaultLabels(labels) {
+        this._defaultLabels = labels;
+      }
+      resetMetrics() {
+        for (const metric in this._metrics) {
+          this._metrics[metric].reset();
+        }
+      }
+      get contentType() {
+        return this._contentType;
+      }
+      setContentType(metricsContentType) {
+        if (metricsContentType === _Registry.OPENMETRICS_CONTENT_TYPE || metricsContentType === _Registry.PROMETHEUS_CONTENT_TYPE) {
+          this._contentType = metricsContentType;
+        } else {
+          throw new Error(`Content type ${metricsContentType} is unsupported`);
+        }
+      }
+      static merge(registers) {
+        const regType = registers[0].contentType;
+        for (const reg of registers) {
+          if (reg.contentType !== regType) {
+            throw new Error(
+              "Registers can only be merged if they have the same content type"
+            );
+          }
+        }
+        const mergedRegistry = new _Registry(regType);
+        const metricsToMerge = registers.reduce(
+          (acc, reg) => acc.concat(reg.getMetricsAsArray()),
+          []
+        );
+        metricsToMerge.forEach(mergedRegistry.registerMetric, mergedRegistry);
+        return mergedRegistry;
+      }
+    };
+    function formatLabels(labels, exclude) {
+      const { hasOwnProperty } = Object.prototype;
+      const formatted = [];
+      for (const [name, value] of Object.entries(labels)) {
+        if (!exclude || !hasOwnProperty.call(exclude, name)) {
+          formatted.push(`${name}="${escapeLabelValue(value)}"`);
+        }
+      }
+      return formatted;
+    }
+    var sharedLabelCache = /* @__PURE__ */ new WeakMap();
+    function flattenSharedLabels(labels) {
+      const cached = sharedLabelCache.get(labels);
+      if (cached) {
+        return cached;
+      }
+      const formattedLabels = formatLabels(labels);
+      const flattened = formattedLabels.join(",");
+      sharedLabelCache.set(labels, flattened);
+      return flattened;
+    }
+    function escapeLabelValue(str) {
+      if (typeof str !== "string") {
+        return str;
+      }
+      return escapeString(str).replace(/"/g, '\\"');
+    }
+    function escapeString(str) {
+      return str.replace(/\\/g, "\\\\").replace(/\n/g, "\\n");
+    }
+    function standardizeCounterName(name) {
+      return name.replace(/_total$/, "");
+    }
+    module.exports = Registry2;
+    module.exports.globalRegistry = new Registry2();
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/validation.js
+var require_validation = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/validation.js"(exports) {
+    "use strict";
+    var util2 = __require("util");
+    var metricRegexp = /^[a-zA-Z_:][a-zA-Z0-9_:]*$/;
+    var labelRegexp = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+    exports.validateMetricName = function(name) {
+      return metricRegexp.test(name);
+    };
+    exports.validateLabelName = function(names = []) {
+      return names.every((name) => labelRegexp.test(name));
+    };
+    exports.validateLabel = function validateLabel(savedLabels, labels) {
+      for (const label in labels) {
+        if (!savedLabels.includes(label)) {
+          throw new Error(
+            `Added label "${label}" is not included in initial labelset: ${util2.inspect(
+              savedLabels
+            )}`
+          );
+        }
+      }
+    };
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metric.js
+var require_metric = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metric.js"(exports, module) {
+    "use strict";
+    var Registry2 = require_registry();
+    var { isObject: isObject2 } = require_util();
+    var { validateMetricName, validateLabelName } = require_validation();
+    var Metric = class {
+      constructor(config, defaults2 = {}) {
+        if (!isObject2(config)) {
+          throw new TypeError("constructor expected a config object");
+        }
+        Object.assign(
+          this,
+          {
+            labelNames: [],
+            registers: [Registry2.globalRegistry],
+            aggregator: "sum",
+            enableExemplars: false
+          },
+          defaults2,
+          config
+        );
+        if (!this.registers) {
+          this.registers = [Registry2.globalRegistry];
+        }
+        if (!this.help) {
+          throw new Error("Missing mandatory help parameter");
+        }
+        if (!this.name) {
+          throw new Error("Missing mandatory name parameter");
+        }
+        if (!validateMetricName(this.name)) {
+          throw new Error("Invalid metric name");
+        }
+        if (!validateLabelName(this.labelNames)) {
+          throw new Error("Invalid label name");
+        }
+        if (this.collect && typeof this.collect !== "function") {
+          throw new Error('Optional "collect" parameter must be a function');
+        }
+        if (this.labelNames) {
+          this.sortedLabelNames = [...this.labelNames].sort();
+        } else {
+          this.sortedLabelNames = [];
+        }
+        this.reset();
+        for (const register2 of this.registers) {
+          if (this.enableExemplars && register2.contentType === Registry2.PROMETHEUS_CONTENT_TYPE) {
+            throw new TypeError(
+              "Exemplars are supported only on OpenMetrics registries"
+            );
+          }
+          register2.registerMetric(this);
+        }
+      }
+      reset() {
+      }
+    };
+    module.exports = { Metric };
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/exemplar.js
+var require_exemplar = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/exemplar.js"(exports, module) {
+    "use strict";
+    var Exemplar = class {
+      constructor(labelSet = {}, value = null) {
+        this.labelSet = labelSet;
+        this.value = value;
+      }
+      /**
+       * Validation for the label set format.
+       * https://github.com/OpenObservability/OpenMetrics/blob/d99b705f611b75fec8f450b05e344e02eea6921d/specification/OpenMetrics.md#exemplars
+       *
+       * @param {object} labelSet - Exemplar labels.
+       * @throws {RangeError}
+       * @return {void}
+       */
+      validateExemplarLabelSet(labelSet) {
+        let res = "";
+        for (const [labelName, labelValue] of Object.entries(labelSet)) {
+          res += `${labelName}${labelValue}`;
+        }
+        if (res.length > 128) {
+          throw new RangeError(
+            "Label set size must be smaller than 128 UTF-8 chars"
+          );
+        }
+      }
+    };
+    module.exports = Exemplar;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/counter.js
+var require_counter = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/counter.js"(exports, module) {
+    "use strict";
+    var util2 = __require("util");
+    var {
+      hashObject,
+      isObject: isObject2,
+      getLabels,
+      removeLabels,
+      nowTimestamp
+    } = require_util();
+    var { validateLabel } = require_validation();
+    var { Metric } = require_metric();
+    var Exemplar = require_exemplar();
+    var Counter = class extends Metric {
+      constructor(config) {
+        super(config);
+        this.type = "counter";
+        this.defaultLabels = {};
+        this.defaultValue = 1;
+        this.defaultExemplarLabelSet = {};
+        if (config.enableExemplars) {
+          this.enableExemplars = true;
+          this.inc = this.incWithExemplar;
+        } else {
+          this.inc = this.incWithoutExemplar;
+        }
+      }
+      /**
+       * Increment counter
+       * @param {object} labels - What label you want to be incremented
+       * @param {Number} value - Value to increment, if omitted increment with 1
+       * @returns {object} results - object with information about the inc operation
+       * @returns {string} results.labelHash - hash representation of the labels
+       */
+      incWithoutExemplar(labels, value) {
+        let hash2 = "";
+        if (isObject2(labels)) {
+          hash2 = hashObject(labels, this.sortedLabelNames);
+          validateLabel(this.labelNames, labels);
+        } else {
+          value = labels;
+          labels = {};
+        }
+        if (value && !Number.isFinite(value)) {
+          throw new TypeError(`Value is not a valid number: ${util2.format(value)}`);
+        }
+        if (value < 0) {
+          throw new Error("It is not possible to decrease a counter");
+        }
+        if (value === null || value === void 0) value = 1;
+        setValue(this.hashMap, value, labels, hash2);
+        return { labelHash: hash2 };
+      }
+      /**
+       * Increment counter with exemplar, same as inc but accepts labels for an
+       * exemplar.
+       * If no label is provided the current exemplar labels are kept unchanged
+       * (defaults to empty set).
+       *
+       * @param {object} incOpts - Object with options about what metric to increase
+       * @param {object} incOpts.labels - What label you want to be incremented,
+       *                                  defaults to null (metric with no labels)
+       * @param {Number} incOpts.value - Value to increment, defaults to 1
+       * @param {object} incOpts.exemplarLabels - Key-value  labels for the
+       *                                          exemplar, defaults to empty set {}
+       * @returns {void}
+       */
+      incWithExemplar({
+        labels = this.defaultLabels,
+        value = this.defaultValue,
+        exemplarLabels = this.defaultExemplarLabelSet
+      } = {}) {
+        const res = this.incWithoutExemplar(labels, value);
+        this.updateExemplar(exemplarLabels, value, res.labelHash);
+      }
+      updateExemplar(exemplarLabels, value, hash2) {
+        if (exemplarLabels === this.defaultExemplarLabelSet) return;
+        if (!isObject2(this.hashMap[hash2].exemplar)) {
+          this.hashMap[hash2].exemplar = new Exemplar();
+        }
+        this.hashMap[hash2].exemplar.validateExemplarLabelSet(exemplarLabels);
+        this.hashMap[hash2].exemplar.labelSet = exemplarLabels;
+        this.hashMap[hash2].exemplar.value = value ? value : 1;
+        this.hashMap[hash2].exemplar.timestamp = nowTimestamp();
+      }
+      /**
+       * Reset counter
+       * @returns {void}
+       */
+      reset() {
+        this.hashMap = {};
+        if (this.labelNames.length === 0) {
+          setValue(this.hashMap, 0);
+        }
+      }
+      async get() {
+        if (this.collect) {
+          const v = this.collect();
+          if (v instanceof Promise) await v;
+        }
+        return {
+          help: this.help,
+          name: this.name,
+          type: this.type,
+          values: Object.values(this.hashMap),
+          aggregator: this.aggregator
+        };
+      }
+      labels(...args) {
+        const labels = getLabels(this.labelNames, args) || {};
+        return {
+          inc: this.inc.bind(this, labels)
+        };
+      }
+      remove(...args) {
+        const labels = getLabels(this.labelNames, args) || {};
+        validateLabel(this.labelNames, labels);
+        return removeLabels.call(this, this.hashMap, labels, this.sortedLabelNames);
+      }
+    };
+    function setValue(hashMap, value, labels = {}, hash2 = "") {
+      if (hashMap[hash2]) {
+        hashMap[hash2].value += value;
+      } else {
+        hashMap[hash2] = { value, labels };
+      }
+      return hashMap;
+    }
+    module.exports = Counter;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/gauge.js
+var require_gauge = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/gauge.js"(exports, module) {
+    "use strict";
+    var util2 = __require("util");
+    var {
+      setValue,
+      setValueDelta,
+      getLabels,
+      hashObject,
+      isObject: isObject2,
+      removeLabels
+    } = require_util();
+    var { validateLabel } = require_validation();
+    var { Metric } = require_metric();
+    var Gauge = class extends Metric {
+      constructor(config) {
+        super(config);
+        this.type = "gauge";
+      }
+      /**
+       * Set a gauge to a value
+       * @param {object} labels - Object with labels and their values
+       * @param {Number} value - Value to set the gauge to, must be positive
+       * @returns {void}
+       */
+      set(labels, value) {
+        value = getValueArg(labels, value);
+        labels = getLabelArg(labels);
+        set(this, labels, value);
+      }
+      /**
+       * Reset gauge
+       * @returns {void}
+       */
+      reset() {
+        this.hashMap = {};
+        if (this.labelNames.length === 0) {
+          setValue(this.hashMap, 0, {});
+        }
+      }
+      /**
+       * Increment a gauge value
+       * @param {object} labels - Object with labels where key is the label key and value is label value. Can only be one level deep
+       * @param {Number} value - Value to increment - if omitted, increment with 1
+       * @returns {void}
+       */
+      inc(labels, value) {
+        value = getValueArg(labels, value);
+        labels = getLabelArg(labels);
+        if (value === void 0) value = 1;
+        setDelta(this, labels, value);
+      }
+      /**
+       * Decrement a gauge value
+       * @param {object} labels - Object with labels where key is the label key and value is label value. Can only be one level deep
+       * @param {Number} value - Value to decrement - if omitted, decrement with 1
+       * @returns {void}
+       */
+      dec(labels, value) {
+        value = getValueArg(labels, value);
+        labels = getLabelArg(labels);
+        if (value === void 0) value = 1;
+        setDelta(this, labels, -value);
+      }
+      /**
+       * Set the gauge to current unix epoch
+       * @param {object} labels - Object with labels where key is the label key and value is label value. Can only be one level deep
+       * @returns {void}
+       */
+      setToCurrentTime(labels) {
+        const now = Date.now() / 1e3;
+        if (labels === void 0) {
+          this.set(now);
+        } else {
+          this.set(labels, now);
+        }
+      }
+      /**
+       * Start a timer
+       * @param {object} labels - Object with labels where key is the label key and value is label value. Can only be one level deep
+       * @returns {function} - Invoke this function to set the duration in seconds since you started the timer.
+       * @example
+       * var done = gauge.startTimer();
+       * makeXHRRequest(function(err, response) {
+       *	done(); //Duration of the request will be saved
+       * });
+       */
+      startTimer(labels) {
+        const start = process.hrtime();
+        return (endLabels) => {
+          const delta = process.hrtime(start);
+          const value = delta[0] + delta[1] / 1e9;
+          this.set(Object.assign({}, labels, endLabels), value);
+          return value;
+        };
+      }
+      async get() {
+        if (this.collect) {
+          const v = this.collect();
+          if (v instanceof Promise) await v;
+        }
+        return {
+          help: this.help,
+          name: this.name,
+          type: this.type,
+          values: Object.values(this.hashMap),
+          aggregator: this.aggregator
+        };
+      }
+      _getValue(labels) {
+        const hash2 = hashObject(labels || {}, this.sortedLabelNames);
+        return this.hashMap[hash2] ? this.hashMap[hash2].value : 0;
+      }
+      labels(...args) {
+        const labels = getLabels(this.labelNames, args);
+        validateLabel(this.labelNames, labels);
+        return {
+          inc: this.inc.bind(this, labels),
+          dec: this.dec.bind(this, labels),
+          set: this.set.bind(this, labels),
+          setToCurrentTime: this.setToCurrentTime.bind(this, labels),
+          startTimer: this.startTimer.bind(this, labels)
+        };
+      }
+      remove(...args) {
+        const labels = getLabels(this.labelNames, args);
+        validateLabel(this.labelNames, labels);
+        removeLabels.call(this, this.hashMap, labels, this.sortedLabelNames);
+      }
+    };
+    function set(gauge, labels, value) {
+      if (typeof value !== "number") {
+        throw new TypeError(`Value is not a valid number: ${util2.format(value)}`);
+      }
+      validateLabel(gauge.labelNames, labels);
+      setValue(gauge.hashMap, value, labels);
+    }
+    function setDelta(gauge, labels, delta) {
+      if (typeof delta !== "number") {
+        throw new TypeError(`Delta is not a valid number: ${util2.format(delta)}`);
+      }
+      validateLabel(gauge.labelNames, labels);
+      const hash2 = hashObject(labels, gauge.sortedLabelNames);
+      setValueDelta(gauge.hashMap, delta, labels, hash2);
+    }
+    function getLabelArg(labels) {
+      return isObject2(labels) ? labels : {};
+    }
+    function getValueArg(labels, value) {
+      return isObject2(labels) ? value : labels;
+    }
+    module.exports = Gauge;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/histogram.js
+var require_histogram = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/histogram.js"(exports, module) {
+    "use strict";
+    var util2 = __require("util");
+    var {
+      getLabels,
+      hashObject,
+      isObject: isObject2,
+      removeLabels,
+      nowTimestamp
+    } = require_util();
+    var { validateLabel } = require_validation();
+    var { Metric } = require_metric();
+    var Exemplar = require_exemplar();
+    var Histogram = class extends Metric {
+      constructor(config) {
+        super(config, {
+          buckets: [5e-3, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+        });
+        this.type = "histogram";
+        this.defaultLabels = {};
+        this.defaultExemplarLabelSet = {};
+        this.enableExemplars = false;
+        for (const label of this.labelNames) {
+          if (label === "le") {
+            throw new Error("le is a reserved label keyword");
+          }
+        }
+        this.upperBounds = this.buckets;
+        this.bucketValues = this.upperBounds.reduce((acc, upperBound) => {
+          acc[upperBound] = 0;
+          return acc;
+        }, {});
+        if (config.enableExemplars) {
+          this.enableExemplars = true;
+          this.bucketExemplars = this.upperBounds.reduce((acc, upperBound) => {
+            acc[upperBound] = null;
+            return acc;
+          }, {});
+          Object.freeze(this.bucketExemplars);
+          this.observe = this.observeWithExemplar;
+        } else {
+          this.observe = this.observeWithoutExemplar;
+        }
+        Object.freeze(this.bucketValues);
+        Object.freeze(this.upperBounds);
+        if (this.labelNames.length === 0) {
+          this.hashMap = {
+            [hashObject({})]: createBaseValues(
+              {},
+              this.bucketValues,
+              this.bucketExemplars
+            )
+          };
+        }
+      }
+      /**
+       * Observe a value in histogram
+       * @param {object} labels - Object with labels where key is the label key and value is label value. Can only be one level deep
+       * @param {Number} value - Value to observe in the histogram
+       * @returns {void}
+       */
+      observeWithoutExemplar(labels, value) {
+        observe.call(this, labels === 0 ? 0 : labels || {})(value);
+      }
+      observeWithExemplar({
+        labels = this.defaultLabels,
+        value,
+        exemplarLabels = this.defaultExemplarLabelSet
+      } = {}) {
+        observe.call(this, labels === 0 ? 0 : labels || {})(value);
+        this.updateExemplar(labels, value, exemplarLabels);
+      }
+      updateExemplar(labels, value, exemplarLabels) {
+        if (Object.keys(exemplarLabels).length === 0) return;
+        const hash2 = hashObject(labels, this.sortedLabelNames);
+        const bound = findBound(this.upperBounds, value);
+        const { bucketExemplars } = this.hashMap[hash2];
+        let exemplar = bucketExemplars[bound];
+        if (!isObject2(exemplar)) {
+          exemplar = new Exemplar();
+          bucketExemplars[bound] = exemplar;
+        }
+        exemplar.validateExemplarLabelSet(exemplarLabels);
+        exemplar.labelSet = exemplarLabels;
+        exemplar.value = value;
+        exemplar.timestamp = nowTimestamp();
+      }
+      async get() {
+        const data = await this.getForPromString();
+        data.values = data.values.map(splayLabels);
+        return data;
+      }
+      async getForPromString() {
+        if (this.collect) {
+          const v = this.collect();
+          if (v instanceof Promise) await v;
+        }
+        const data = Object.values(this.hashMap);
+        const values = data.map(extractBucketValuesForExport(this)).reduce(addSumAndCountForExport(this), []);
+        return {
+          name: this.name,
+          help: this.help,
+          type: this.type,
+          values,
+          aggregator: this.aggregator
+        };
+      }
+      reset() {
+        this.hashMap = {};
+      }
+      /**
+       * Initialize the metrics for the given combination of labels to zero
+       * @param {object} labels - Object with labels where key is the label key and value is label value. Can only be one level deep
+       * @returns {void}
+       */
+      zero(labels) {
+        const hash2 = hashObject(labels, this.sortedLabelNames);
+        this.hashMap[hash2] = createBaseValues(
+          labels,
+          this.bucketValues,
+          this.bucketExemplars
+        );
+      }
+      /**
+       * Start a timer that could be used to logging durations
+       * @param {object} labels - Object with labels where key is the label key and value is label value. Can only be one level deep
+       * @param {object} exemplarLabels - Object with labels for exemplar where key is the label key and value is label value. Can only be one level deep
+       * @returns {function} - Function to invoke when you want to stop the timer and observe the duration in seconds
+       * @example
+       * var end = histogram.startTimer();
+       * makeExpensiveXHRRequest(function(err, res) {
+       * 	const duration = end(); //Observe the duration of expensiveXHRRequest and returns duration in seconds
+       * 	console.log('Duration', duration);
+       * });
+       */
+      startTimer(labels, exemplarLabels) {
+        return this.enableExemplars ? startTimerWithExemplar.call(this, labels, exemplarLabels)() : startTimer.call(this, labels)();
+      }
+      labels(...args) {
+        const labels = getLabels(this.labelNames, args);
+        validateLabel(this.labelNames, labels);
+        return {
+          observe: observe.call(this, labels),
+          startTimer: startTimer.call(this, labels)
+        };
+      }
+      remove(...args) {
+        const labels = getLabels(this.labelNames, args);
+        validateLabel(this.labelNames, labels);
+        removeLabels.call(this, this.hashMap, labels, this.sortedLabelNames);
+      }
+    };
+    function startTimer(startLabels) {
+      return () => {
+        const start = process.hrtime();
+        return (endLabels) => {
+          const delta = process.hrtime(start);
+          const value = delta[0] + delta[1] / 1e9;
+          this.observe(Object.assign({}, startLabels, endLabels), value);
+          return value;
+        };
+      };
+    }
+    function startTimerWithExemplar(startLabels, startExemplarLabels) {
+      return () => {
+        const start = process.hrtime();
+        return (endLabels, endExemplarLabels) => {
+          const delta = process.hrtime(start);
+          const value = delta[0] + delta[1] / 1e9;
+          this.observe({
+            labels: Object.assign({}, startLabels, endLabels),
+            value,
+            exemplarLabels: Object.assign(
+              {},
+              startExemplarLabels,
+              endExemplarLabels
+            )
+          });
+          return value;
+        };
+      };
+    }
+    function setValuePair(labels, value, metricName, exemplar, sharedLabels = {}) {
+      return {
+        labels,
+        sharedLabels,
+        value,
+        metricName,
+        exemplar
+      };
+    }
+    function findBound(upperBounds, value) {
+      for (let i = 0; i < upperBounds.length; i++) {
+        const bound = upperBounds[i];
+        if (value <= bound) {
+          return bound;
+        }
+      }
+      return -1;
+    }
+    function observe(labels) {
+      return (value) => {
+        const labelValuePair = convertLabelsAndValues(labels, value);
+        validateLabel(this.labelNames, labelValuePair.labels);
+        if (!Number.isFinite(labelValuePair.value)) {
+          throw new TypeError(
+            `Value is not a valid number: ${util2.format(labelValuePair.value)}`
+          );
+        }
+        const hash2 = hashObject(labelValuePair.labels, this.sortedLabelNames);
+        let valueFromMap = this.hashMap[hash2];
+        if (!valueFromMap) {
+          valueFromMap = createBaseValues(
+            labelValuePair.labels,
+            this.bucketValues,
+            this.bucketExemplars
+          );
+        }
+        const b = findBound(this.upperBounds, labelValuePair.value);
+        valueFromMap.sum += labelValuePair.value;
+        valueFromMap.count += 1;
+        if (Object.prototype.hasOwnProperty.call(valueFromMap.bucketValues, b)) {
+          valueFromMap.bucketValues[b] += 1;
+        }
+        this.hashMap[hash2] = valueFromMap;
+      };
+    }
+    function createBaseValues(labels, bucketValues, bucketExemplars) {
+      const result = {
+        labels,
+        bucketValues: { ...bucketValues },
+        sum: 0,
+        count: 0
+      };
+      if (bucketExemplars) {
+        result.bucketExemplars = { ...bucketExemplars };
+      }
+      return result;
+    }
+    function convertLabelsAndValues(labels, value) {
+      return isObject2(labels) ? {
+        labels,
+        value
+      } : {
+        value: labels,
+        labels: {}
+      };
+    }
+    function extractBucketValuesForExport(histogram) {
+      const name = `${histogram.name}_bucket`;
+      return (bucketData) => {
+        let acc = 0;
+        const buckets = histogram.upperBounds.map((upperBound) => {
+          acc += bucketData.bucketValues[upperBound];
+          return setValuePair(
+            { le: upperBound },
+            acc,
+            name,
+            bucketData.bucketExemplars ? bucketData.bucketExemplars[upperBound] : null,
+            bucketData.labels
+          );
+        });
+        return { buckets, data: bucketData };
+      };
+    }
+    function addSumAndCountForExport(histogram) {
+      return (acc, d) => {
+        acc.push(...d.buckets);
+        const infLabel = { le: "+Inf" };
+        acc.push(
+          setValuePair(
+            infLabel,
+            d.data.count,
+            `${histogram.name}_bucket`,
+            d.data.bucketExemplars ? d.data.bucketExemplars["-1"] : null,
+            d.data.labels
+          ),
+          setValuePair(
+            {},
+            d.data.sum,
+            `${histogram.name}_sum`,
+            void 0,
+            d.data.labels
+          ),
+          setValuePair(
+            {},
+            d.data.count,
+            `${histogram.name}_count`,
+            void 0,
+            d.data.labels
+          )
+        );
+        return acc;
+      };
+    }
+    function splayLabels(bucket) {
+      const { sharedLabels, labels, ...newBucket } = bucket;
+      for (const label of Object.keys(sharedLabels)) {
+        labels[label] = sharedLabels[label];
+      }
+      newBucket.labels = labels;
+      return newBucket;
+    }
+    module.exports = Histogram;
+  }
+});
+
+// ../node_modules/.pnpm/bintrees@1.0.2/node_modules/bintrees/lib/treebase.js
+var require_treebase = __commonJS({
+  "../node_modules/.pnpm/bintrees@1.0.2/node_modules/bintrees/lib/treebase.js"(exports, module) {
+    function TreeBase() {
+    }
+    TreeBase.prototype.clear = function() {
+      this._root = null;
+      this.size = 0;
+    };
+    TreeBase.prototype.find = function(data) {
+      var res = this._root;
+      while (res !== null) {
+        var c = this._comparator(data, res.data);
+        if (c === 0) {
+          return res.data;
+        } else {
+          res = res.get_child(c > 0);
+        }
+      }
+      return null;
+    };
+    TreeBase.prototype.findIter = function(data) {
+      var res = this._root;
+      var iter = this.iterator();
+      while (res !== null) {
+        var c = this._comparator(data, res.data);
+        if (c === 0) {
+          iter._cursor = res;
+          return iter;
+        } else {
+          iter._ancestors.push(res);
+          res = res.get_child(c > 0);
+        }
+      }
+      return null;
+    };
+    TreeBase.prototype.lowerBound = function(item) {
+      var cur = this._root;
+      var iter = this.iterator();
+      var cmp = this._comparator;
+      while (cur !== null) {
+        var c = cmp(item, cur.data);
+        if (c === 0) {
+          iter._cursor = cur;
+          return iter;
+        }
+        iter._ancestors.push(cur);
+        cur = cur.get_child(c > 0);
+      }
+      for (var i = iter._ancestors.length - 1; i >= 0; --i) {
+        cur = iter._ancestors[i];
+        if (cmp(item, cur.data) < 0) {
+          iter._cursor = cur;
+          iter._ancestors.length = i;
+          return iter;
+        }
+      }
+      iter._ancestors.length = 0;
+      return iter;
+    };
+    TreeBase.prototype.upperBound = function(item) {
+      var iter = this.lowerBound(item);
+      var cmp = this._comparator;
+      while (iter.data() !== null && cmp(iter.data(), item) === 0) {
+        iter.next();
+      }
+      return iter;
+    };
+    TreeBase.prototype.min = function() {
+      var res = this._root;
+      if (res === null) {
+        return null;
+      }
+      while (res.left !== null) {
+        res = res.left;
+      }
+      return res.data;
+    };
+    TreeBase.prototype.max = function() {
+      var res = this._root;
+      if (res === null) {
+        return null;
+      }
+      while (res.right !== null) {
+        res = res.right;
+      }
+      return res.data;
+    };
+    TreeBase.prototype.iterator = function() {
+      return new Iterator(this);
+    };
+    TreeBase.prototype.each = function(cb) {
+      var it = this.iterator(), data;
+      while ((data = it.next()) !== null) {
+        if (cb(data) === false) {
+          return;
+        }
+      }
+    };
+    TreeBase.prototype.reach = function(cb) {
+      var it = this.iterator(), data;
+      while ((data = it.prev()) !== null) {
+        if (cb(data) === false) {
+          return;
+        }
+      }
+    };
+    function Iterator(tree) {
+      this._tree = tree;
+      this._ancestors = [];
+      this._cursor = null;
+    }
+    Iterator.prototype.data = function() {
+      return this._cursor !== null ? this._cursor.data : null;
+    };
+    Iterator.prototype.next = function() {
+      if (this._cursor === null) {
+        var root = this._tree._root;
+        if (root !== null) {
+          this._minNode(root);
+        }
+      } else {
+        if (this._cursor.right === null) {
+          var save;
+          do {
+            save = this._cursor;
+            if (this._ancestors.length) {
+              this._cursor = this._ancestors.pop();
+            } else {
+              this._cursor = null;
+              break;
+            }
+          } while (this._cursor.right === save);
+        } else {
+          this._ancestors.push(this._cursor);
+          this._minNode(this._cursor.right);
+        }
+      }
+      return this._cursor !== null ? this._cursor.data : null;
+    };
+    Iterator.prototype.prev = function() {
+      if (this._cursor === null) {
+        var root = this._tree._root;
+        if (root !== null) {
+          this._maxNode(root);
+        }
+      } else {
+        if (this._cursor.left === null) {
+          var save;
+          do {
+            save = this._cursor;
+            if (this._ancestors.length) {
+              this._cursor = this._ancestors.pop();
+            } else {
+              this._cursor = null;
+              break;
+            }
+          } while (this._cursor.left === save);
+        } else {
+          this._ancestors.push(this._cursor);
+          this._maxNode(this._cursor.left);
+        }
+      }
+      return this._cursor !== null ? this._cursor.data : null;
+    };
+    Iterator.prototype._minNode = function(start) {
+      while (start.left !== null) {
+        this._ancestors.push(start);
+        start = start.left;
+      }
+      this._cursor = start;
+    };
+    Iterator.prototype._maxNode = function(start) {
+      while (start.right !== null) {
+        this._ancestors.push(start);
+        start = start.right;
+      }
+      this._cursor = start;
+    };
+    module.exports = TreeBase;
+  }
+});
+
+// ../node_modules/.pnpm/bintrees@1.0.2/node_modules/bintrees/lib/rbtree.js
+var require_rbtree = __commonJS({
+  "../node_modules/.pnpm/bintrees@1.0.2/node_modules/bintrees/lib/rbtree.js"(exports, module) {
+    var TreeBase = require_treebase();
+    function Node(data) {
+      this.data = data;
+      this.left = null;
+      this.right = null;
+      this.red = true;
+    }
+    Node.prototype.get_child = function(dir) {
+      return dir ? this.right : this.left;
+    };
+    Node.prototype.set_child = function(dir, val) {
+      if (dir) {
+        this.right = val;
+      } else {
+        this.left = val;
+      }
+    };
+    function RBTree(comparator) {
+      this._root = null;
+      this._comparator = comparator;
+      this.size = 0;
+    }
+    RBTree.prototype = new TreeBase();
+    RBTree.prototype.insert = function(data) {
+      var ret2 = false;
+      if (this._root === null) {
+        this._root = new Node(data);
+        ret2 = true;
+        this.size++;
+      } else {
+        var head = new Node(void 0);
+        var dir = 0;
+        var last = 0;
+        var gp = null;
+        var ggp = head;
+        var p = null;
+        var node = this._root;
+        ggp.right = this._root;
+        while (true) {
+          if (node === null) {
+            node = new Node(data);
+            p.set_child(dir, node);
+            ret2 = true;
+            this.size++;
+          } else if (is_red(node.left) && is_red(node.right)) {
+            node.red = true;
+            node.left.red = false;
+            node.right.red = false;
+          }
+          if (is_red(node) && is_red(p)) {
+            var dir2 = ggp.right === gp;
+            if (node === p.get_child(last)) {
+              ggp.set_child(dir2, single_rotate(gp, !last));
+            } else {
+              ggp.set_child(dir2, double_rotate(gp, !last));
+            }
+          }
+          var cmp = this._comparator(node.data, data);
+          if (cmp === 0) {
+            break;
+          }
+          last = dir;
+          dir = cmp < 0;
+          if (gp !== null) {
+            ggp = gp;
+          }
+          gp = p;
+          p = node;
+          node = node.get_child(dir);
+        }
+        this._root = head.right;
+      }
+      this._root.red = false;
+      return ret2;
+    };
+    RBTree.prototype.remove = function(data) {
+      if (this._root === null) {
+        return false;
+      }
+      var head = new Node(void 0);
+      var node = head;
+      node.right = this._root;
+      var p = null;
+      var gp = null;
+      var found = null;
+      var dir = 1;
+      while (node.get_child(dir) !== null) {
+        var last = dir;
+        gp = p;
+        p = node;
+        node = node.get_child(dir);
+        var cmp = this._comparator(data, node.data);
+        dir = cmp > 0;
+        if (cmp === 0) {
+          found = node;
+        }
+        if (!is_red(node) && !is_red(node.get_child(dir))) {
+          if (is_red(node.get_child(!dir))) {
+            var sr = single_rotate(node, dir);
+            p.set_child(last, sr);
+            p = sr;
+          } else if (!is_red(node.get_child(!dir))) {
+            var sibling = p.get_child(!last);
+            if (sibling !== null) {
+              if (!is_red(sibling.get_child(!last)) && !is_red(sibling.get_child(last))) {
+                p.red = false;
+                sibling.red = true;
+                node.red = true;
+              } else {
+                var dir2 = gp.right === p;
+                if (is_red(sibling.get_child(last))) {
+                  gp.set_child(dir2, double_rotate(p, last));
+                } else if (is_red(sibling.get_child(!last))) {
+                  gp.set_child(dir2, single_rotate(p, last));
+                }
+                var gpc = gp.get_child(dir2);
+                gpc.red = true;
+                node.red = true;
+                gpc.left.red = false;
+                gpc.right.red = false;
+              }
+            }
+          }
+        }
+      }
+      if (found !== null) {
+        found.data = node.data;
+        p.set_child(p.right === node, node.get_child(node.left === null));
+        this.size--;
+      }
+      this._root = head.right;
+      if (this._root !== null) {
+        this._root.red = false;
+      }
+      return found !== null;
+    };
+    function is_red(node) {
+      return node !== null && node.red;
+    }
+    function single_rotate(root, dir) {
+      var save = root.get_child(!dir);
+      root.set_child(!dir, save.get_child(dir));
+      save.set_child(dir, root);
+      root.red = true;
+      save.red = false;
+      return save;
+    }
+    function double_rotate(root, dir) {
+      root.set_child(!dir, single_rotate(root.get_child(!dir), !dir));
+      return single_rotate(root, dir);
+    }
+    module.exports = RBTree;
+  }
+});
+
+// ../node_modules/.pnpm/bintrees@1.0.2/node_modules/bintrees/lib/bintree.js
+var require_bintree = __commonJS({
+  "../node_modules/.pnpm/bintrees@1.0.2/node_modules/bintrees/lib/bintree.js"(exports, module) {
+    var TreeBase = require_treebase();
+    function Node(data) {
+      this.data = data;
+      this.left = null;
+      this.right = null;
+    }
+    Node.prototype.get_child = function(dir) {
+      return dir ? this.right : this.left;
+    };
+    Node.prototype.set_child = function(dir, val) {
+      if (dir) {
+        this.right = val;
+      } else {
+        this.left = val;
+      }
+    };
+    function BinTree(comparator) {
+      this._root = null;
+      this._comparator = comparator;
+      this.size = 0;
+    }
+    BinTree.prototype = new TreeBase();
+    BinTree.prototype.insert = function(data) {
+      if (this._root === null) {
+        this._root = new Node(data);
+        this.size++;
+        return true;
+      }
+      var dir = 0;
+      var p = null;
+      var node = this._root;
+      while (true) {
+        if (node === null) {
+          node = new Node(data);
+          p.set_child(dir, node);
+          ret = true;
+          this.size++;
+          return true;
+        }
+        if (this._comparator(node.data, data) === 0) {
+          return false;
+        }
+        dir = this._comparator(node.data, data) < 0;
+        p = node;
+        node = node.get_child(dir);
+      }
+    };
+    BinTree.prototype.remove = function(data) {
+      if (this._root === null) {
+        return false;
+      }
+      var head = new Node(void 0);
+      var node = head;
+      node.right = this._root;
+      var p = null;
+      var found = null;
+      var dir = 1;
+      while (node.get_child(dir) !== null) {
+        p = node;
+        node = node.get_child(dir);
+        var cmp = this._comparator(data, node.data);
+        dir = cmp > 0;
+        if (cmp === 0) {
+          found = node;
+        }
+      }
+      if (found !== null) {
+        found.data = node.data;
+        p.set_child(p.right === node, node.get_child(node.left === null));
+        this._root = head.right;
+        this.size--;
+        return true;
+      } else {
+        return false;
+      }
+    };
+    module.exports = BinTree;
+  }
+});
+
+// ../node_modules/.pnpm/bintrees@1.0.2/node_modules/bintrees/index.js
+var require_bintrees = __commonJS({
+  "../node_modules/.pnpm/bintrees@1.0.2/node_modules/bintrees/index.js"(exports, module) {
+    module.exports = {
+      RBTree: require_rbtree(),
+      BinTree: require_bintree()
+    };
+  }
+});
+
+// ../node_modules/.pnpm/tdigest@0.1.2/node_modules/tdigest/tdigest.js
+var require_tdigest = __commonJS({
+  "../node_modules/.pnpm/tdigest@0.1.2/node_modules/tdigest/tdigest.js"(exports, module) {
+    var RBTree = require_bintrees().RBTree;
+    function TDigest(delta, K, CX) {
+      this.discrete = delta === false;
+      this.delta = delta || 0.01;
+      this.K = K === void 0 ? 25 : K;
+      this.CX = CX === void 0 ? 1.1 : CX;
+      this.centroids = new RBTree(compare_centroid_means);
+      this.nreset = 0;
+      this.reset();
+    }
+    TDigest.prototype.reset = function() {
+      this.centroids.clear();
+      this.n = 0;
+      this.nreset += 1;
+      this.last_cumulate = 0;
+    };
+    TDigest.prototype.size = function() {
+      return this.centroids.size;
+    };
+    TDigest.prototype.toArray = function(everything) {
+      var result = [];
+      if (everything) {
+        this._cumulate(true);
+        this.centroids.each(function(c) {
+          result.push(c);
+        });
+      } else {
+        this.centroids.each(function(c) {
+          result.push({ mean: c.mean, n: c.n });
+        });
+      }
+      return result;
+    };
+    TDigest.prototype.summary = function() {
+      var approx = this.discrete ? "exact " : "approximating ";
+      var s = [
+        approx + this.n + " samples using " + this.size() + " centroids",
+        "min = " + this.percentile(0),
+        "Q1  = " + this.percentile(0.25),
+        "Q2  = " + this.percentile(0.5),
+        "Q3  = " + this.percentile(0.75),
+        "max = " + this.percentile(1)
+      ];
+      return s.join("\n");
+    };
+    function compare_centroid_means(a, b) {
+      return a.mean > b.mean ? 1 : a.mean < b.mean ? -1 : 0;
+    }
+    function compare_centroid_mean_cumns(a, b) {
+      return a.mean_cumn - b.mean_cumn;
+    }
+    TDigest.prototype.push = function(x, n) {
+      n = n || 1;
+      x = Array.isArray(x) ? x : [x];
+      for (var i = 0; i < x.length; i++) {
+        this._digest(x[i], n);
+      }
+    };
+    TDigest.prototype.push_centroid = function(c) {
+      c = Array.isArray(c) ? c : [c];
+      for (var i = 0; i < c.length; i++) {
+        this._digest(c[i].mean, c[i].n);
+      }
+    };
+    TDigest.prototype._cumulate = function(exact) {
+      if (this.n === this.last_cumulate || !exact && this.CX && this.CX > this.n / this.last_cumulate) {
+        return;
+      }
+      var cumn = 0;
+      this.centroids.each(function(c) {
+        c.mean_cumn = cumn + c.n / 2;
+        cumn = c.cumn = cumn + c.n;
+      });
+      this.n = this.last_cumulate = cumn;
+    };
+    TDigest.prototype.find_nearest = function(x) {
+      if (this.size() === 0) {
+        return null;
+      }
+      var iter = this.centroids.lowerBound({ mean: x });
+      var c = iter.data() === null ? iter.prev() : iter.data();
+      if (c.mean === x || this.discrete) {
+        return c;
+      }
+      var prev = iter.prev();
+      if (prev && Math.abs(prev.mean - x) < Math.abs(c.mean - x)) {
+        return prev;
+      } else {
+        return c;
+      }
+    };
+    TDigest.prototype._new_centroid = function(x, n, cumn) {
+      var c = { mean: x, n, cumn };
+      this.centroids.insert(c);
+      this.n += n;
+      return c;
+    };
+    TDigest.prototype._addweight = function(nearest, x, n) {
+      if (x !== nearest.mean) {
+        nearest.mean += n * (x - nearest.mean) / (nearest.n + n);
+      }
+      nearest.cumn += n;
+      nearest.mean_cumn += n / 2;
+      nearest.n += n;
+      this.n += n;
+    };
+    TDigest.prototype._digest = function(x, n) {
+      var min = this.centroids.min();
+      var max = this.centroids.max();
+      var nearest = this.find_nearest(x);
+      if (nearest && nearest.mean === x) {
+        this._addweight(nearest, x, n);
+      } else if (nearest === min) {
+        this._new_centroid(x, n, 0);
+      } else if (nearest === max) {
+        this._new_centroid(x, n, this.n);
+      } else if (this.discrete) {
+        this._new_centroid(x, n, nearest.cumn);
+      } else {
+        var p = nearest.mean_cumn / this.n;
+        var max_n = Math.floor(4 * this.n * this.delta * p * (1 - p));
+        if (max_n - nearest.n >= n) {
+          this._addweight(nearest, x, n);
+        } else {
+          this._new_centroid(x, n, nearest.cumn);
+        }
+      }
+      this._cumulate(false);
+      if (!this.discrete && this.K && this.size() > this.K / this.delta) {
+        this.compress();
+      }
+    };
+    TDigest.prototype.bound_mean = function(x) {
+      var iter = this.centroids.upperBound({ mean: x });
+      var lower = iter.prev();
+      var upper = lower.mean === x ? lower : iter.next();
+      return [lower, upper];
+    };
+    TDigest.prototype.p_rank = function(x_or_xlist) {
+      var xs = Array.isArray(x_or_xlist) ? x_or_xlist : [x_or_xlist];
+      var ps = xs.map(this._p_rank, this);
+      return Array.isArray(x_or_xlist) ? ps : ps[0];
+    };
+    TDigest.prototype._p_rank = function(x) {
+      if (this.size() === 0) {
+        return void 0;
+      } else if (x < this.centroids.min().mean) {
+        return 0;
+      } else if (x > this.centroids.max().mean) {
+        return 1;
+      }
+      this._cumulate(true);
+      var bound = this.bound_mean(x);
+      var lower = bound[0], upper = bound[1];
+      if (this.discrete) {
+        return lower.cumn / this.n;
+      } else {
+        var cumn = lower.mean_cumn;
+        if (lower !== upper) {
+          cumn += (x - lower.mean) * (upper.mean_cumn - lower.mean_cumn) / (upper.mean - lower.mean);
+        }
+        return cumn / this.n;
+      }
+    };
+    TDigest.prototype.bound_mean_cumn = function(cumn) {
+      this.centroids._comparator = compare_centroid_mean_cumns;
+      var iter = this.centroids.upperBound({ mean_cumn: cumn });
+      this.centroids._comparator = compare_centroid_means;
+      var lower = iter.prev();
+      var upper = lower && lower.mean_cumn === cumn ? lower : iter.next();
+      return [lower, upper];
+    };
+    TDigest.prototype.percentile = function(p_or_plist) {
+      var ps = Array.isArray(p_or_plist) ? p_or_plist : [p_or_plist];
+      var qs2 = ps.map(this._percentile, this);
+      return Array.isArray(p_or_plist) ? qs2 : qs2[0];
+    };
+    TDigest.prototype._percentile = function(p) {
+      if (this.size() === 0) {
+        return void 0;
+      }
+      this._cumulate(true);
+      var h = this.n * p;
+      var bound = this.bound_mean_cumn(h);
+      var lower = bound[0], upper = bound[1];
+      if (upper === lower || lower === null || upper === null) {
+        return (lower || upper).mean;
+      } else if (!this.discrete) {
+        return lower.mean + (h - lower.mean_cumn) * (upper.mean - lower.mean) / (upper.mean_cumn - lower.mean_cumn);
+      } else if (h <= lower.cumn) {
+        return lower.mean;
+      } else {
+        return upper.mean;
+      }
+    };
+    function pop_random(choices) {
+      var idx = Math.floor(Math.random() * choices.length);
+      return choices.splice(idx, 1)[0];
+    }
+    TDigest.prototype.compress = function() {
+      if (this.compressing) {
+        return;
+      }
+      var points = this.toArray();
+      this.reset();
+      this.compressing = true;
+      while (points.length > 0) {
+        this.push_centroid(pop_random(points));
+      }
+      this._cumulate(true);
+      this.compressing = false;
+    };
+    function Digest(config) {
+      this.config = config || {};
+      this.mode = this.config.mode || "auto";
+      TDigest.call(this, this.mode === "cont" ? config.delta : false);
+      this.digest_ratio = this.config.ratio || 0.9;
+      this.digest_thresh = this.config.thresh || 1e3;
+      this.n_unique = 0;
+    }
+    Digest.prototype = Object.create(TDigest.prototype);
+    Digest.prototype.constructor = Digest;
+    Digest.prototype.push = function(x_or_xlist) {
+      TDigest.prototype.push.call(this, x_or_xlist);
+      this.check_continuous();
+    };
+    Digest.prototype._new_centroid = function(x, n, cumn) {
+      this.n_unique += 1;
+      TDigest.prototype._new_centroid.call(this, x, n, cumn);
+    };
+    Digest.prototype._addweight = function(nearest, x, n) {
+      if (nearest.n === 1) {
+        this.n_unique -= 1;
+      }
+      TDigest.prototype._addweight.call(this, nearest, x, n);
+    };
+    Digest.prototype.check_continuous = function() {
+      if (this.mode !== "auto" || this.size() < this.digest_thresh) {
+        return false;
+      }
+      if (this.n_unique / this.size() > this.digest_ratio) {
+        this.mode = "cont";
+        this.discrete = false;
+        this.delta = this.config.delta || 0.01;
+        this.compress();
+        return true;
+      }
+      return false;
+    };
+    module.exports = {
+      "TDigest": TDigest,
+      "Digest": Digest
+    };
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/timeWindowQuantiles.js
+var require_timeWindowQuantiles = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/timeWindowQuantiles.js"(exports, module) {
+    "use strict";
+    var { TDigest } = require_tdigest();
+    var TimeWindowQuantiles = class {
+      constructor(maxAgeSeconds, ageBuckets) {
+        this.maxAgeSeconds = maxAgeSeconds || 0;
+        this.ageBuckets = ageBuckets || 0;
+        this.shouldRotate = maxAgeSeconds && ageBuckets;
+        this.ringBuffer = Array(ageBuckets).fill(new TDigest());
+        this.currentBuffer = 0;
+        this.lastRotateTimestampMillis = Date.now();
+        this.durationBetweenRotatesMillis = maxAgeSeconds * 1e3 / ageBuckets || Infinity;
+      }
+      size() {
+        const bucket = rotate.call(this);
+        return bucket.size();
+      }
+      percentile(quantile) {
+        const bucket = rotate.call(this);
+        return bucket.percentile(quantile);
+      }
+      push(value) {
+        rotate.call(this);
+        this.ringBuffer.forEach((bucket) => {
+          bucket.push(value);
+        });
+      }
+      reset() {
+        this.ringBuffer.forEach((bucket) => {
+          bucket.reset();
+        });
+      }
+      compress() {
+        this.ringBuffer.forEach((bucket) => {
+          bucket.compress();
+        });
+      }
+    };
+    function rotate() {
+      let timeSinceLastRotateMillis = Date.now() - this.lastRotateTimestampMillis;
+      while (timeSinceLastRotateMillis > this.durationBetweenRotatesMillis && this.shouldRotate) {
+        this.ringBuffer[this.currentBuffer] = new TDigest();
+        if (++this.currentBuffer >= this.ringBuffer.length) {
+          this.currentBuffer = 0;
+        }
+        timeSinceLastRotateMillis -= this.durationBetweenRotatesMillis;
+        this.lastRotateTimestampMillis += this.durationBetweenRotatesMillis;
+      }
+      return this.ringBuffer[this.currentBuffer];
+    }
+    module.exports = TimeWindowQuantiles;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/summary.js
+var require_summary = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/summary.js"(exports, module) {
+    "use strict";
+    var util2 = __require("util");
+    var { getLabels, hashObject, removeLabels } = require_util();
+    var { validateLabel } = require_validation();
+    var { Metric } = require_metric();
+    var timeWindowQuantiles = require_timeWindowQuantiles();
+    var DEFAULT_COMPRESS_COUNT = 1e3;
+    var Summary = class extends Metric {
+      constructor(config) {
+        super(config, {
+          percentiles: [0.01, 0.05, 0.5, 0.9, 0.95, 0.99, 0.999],
+          compressCount: DEFAULT_COMPRESS_COUNT,
+          hashMap: {}
+        });
+        this.type = "summary";
+        for (const label of this.labelNames) {
+          if (label === "quantile")
+            throw new Error("quantile is a reserved label keyword");
+        }
+        if (this.labelNames.length === 0) {
+          this.hashMap = {
+            [hashObject({})]: {
+              labels: {},
+              td: new timeWindowQuantiles(this.maxAgeSeconds, this.ageBuckets),
+              count: 0,
+              sum: 0
+            }
+          };
+        }
+      }
+      /**
+       * Observe a value
+       * @param {object} labels - Object with labels where key is the label key and value is label value. Can only be one level deep
+       * @param {Number} value - Value to observe
+       * @returns {void}
+       */
+      observe(labels, value) {
+        observe.call(this, labels === 0 ? 0 : labels || {})(value);
+      }
+      async get() {
+        if (this.collect) {
+          const v = this.collect();
+          if (v instanceof Promise) await v;
+        }
+        const hashKeys = Object.keys(this.hashMap);
+        const values = [];
+        hashKeys.forEach((hashKey) => {
+          const s = this.hashMap[hashKey];
+          if (s) {
+            if (this.pruneAgedBuckets && s.td.size() === 0) {
+              delete this.hashMap[hashKey];
+            } else {
+              extractSummariesForExport(s, this.percentiles).forEach((v) => {
+                values.push(v);
+              });
+              values.push(getSumForExport(s, this));
+              values.push(getCountForExport(s, this));
+            }
+          }
+        });
+        return {
+          name: this.name,
+          help: this.help,
+          type: this.type,
+          values,
+          aggregator: this.aggregator
+        };
+      }
+      reset() {
+        const data = Object.values(this.hashMap);
+        data.forEach((s) => {
+          s.td.reset();
+          s.count = 0;
+          s.sum = 0;
+        });
+      }
+      /**
+       * Start a timer that could be used to logging durations
+       * @param {object} labels - Object with labels where key is the label key and value is label value. Can only be one level deep
+       * @returns {function} - Function to invoke when you want to stop the timer and observe the duration in seconds
+       * @example
+       * var end = summary.startTimer();
+       * makeExpensiveXHRRequest(function(err, res) {
+       *	end(); //Observe the duration of expensiveXHRRequest
+       * });
+       */
+      startTimer(labels) {
+        return startTimer.call(this, labels)();
+      }
+      labels(...args) {
+        const labels = getLabels(this.labelNames, args);
+        validateLabel(this.labelNames, labels);
+        return {
+          observe: observe.call(this, labels),
+          startTimer: startTimer.call(this, labels)
+        };
+      }
+      remove(...args) {
+        const labels = getLabels(this.labelNames, args);
+        validateLabel(this.labelNames, labels);
+        removeLabels.call(this, this.hashMap, labels, this.sortedLabelNames);
+      }
+    };
+    function extractSummariesForExport(summaryOfLabels, percentiles) {
+      summaryOfLabels.td.compress();
+      return percentiles.map((percentile) => {
+        const percentileValue = summaryOfLabels.td.percentile(percentile);
+        return {
+          labels: Object.assign({ quantile: percentile }, summaryOfLabels.labels),
+          value: percentileValue ? percentileValue : 0
+        };
+      });
+    }
+    function getCountForExport(value, summary) {
+      return {
+        metricName: `${summary.name}_count`,
+        labels: value.labels,
+        value: value.count
+      };
+    }
+    function getSumForExport(value, summary) {
+      return {
+        metricName: `${summary.name}_sum`,
+        labels: value.labels,
+        value: value.sum
+      };
+    }
+    function startTimer(startLabels) {
+      return () => {
+        const start = process.hrtime();
+        return (endLabels) => {
+          const delta = process.hrtime(start);
+          const value = delta[0] + delta[1] / 1e9;
+          this.observe(Object.assign({}, startLabels, endLabels), value);
+          return value;
+        };
+      };
+    }
+    function observe(labels) {
+      return (value) => {
+        const labelValuePair = convertLabelsAndValues(labels, value);
+        validateLabel(this.labelNames, labels);
+        if (!Number.isFinite(labelValuePair.value)) {
+          throw new TypeError(
+            `Value is not a valid number: ${util2.format(labelValuePair.value)}`
+          );
+        }
+        const hash2 = hashObject(labelValuePair.labels, this.sortedLabelNames);
+        let summaryOfLabel = this.hashMap[hash2];
+        if (!summaryOfLabel) {
+          summaryOfLabel = {
+            labels: labelValuePair.labels,
+            td: new timeWindowQuantiles(this.maxAgeSeconds, this.ageBuckets),
+            count: 0,
+            sum: 0
+          };
+        }
+        summaryOfLabel.td.push(labelValuePair.value);
+        summaryOfLabel.count++;
+        if (summaryOfLabel.count % this.compressCount === 0) {
+          summaryOfLabel.td.compress();
+        }
+        summaryOfLabel.sum += labelValuePair.value;
+        this.hashMap[hash2] = summaryOfLabel;
+      };
+    }
+    function convertLabelsAndValues(labels, value) {
+      if (value === void 0) {
+        return {
+          value: labels,
+          labels: {}
+        };
+      }
+      return {
+        labels,
+        value
+      };
+    }
+    module.exports = Summary;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/pushgateway.js
+var require_pushgateway = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/pushgateway.js"(exports, module) {
+    "use strict";
+    var url = __require("url");
+    var http2 = __require("http");
+    var https2 = __require("https");
+    var { gzipSync } = __require("zlib");
+    var { globalRegistry } = require_registry();
+    var Pushgateway = class {
+      constructor(gatewayUrl, options, registry) {
+        if (!registry) {
+          registry = globalRegistry;
+        }
+        this.registry = registry;
+        this.gatewayUrl = gatewayUrl;
+        const { requireJobName, ...requestOptions } = {
+          requireJobName: true,
+          ...options
+        };
+        this.requireJobName = requireJobName;
+        this.requestOptions = requestOptions;
+      }
+      pushAdd(params = {}) {
+        if (this.requireJobName && !params.jobName) {
+          throw new Error("Missing jobName parameter");
+        }
+        return useGateway.call(this, "POST", params.jobName, params.groupings);
+      }
+      push(params = {}) {
+        if (this.requireJobName && !params.jobName) {
+          throw new Error("Missing jobName parameter");
+        }
+        return useGateway.call(this, "PUT", params.jobName, params.groupings);
+      }
+      delete(params = {}) {
+        if (this.requireJobName && !params.jobName) {
+          throw new Error("Missing jobName parameter");
+        }
+        return useGateway.call(this, "DELETE", params.jobName, params.groupings);
+      }
+    };
+    async function useGateway(method, job, groupings) {
+      const gatewayUrlParsed = url.parse(this.gatewayUrl);
+      const gatewayUrlPath = gatewayUrlParsed.pathname && gatewayUrlParsed.pathname !== "/" ? gatewayUrlParsed.pathname : "";
+      const jobPath = job ? `/job/${encodeURIComponent(job)}${generateGroupings(groupings)}` : "";
+      const path2 = `${gatewayUrlPath}/metrics${jobPath}`;
+      const target = url.resolve(this.gatewayUrl, path2);
+      const requestParams = url.parse(target);
+      const httpModule = isHttps(requestParams.href) ? https2 : http2;
+      const options = Object.assign(requestParams, this.requestOptions, {
+        method
+      });
+      return new Promise((resolve, reject) => {
+        if (method === "DELETE" && options.headers) {
+          delete options.headers["Content-Encoding"];
+        }
+        const req = httpModule.request(options, (resp) => {
+          let body = "";
+          resp.setEncoding("utf8");
+          resp.on("data", (chunk) => {
+            body += chunk;
+          });
+          resp.on("end", () => {
+            if (resp.statusCode >= 400) {
+              reject(
+                new Error(`push failed with status ${resp.statusCode}, ${body}`)
+              );
+            } else {
+              resolve({ resp, body });
+            }
+          });
+        });
+        req.on("error", (err) => {
+          reject(err);
+        });
+        req.on("timeout", () => {
+          req.destroy(new Error("Pushgateway request timed out"));
+        });
+        if (method !== "DELETE") {
+          this.registry.metrics().then((metrics) => {
+            if (options.headers && options.headers["Content-Encoding"] === "gzip") {
+              metrics = gzipSync(metrics);
+            }
+            req.write(metrics);
+            req.end();
+          }).catch((err) => {
+            reject(err);
+          });
+        } else {
+          req.end();
+        }
+      });
+    }
+    function generateGroupings(groupings) {
+      if (!groupings) {
+        return "";
+      }
+      return Object.keys(groupings).map(
+        (key) => `/${encodeURIComponent(key)}/${encodeURIComponent(groupings[key])}`
+      ).join("");
+    }
+    function isHttps(href) {
+      return href.search(/^https/) !== -1;
+    }
+    module.exports = Pushgateway;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/bucketGenerators.js
+var require_bucketGenerators = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/bucketGenerators.js"(exports) {
+    "use strict";
+    exports.linearBuckets = (start, width, count2) => {
+      if (count2 < 1) {
+        throw new Error("Linear buckets needs a positive count");
+      }
+      const buckets = new Array(count2);
+      for (let i = 0; i < count2; i++) {
+        buckets[i] = start + i * width;
+      }
+      return buckets;
+    };
+    exports.exponentialBuckets = (start, factor, count2) => {
+      if (start <= 0) {
+        throw new Error("Exponential buckets needs a positive start");
+      }
+      if (count2 < 1) {
+        throw new Error("Exponential buckets needs a positive count");
+      }
+      if (factor <= 1) {
+        throw new Error("Exponential buckets needs a factor greater than 1");
+      }
+      const buckets = new Array(count2);
+      for (let i = 0; i < count2; i++) {
+        buckets[i] = start;
+        start *= factor;
+      }
+      return buckets;
+    };
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processCpuTotal.js
+var require_processCpuTotal = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processCpuTotal.js"(exports, module) {
+    "use strict";
+    var OtelApi = __require("@opentelemetry/api");
+    var Counter = require_counter();
+    var PROCESS_CPU_USER_SECONDS = "process_cpu_user_seconds_total";
+    var PROCESS_CPU_SYSTEM_SECONDS = "process_cpu_system_seconds_total";
+    var PROCESS_CPU_SECONDS = "process_cpu_seconds_total";
+    module.exports = (registry, config = {}) => {
+      const registers = registry ? [registry] : void 0;
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const exemplars = config.enableExemplars ? config.enableExemplars : false;
+      const labelNames = Object.keys(labels);
+      let lastCpuUsage = process.cpuUsage();
+      const cpuUserUsageCounter = new Counter({
+        name: namePrefix + PROCESS_CPU_USER_SECONDS,
+        help: "Total user CPU time spent in seconds.",
+        enableExemplars: exemplars,
+        registers,
+        labelNames,
+        // Use this one metric's `collect` to set all metrics' values.
+        collect() {
+          const cpuUsage = process.cpuUsage();
+          const userUsageMicros = cpuUsage.user - lastCpuUsage.user;
+          const systemUsageMicros = cpuUsage.system - lastCpuUsage.system;
+          lastCpuUsage = cpuUsage;
+          if (this.enableExemplars) {
+            let exemplarLabels = {};
+            const currentSpan = OtelApi.trace.getSpan(OtelApi.context.active());
+            if (currentSpan) {
+              exemplarLabels = {
+                traceId: currentSpan.spanContext().traceId,
+                spanId: currentSpan.spanContext().spanId
+              };
+            }
+            cpuUserUsageCounter.inc({
+              labels,
+              value: userUsageMicros / 1e6,
+              exemplarLabels
+            });
+            cpuSystemUsageCounter.inc({
+              labels,
+              value: systemUsageMicros / 1e6,
+              exemplarLabels
+            });
+            cpuUsageCounter.inc({
+              labels,
+              value: (userUsageMicros + systemUsageMicros) / 1e6,
+              exemplarLabels
+            });
+          } else {
+            cpuUserUsageCounter.inc(labels, userUsageMicros / 1e6);
+            cpuSystemUsageCounter.inc(labels, systemUsageMicros / 1e6);
+            cpuUsageCounter.inc(
+              labels,
+              (userUsageMicros + systemUsageMicros) / 1e6
+            );
+          }
+        }
+      });
+      const cpuSystemUsageCounter = new Counter({
+        name: namePrefix + PROCESS_CPU_SYSTEM_SECONDS,
+        help: "Total system CPU time spent in seconds.",
+        enableExemplars: exemplars,
+        registers,
+        labelNames
+      });
+      const cpuUsageCounter = new Counter({
+        name: namePrefix + PROCESS_CPU_SECONDS,
+        help: "Total user and system CPU time spent in seconds.",
+        enableExemplars: exemplars,
+        registers,
+        labelNames
+      });
+    };
+    module.exports.metricNames = [
+      PROCESS_CPU_USER_SECONDS,
+      PROCESS_CPU_SYSTEM_SECONDS,
+      PROCESS_CPU_SECONDS
+    ];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processStartTime.js
+var require_processStartTime = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processStartTime.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var startInSeconds = Math.round(Date.now() / 1e3 - process.uptime());
+    var PROCESS_START_TIME = "process_start_time_seconds";
+    module.exports = (registry, config = {}) => {
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      new Gauge({
+        name: namePrefix + PROCESS_START_TIME,
+        help: "Start time of the process since unix epoch in seconds.",
+        registers: registry ? [registry] : void 0,
+        labelNames,
+        aggregator: "omit",
+        collect() {
+          this.set(labels, startInSeconds);
+        }
+      });
+    };
+    module.exports.metricNames = [PROCESS_START_TIME];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/osMemoryHeapLinux.js
+var require_osMemoryHeapLinux = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/osMemoryHeapLinux.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var fs = __require("fs");
+    var values = ["VmSize", "VmRSS", "VmData"];
+    var PROCESS_RESIDENT_MEMORY = "process_resident_memory_bytes";
+    var PROCESS_VIRTUAL_MEMORY = "process_virtual_memory_bytes";
+    var PROCESS_HEAP = "process_heap_bytes";
+    function structureOutput(input) {
+      return input.split("\n").reduce((acc, string) => {
+        if (!values.some((value2) => string.startsWith(value2))) {
+          return acc;
+        }
+        const split = string.split(":");
+        let value = split[1].trim();
+        value = value.substr(0, value.length - 3);
+        value = Number(value) * 1024;
+        acc[split[0]] = value;
+        return acc;
+      }, {});
+    }
+    module.exports = (registry, config = {}) => {
+      const registers = registry ? [registry] : void 0;
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      const residentMemGauge = new Gauge({
+        name: namePrefix + PROCESS_RESIDENT_MEMORY,
+        help: "Resident memory size in bytes.",
+        registers,
+        labelNames,
+        // Use this one metric's `collect` to set all metrics' values.
+        collect() {
+          try {
+            const stat = fs.readFileSync("/proc/self/status", "utf8");
+            const structuredOutput = structureOutput(stat);
+            residentMemGauge.set(labels, structuredOutput.VmRSS);
+            virtualMemGauge.set(labels, structuredOutput.VmSize);
+            heapSizeMemGauge.set(labels, structuredOutput.VmData);
+          } catch {
+          }
+        }
+      });
+      const virtualMemGauge = new Gauge({
+        name: namePrefix + PROCESS_VIRTUAL_MEMORY,
+        help: "Virtual memory size in bytes.",
+        registers,
+        labelNames
+      });
+      const heapSizeMemGauge = new Gauge({
+        name: namePrefix + PROCESS_HEAP,
+        help: "Process heap size in bytes.",
+        registers,
+        labelNames
+      });
+    };
+    module.exports.metricNames = [
+      PROCESS_RESIDENT_MEMORY,
+      PROCESS_VIRTUAL_MEMORY,
+      PROCESS_HEAP
+    ];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/helpers/safeMemoryUsage.js
+var require_safeMemoryUsage = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/helpers/safeMemoryUsage.js"(exports, module) {
+    "use strict";
+    function safeMemoryUsage() {
+      try {
+        return process.memoryUsage();
+      } catch {
+        return;
+      }
+    }
+    module.exports = safeMemoryUsage;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/osMemoryHeap.js
+var require_osMemoryHeap = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/osMemoryHeap.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var linuxVariant = require_osMemoryHeapLinux();
+    var safeMemoryUsage = require_safeMemoryUsage();
+    var PROCESS_RESIDENT_MEMORY = "process_resident_memory_bytes";
+    function notLinuxVariant(registry, config = {}) {
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      new Gauge({
+        name: namePrefix + PROCESS_RESIDENT_MEMORY,
+        help: "Resident memory size in bytes.",
+        registers: registry ? [registry] : void 0,
+        labelNames,
+        collect() {
+          const memUsage = safeMemoryUsage();
+          if (memUsage) {
+            this.set(labels, memUsage.rss);
+          }
+        }
+      });
+    }
+    module.exports = (registry, config) => process.platform === "linux" ? linuxVariant(registry, config) : notLinuxVariant(registry, config);
+    module.exports.metricNames = process.platform === "linux" ? linuxVariant.metricNames : [PROCESS_RESIDENT_MEMORY];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processOpenFileDescriptors.js
+var require_processOpenFileDescriptors = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processOpenFileDescriptors.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var fs = __require("fs");
+    var process3 = __require("process");
+    var PROCESS_OPEN_FDS = "process_open_fds";
+    module.exports = (registry, config = {}) => {
+      if (process3.platform !== "linux") {
+        return;
+      }
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      new Gauge({
+        name: namePrefix + PROCESS_OPEN_FDS,
+        help: "Number of open file descriptors.",
+        registers: registry ? [registry] : void 0,
+        labelNames,
+        collect() {
+          try {
+            const fds = fs.readdirSync("/proc/self/fd");
+            this.set(labels, fds.length - 1);
+          } catch {
+          }
+        }
+      });
+    };
+    module.exports.metricNames = [PROCESS_OPEN_FDS];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processMaxFileDescriptors.js
+var require_processMaxFileDescriptors = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processMaxFileDescriptors.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var fs = __require("fs");
+    var PROCESS_MAX_FDS = "process_max_fds";
+    var maxFds;
+    module.exports = (registry, config = {}) => {
+      if (maxFds === void 0) {
+        try {
+          const limits = fs.readFileSync("/proc/self/limits", "utf8");
+          const lines = limits.split("\n");
+          for (const line2 of lines) {
+            if (line2.startsWith("Max open files")) {
+              const parts = line2.split(/  +/);
+              maxFds = Number(parts[1]);
+              break;
+            }
+          }
+        } catch {
+          return;
+        }
+      }
+      if (maxFds === void 0) return;
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      new Gauge({
+        name: namePrefix + PROCESS_MAX_FDS,
+        help: "Maximum number of open file descriptors.",
+        registers: registry ? [registry] : void 0,
+        labelNames,
+        collect() {
+          if (maxFds !== void 0) this.set(labels, maxFds);
+        }
+      });
+    };
+    module.exports.metricNames = [PROCESS_MAX_FDS];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/eventLoopLag.js
+var require_eventLoopLag = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/eventLoopLag.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var perf_hooks;
+    try {
+      perf_hooks = __require("perf_hooks");
+    } catch {
+    }
+    var NODEJS_EVENTLOOP_LAG = "nodejs_eventloop_lag_seconds";
+    var NODEJS_EVENTLOOP_LAG_MIN = "nodejs_eventloop_lag_min_seconds";
+    var NODEJS_EVENTLOOP_LAG_MAX = "nodejs_eventloop_lag_max_seconds";
+    var NODEJS_EVENTLOOP_LAG_MEAN = "nodejs_eventloop_lag_mean_seconds";
+    var NODEJS_EVENTLOOP_LAG_STDDEV = "nodejs_eventloop_lag_stddev_seconds";
+    var NODEJS_EVENTLOOP_LAG_P50 = "nodejs_eventloop_lag_p50_seconds";
+    var NODEJS_EVENTLOOP_LAG_P90 = "nodejs_eventloop_lag_p90_seconds";
+    var NODEJS_EVENTLOOP_LAG_P99 = "nodejs_eventloop_lag_p99_seconds";
+    function reportEventloopLag(start, gauge, labels) {
+      const delta = process.hrtime(start);
+      const nanosec = delta[0] * 1e9 + delta[1];
+      const seconds = nanosec / 1e9;
+      gauge.set(labels, seconds);
+    }
+    module.exports = (registry, config = {}) => {
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      const registers = registry ? [registry] : void 0;
+      let collect = () => {
+        const start = process.hrtime();
+        setImmediate(reportEventloopLag, start, lag, labels);
+      };
+      if (perf_hooks && perf_hooks.monitorEventLoopDelay) {
+        try {
+          const histogram = perf_hooks.monitorEventLoopDelay({
+            resolution: config.eventLoopMonitoringPrecision
+          });
+          histogram.enable();
+          collect = () => {
+            const start = process.hrtime();
+            setImmediate(reportEventloopLag, start, lag, labels);
+            lagMin.set(labels, histogram.min / 1e9);
+            lagMax.set(labels, histogram.max / 1e9);
+            lagMean.set(labels, histogram.mean / 1e9);
+            lagStddev.set(labels, histogram.stddev / 1e9);
+            lagP50.set(labels, histogram.percentile(50) / 1e9);
+            lagP90.set(labels, histogram.percentile(90) / 1e9);
+            lagP99.set(labels, histogram.percentile(99) / 1e9);
+            histogram.reset();
+          };
+        } catch (e) {
+          if (e.code === "ERR_NOT_IMPLEMENTED") {
+            return;
+          }
+          throw e;
+        }
+      }
+      const lag = new Gauge({
+        name: namePrefix + NODEJS_EVENTLOOP_LAG,
+        help: "Lag of event loop in seconds.",
+        registers,
+        labelNames,
+        aggregator: "average",
+        // Use this one metric's `collect` to set all metrics' values.
+        collect
+      });
+      const lagMin = new Gauge({
+        name: namePrefix + NODEJS_EVENTLOOP_LAG_MIN,
+        help: "The minimum recorded event loop delay.",
+        registers,
+        labelNames,
+        aggregator: "min"
+      });
+      const lagMax = new Gauge({
+        name: namePrefix + NODEJS_EVENTLOOP_LAG_MAX,
+        help: "The maximum recorded event loop delay.",
+        registers,
+        labelNames,
+        aggregator: "max"
+      });
+      const lagMean = new Gauge({
+        name: namePrefix + NODEJS_EVENTLOOP_LAG_MEAN,
+        help: "The mean of the recorded event loop delays.",
+        registers,
+        labelNames,
+        aggregator: "average"
+      });
+      const lagStddev = new Gauge({
+        name: namePrefix + NODEJS_EVENTLOOP_LAG_STDDEV,
+        help: "The standard deviation of the recorded event loop delays.",
+        registers,
+        labelNames,
+        aggregator: "average"
+      });
+      const lagP50 = new Gauge({
+        name: namePrefix + NODEJS_EVENTLOOP_LAG_P50,
+        help: "The 50th percentile of the recorded event loop delays.",
+        registers,
+        labelNames,
+        aggregator: "average"
+      });
+      const lagP90 = new Gauge({
+        name: namePrefix + NODEJS_EVENTLOOP_LAG_P90,
+        help: "The 90th percentile of the recorded event loop delays.",
+        registers,
+        labelNames,
+        aggregator: "average"
+      });
+      const lagP99 = new Gauge({
+        name: namePrefix + NODEJS_EVENTLOOP_LAG_P99,
+        help: "The 99th percentile of the recorded event loop delays.",
+        registers,
+        labelNames,
+        aggregator: "average"
+      });
+    };
+    module.exports.metricNames = [
+      NODEJS_EVENTLOOP_LAG,
+      NODEJS_EVENTLOOP_LAG_MIN,
+      NODEJS_EVENTLOOP_LAG_MAX,
+      NODEJS_EVENTLOOP_LAG_MEAN,
+      NODEJS_EVENTLOOP_LAG_STDDEV,
+      NODEJS_EVENTLOOP_LAG_P50,
+      NODEJS_EVENTLOOP_LAG_P90,
+      NODEJS_EVENTLOOP_LAG_P99
+    ];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/helpers/processMetricsHelpers.js
+var require_processMetricsHelpers = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/helpers/processMetricsHelpers.js"(exports, module) {
+    "use strict";
+    function aggregateByObjectName(list) {
+      const data = {};
+      for (let i = 0; i < list.length; i++) {
+        const listElement = list[i];
+        if (!listElement || typeof listElement.constructor === "undefined") {
+          continue;
+        }
+        if (Object.hasOwnProperty.call(data, listElement.constructor.name)) {
+          data[listElement.constructor.name] += 1;
+        } else {
+          data[listElement.constructor.name] = 1;
+        }
+      }
+      return data;
+    }
+    function updateMetrics(gauge, data, labels) {
+      gauge.reset();
+      for (const key in data) {
+        gauge.set(Object.assign({ type: key }, labels || {}), data[key]);
+      }
+    }
+    module.exports = {
+      aggregateByObjectName,
+      updateMetrics
+    };
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processHandles.js
+var require_processHandles = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processHandles.js"(exports, module) {
+    "use strict";
+    var { aggregateByObjectName } = require_processMetricsHelpers();
+    var { updateMetrics } = require_processMetricsHelpers();
+    var Gauge = require_gauge();
+    var NODEJS_ACTIVE_HANDLES = "nodejs_active_handles";
+    var NODEJS_ACTIVE_HANDLES_TOTAL = "nodejs_active_handles_total";
+    module.exports = (registry, config = {}) => {
+      if (typeof process._getActiveHandles !== "function") {
+        return;
+      }
+      const registers = registry ? [registry] : void 0;
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      new Gauge({
+        name: namePrefix + NODEJS_ACTIVE_HANDLES,
+        help: "Number of active libuv handles grouped by handle type. Every handle type is C++ class name.",
+        labelNames: ["type", ...labelNames],
+        registers,
+        collect() {
+          const handles = process._getActiveHandles();
+          updateMetrics(this, aggregateByObjectName(handles), labels);
+        }
+      });
+      new Gauge({
+        name: namePrefix + NODEJS_ACTIVE_HANDLES_TOTAL,
+        help: "Total number of active handles.",
+        registers,
+        labelNames,
+        collect() {
+          const handles = process._getActiveHandles();
+          this.set(labels, handles.length);
+        }
+      });
+    };
+    module.exports.metricNames = [
+      NODEJS_ACTIVE_HANDLES,
+      NODEJS_ACTIVE_HANDLES_TOTAL
+    ];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processRequests.js
+var require_processRequests = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processRequests.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var { aggregateByObjectName } = require_processMetricsHelpers();
+    var { updateMetrics } = require_processMetricsHelpers();
+    var NODEJS_ACTIVE_REQUESTS = "nodejs_active_requests";
+    var NODEJS_ACTIVE_REQUESTS_TOTAL = "nodejs_active_requests_total";
+    module.exports = (registry, config = {}) => {
+      if (typeof process._getActiveRequests !== "function") {
+        return;
+      }
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      new Gauge({
+        name: namePrefix + NODEJS_ACTIVE_REQUESTS,
+        help: "Number of active libuv requests grouped by request type. Every request type is C++ class name.",
+        labelNames: ["type", ...labelNames],
+        registers: registry ? [registry] : void 0,
+        collect() {
+          const requests = process._getActiveRequests();
+          updateMetrics(this, aggregateByObjectName(requests), labels);
+        }
+      });
+      new Gauge({
+        name: namePrefix + NODEJS_ACTIVE_REQUESTS_TOTAL,
+        help: "Total number of active requests.",
+        registers: registry ? [registry] : void 0,
+        labelNames,
+        collect() {
+          const requests = process._getActiveRequests();
+          this.set(labels, requests.length);
+        }
+      });
+    };
+    module.exports.metricNames = [
+      NODEJS_ACTIVE_REQUESTS,
+      NODEJS_ACTIVE_REQUESTS_TOTAL
+    ];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processResources.js
+var require_processResources = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/processResources.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var { updateMetrics } = require_processMetricsHelpers();
+    var NODEJS_ACTIVE_RESOURCES = "nodejs_active_resources";
+    var NODEJS_ACTIVE_RESOURCES_TOTAL = "nodejs_active_resources_total";
+    module.exports = (registry, config = {}) => {
+      if (typeof process.getActiveResourcesInfo !== "function") {
+        return;
+      }
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      new Gauge({
+        name: namePrefix + NODEJS_ACTIVE_RESOURCES,
+        help: "Number of active resources that are currently keeping the event loop alive, grouped by async resource type.",
+        labelNames: ["type", ...labelNames],
+        registers: registry ? [registry] : void 0,
+        collect() {
+          const resources = process.getActiveResourcesInfo();
+          const data = {};
+          for (let i = 0; i < resources.length; i++) {
+            const resource = resources[i];
+            if (Object.hasOwn(data, resource)) {
+              data[resource] += 1;
+            } else {
+              data[resource] = 1;
+            }
+          }
+          updateMetrics(this, data, labels);
+        }
+      });
+      new Gauge({
+        name: namePrefix + NODEJS_ACTIVE_RESOURCES_TOTAL,
+        help: "Total number of active resources.",
+        registers: registry ? [registry] : void 0,
+        labelNames,
+        collect() {
+          const resources = process.getActiveResourcesInfo();
+          this.set(labels, resources.length);
+        }
+      });
+    };
+    module.exports.metricNames = [
+      NODEJS_ACTIVE_RESOURCES,
+      NODEJS_ACTIVE_RESOURCES_TOTAL
+    ];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/heapSizeAndUsed.js
+var require_heapSizeAndUsed = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/heapSizeAndUsed.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var safeMemoryUsage = require_safeMemoryUsage();
+    var NODEJS_HEAP_SIZE_TOTAL = "nodejs_heap_size_total_bytes";
+    var NODEJS_HEAP_SIZE_USED = "nodejs_heap_size_used_bytes";
+    var NODEJS_EXTERNAL_MEMORY = "nodejs_external_memory_bytes";
+    module.exports = (registry, config = {}) => {
+      if (typeof process.memoryUsage !== "function") {
+        return;
+      }
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      const registers = registry ? [registry] : void 0;
+      const namePrefix = config.prefix ? config.prefix : "";
+      const collect = () => {
+        const memUsage = safeMemoryUsage();
+        if (memUsage) {
+          heapSizeTotal.set(labels, memUsage.heapTotal);
+          heapSizeUsed.set(labels, memUsage.heapUsed);
+          if (memUsage.external !== void 0) {
+            externalMemUsed.set(labels, memUsage.external);
+          }
+        }
+      };
+      const heapSizeTotal = new Gauge({
+        name: namePrefix + NODEJS_HEAP_SIZE_TOTAL,
+        help: "Process heap size from Node.js in bytes.",
+        registers,
+        labelNames,
+        // Use this one metric's `collect` to set all metrics' values.
+        collect
+      });
+      const heapSizeUsed = new Gauge({
+        name: namePrefix + NODEJS_HEAP_SIZE_USED,
+        help: "Process heap size used from Node.js in bytes.",
+        registers,
+        labelNames
+      });
+      const externalMemUsed = new Gauge({
+        name: namePrefix + NODEJS_EXTERNAL_MEMORY,
+        help: "Node.js external memory size in bytes.",
+        registers,
+        labelNames
+      });
+    };
+    module.exports.metricNames = [
+      NODEJS_HEAP_SIZE_TOTAL,
+      NODEJS_HEAP_SIZE_USED,
+      NODEJS_EXTERNAL_MEMORY
+    ];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/heapSpacesSizeAndUsed.js
+var require_heapSpacesSizeAndUsed = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/heapSpacesSizeAndUsed.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var v8 = __require("v8");
+    var METRICS = ["total", "used", "available"];
+    var NODEJS_HEAP_SIZE = {};
+    METRICS.forEach((metricType) => {
+      NODEJS_HEAP_SIZE[metricType] = `nodejs_heap_space_size_${metricType}_bytes`;
+    });
+    module.exports = (registry, config = {}) => {
+      try {
+        v8.getHeapSpaceStatistics();
+      } catch (e) {
+        if (e.code === "ERR_NOT_IMPLEMENTED") {
+          return;
+        }
+        throw e;
+      }
+      const registers = registry ? [registry] : void 0;
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = ["space", ...Object.keys(labels)];
+      const gauges = {};
+      METRICS.forEach((metricType) => {
+        gauges[metricType] = new Gauge({
+          name: namePrefix + NODEJS_HEAP_SIZE[metricType],
+          help: `Process heap space size ${metricType} from Node.js in bytes.`,
+          labelNames,
+          registers
+        });
+      });
+      gauges.total.collect = () => {
+        for (const space of v8.getHeapSpaceStatistics()) {
+          const spaceName = space.space_name.substr(
+            0,
+            space.space_name.indexOf("_space")
+          );
+          gauges.total.set({ space: spaceName, ...labels }, space.space_size);
+          gauges.used.set({ space: spaceName, ...labels }, space.space_used_size);
+          gauges.available.set(
+            { space: spaceName, ...labels },
+            space.space_available_size
+          );
+        }
+      };
+    };
+    module.exports.metricNames = Object.values(NODEJS_HEAP_SIZE);
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/version.js
+var require_version = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/version.js"(exports, module) {
+    "use strict";
+    var Gauge = require_gauge();
+    var version2 = process.version;
+    var versionSegments = version2.slice(1).split(".").map(Number);
+    var NODE_VERSION_INFO = "nodejs_version_info";
+    module.exports = (registry, config = {}) => {
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      new Gauge({
+        name: namePrefix + NODE_VERSION_INFO,
+        help: "Node.js version info.",
+        labelNames: ["version", "major", "minor", "patch", ...labelNames],
+        registers: registry ? [registry] : void 0,
+        aggregator: "first",
+        collect() {
+          this.labels(
+            version2,
+            versionSegments[0],
+            versionSegments[1],
+            versionSegments[2],
+            ...Object.values(labels)
+          ).set(1);
+        }
+      });
+    };
+    module.exports.metricNames = [NODE_VERSION_INFO];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/gc.js
+var require_gc = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metrics/gc.js"(exports, module) {
+    "use strict";
+    var Histogram = require_histogram();
+    var perf_hooks;
+    try {
+      perf_hooks = __require("perf_hooks");
+    } catch {
+    }
+    var NODEJS_GC_DURATION_SECONDS = "nodejs_gc_duration_seconds";
+    var DEFAULT_GC_DURATION_BUCKETS = [1e-3, 0.01, 0.1, 1, 2, 5];
+    var kinds = [];
+    if (perf_hooks && perf_hooks.constants) {
+      kinds[perf_hooks.constants.NODE_PERFORMANCE_GC_MAJOR] = "major";
+      kinds[perf_hooks.constants.NODE_PERFORMANCE_GC_MINOR] = "minor";
+      kinds[perf_hooks.constants.NODE_PERFORMANCE_GC_INCREMENTAL] = "incremental";
+      kinds[perf_hooks.constants.NODE_PERFORMANCE_GC_WEAKCB] = "weakcb";
+    }
+    module.exports = (registry, config = {}) => {
+      if (!perf_hooks) {
+        return;
+      }
+      const namePrefix = config.prefix ? config.prefix : "";
+      const labels = config.labels ? config.labels : {};
+      const labelNames = Object.keys(labels);
+      const buckets = config.gcDurationBuckets ? config.gcDurationBuckets : DEFAULT_GC_DURATION_BUCKETS;
+      const gcHistogram = new Histogram({
+        name: namePrefix + NODEJS_GC_DURATION_SECONDS,
+        help: "Garbage collection duration by kind, one of major, minor, incremental or weakcb.",
+        labelNames: ["kind", ...labelNames],
+        enableExemplars: false,
+        buckets,
+        registers: registry ? [registry] : void 0
+      });
+      const obs = new perf_hooks.PerformanceObserver((list) => {
+        const entry = list.getEntries()[0];
+        const kind = entry.detail ? kinds[entry.detail.kind] : kinds[entry.kind];
+        gcHistogram.observe(Object.assign({ kind }, labels), entry.duration / 1e3);
+      });
+      obs.observe({ entryTypes: ["gc"] });
+    };
+    module.exports.metricNames = [NODEJS_GC_DURATION_SECONDS];
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/defaultMetrics.js
+var require_defaultMetrics = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/defaultMetrics.js"(exports, module) {
+    "use strict";
+    var { isObject: isObject2 } = require_util();
+    var processCpuTotal = require_processCpuTotal();
+    var processStartTime = require_processStartTime();
+    var osMemoryHeap = require_osMemoryHeap();
+    var processOpenFileDescriptors = require_processOpenFileDescriptors();
+    var processMaxFileDescriptors = require_processMaxFileDescriptors();
+    var eventLoopLag = require_eventLoopLag();
+    var processHandles = require_processHandles();
+    var processRequests = require_processRequests();
+    var processResources = require_processResources();
+    var heapSizeAndUsed = require_heapSizeAndUsed();
+    var heapSpacesSizeAndUsed = require_heapSpacesSizeAndUsed();
+    var version2 = require_version();
+    var gc = require_gc();
+    var metrics = {
+      processCpuTotal,
+      processStartTime,
+      osMemoryHeap,
+      processOpenFileDescriptors,
+      processMaxFileDescriptors,
+      eventLoopLag,
+      ...typeof process.getActiveResourcesInfo === "function" ? { processResources } : {},
+      processHandles,
+      processRequests,
+      heapSizeAndUsed,
+      heapSpacesSizeAndUsed,
+      version: version2,
+      gc
+    };
+    var metricsList = Object.keys(metrics);
+    module.exports = function collectDefaultMetrics2(config) {
+      if (config !== null && config !== void 0 && !isObject2(config)) {
+        throw new TypeError("config must be null, undefined, or an object");
+      }
+      config = { eventLoopMonitoringPrecision: 10, ...config };
+      for (const metric of Object.values(metrics)) {
+        metric(config.register, config);
+      }
+    };
+    module.exports.metricsList = metricsList;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metricAggregators.js
+var require_metricAggregators = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/metricAggregators.js"(exports) {
+    "use strict";
+    var { Grouper, hashObject } = require_util();
+    function AggregatorFactory(aggregatorFn) {
+      return (metrics) => {
+        if (metrics.length === 0) return;
+        const result = {
+          help: metrics[0].help,
+          name: metrics[0].name,
+          type: metrics[0].type,
+          values: [],
+          aggregator: metrics[0].aggregator
+        };
+        const byLabels = new Grouper();
+        metrics.forEach((metric) => {
+          metric.values.forEach((value) => {
+            const key = hashObject(value.labels);
+            byLabels.add(`${value.metricName}_${key}`, value);
+          });
+        });
+        byLabels.forEach((values) => {
+          if (values.length === 0) return;
+          const valObj = {
+            value: aggregatorFn(values),
+            labels: values[0].labels
+          };
+          if (values[0].metricName) {
+            valObj.metricName = values[0].metricName;
+          }
+          result.values.push(valObj);
+        });
+        return result;
+      };
+    }
+    exports.AggregatorFactory = AggregatorFactory;
+    exports.aggregators = {
+      /**
+       * @return The sum of values.
+       */
+      sum: AggregatorFactory((v) => v.reduce((p, c) => p + c.value, 0)),
+      /**
+       * @return The first value.
+       */
+      first: AggregatorFactory((v) => v[0].value),
+      /**
+       * @return {undefined} Undefined; omits the metric.
+       */
+      omit: () => {
+      },
+      /**
+       * @return The arithmetic mean of the values.
+       */
+      average: AggregatorFactory(
+        (v) => v.reduce((p, c) => p + c.value, 0) / v.length
+      ),
+      /**
+       * @return The minimum of the values.
+       */
+      min: AggregatorFactory(
+        (v) => v.reduce((p, c) => Math.min(p, c.value), Infinity)
+      ),
+      /**
+       * @return The maximum of the values.
+       */
+      max: AggregatorFactory(
+        (v) => v.reduce((p, c) => Math.max(p, c.value), -Infinity)
+      )
+    };
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/cluster.js
+var require_cluster = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/lib/cluster.js"(exports, module) {
+    "use strict";
+    var Registry2 = require_registry();
+    var { Grouper } = require_util();
+    var { aggregators } = require_metricAggregators();
+    var cluster = () => {
+      const data = __require("cluster");
+      cluster = () => data;
+      return data;
+    };
+    var GET_METRICS_REQ = "prom-client:getMetricsReq";
+    var GET_METRICS_RES = "prom-client:getMetricsRes";
+    var registries = [Registry2.globalRegistry];
+    var requestCtr = 0;
+    var listenersAdded = false;
+    var requests = /* @__PURE__ */ new Map();
+    var AggregatorRegistry = class extends Registry2 {
+      constructor(regContentType = Registry2.PROMETHEUS_CONTENT_TYPE) {
+        super(regContentType);
+        addListeners();
+      }
+      /**
+       * Gets aggregated metrics for all workers. The optional callback and
+       * returned Promise resolve with the same value; either may be used.
+       * @return {Promise<string>} Promise that resolves with the aggregated
+       *   metrics.
+       */
+      clusterMetrics() {
+        const requestId = requestCtr++;
+        return new Promise((resolve, reject) => {
+          let settled = false;
+          function done(err, result) {
+            if (settled) return;
+            settled = true;
+            if (err) reject(err);
+            else resolve(result);
+          }
+          const request = {
+            responses: [],
+            pending: 0,
+            done,
+            errorTimeout: setTimeout(() => {
+              const err = new Error("Operation timed out.");
+              request.done(err);
+            }, 5e3)
+          };
+          requests.set(requestId, request);
+          const message = {
+            type: GET_METRICS_REQ,
+            requestId
+          };
+          for (const id in cluster().workers) {
+            if (cluster().workers[id].isConnected()) {
+              cluster().workers[id].send(message);
+              request.pending++;
+            }
+          }
+          if (request.pending === 0) {
+            clearTimeout(request.errorTimeout);
+            process.nextTick(() => done(null, ""));
+          }
+        });
+      }
+      get contentType() {
+        return super.contentType;
+      }
+      /**
+       * Creates a new Registry instance from an array of metrics that were
+       * created by `registry.getMetricsAsJSON()`. Metrics are aggregated using
+       * the method specified by their `aggregator` property, or by summation if
+       * `aggregator` is undefined.
+       * @param {Array} metricsArr Array of metrics, each of which created by
+       *   `registry.getMetricsAsJSON()`.
+       * @param {string} registryType content type of the new registry. Defaults
+       * to PROMETHEUS_CONTENT_TYPE.
+       * @return {Registry} aggregated registry.
+       */
+      static aggregate(metricsArr, registryType = Registry2.PROMETHEUS_CONTENT_TYPE) {
+        const aggregatedRegistry = new Registry2();
+        const metricsByName = new Grouper();
+        aggregatedRegistry.setContentType(registryType);
+        metricsArr.forEach((metrics) => {
+          metrics.forEach((metric) => {
+            metricsByName.add(metric.name, metric);
+          });
+        });
+        metricsByName.forEach((metrics) => {
+          const aggregatorName = metrics[0].aggregator;
+          const aggregatorFn = aggregators[aggregatorName];
+          if (typeof aggregatorFn !== "function") {
+            throw new Error(`'${aggregatorName}' is not a defined aggregator.`);
+          }
+          const aggregatedMetric = aggregatorFn(metrics);
+          if (aggregatedMetric) {
+            const aggregatedMetricWrapper = Object.assign(
+              {
+                get: () => aggregatedMetric
+              },
+              aggregatedMetric
+            );
+            aggregatedRegistry.registerMetric(aggregatedMetricWrapper);
+          }
+        });
+        return aggregatedRegistry;
+      }
+      /**
+       * Sets the registry or registries to be aggregated. Call from workers to
+       * use a registry/registries other than the default global registry.
+       * @param {Array<Registry>|Registry} regs Registry or registries to be
+       *   aggregated.
+       * @return {void}
+       */
+      static setRegistries(regs) {
+        if (!Array.isArray(regs)) regs = [regs];
+        regs.forEach((reg) => {
+          if (!(reg instanceof Registry2)) {
+            throw new TypeError(`Expected Registry, got ${typeof reg}`);
+          }
+        });
+        registries = regs;
+      }
+    };
+    function addListeners() {
+      if (listenersAdded) return;
+      listenersAdded = true;
+      if (cluster().isMaster) {
+        cluster().on("message", (worker, message) => {
+          if (message.type === GET_METRICS_RES) {
+            const request = requests.get(message.requestId);
+            if (message.error) {
+              request.done(new Error(message.error));
+              return;
+            }
+            message.metrics.forEach((registry) => request.responses.push(registry));
+            request.pending--;
+            if (request.pending === 0) {
+              requests.delete(message.requestId);
+              clearTimeout(request.errorTimeout);
+              const registry = AggregatorRegistry.aggregate(request.responses);
+              const promString = registry.metrics();
+              request.done(null, promString);
+            }
+          }
+        });
+      }
+      if (cluster().isWorker) {
+        process.on("message", (message) => {
+          if (message.type === GET_METRICS_REQ) {
+            Promise.all(registries.map((r) => r.getMetricsAsJSON())).then((metrics) => {
+              process.send({
+                type: GET_METRICS_RES,
+                requestId: message.requestId,
+                metrics
+              });
+            }).catch((error) => {
+              process.send({
+                type: GET_METRICS_RES,
+                requestId: message.requestId,
+                error: error.message
+              });
+            });
+          }
+        });
+      }
+    }
+    module.exports = AggregatorRegistry;
+  }
+});
+
+// ../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/index.js
+var require_prom_client = __commonJS({
+  "../node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client/index.js"(exports) {
+    "use strict";
+    exports.register = require_registry().globalRegistry;
+    exports.Registry = require_registry();
+    Object.defineProperty(exports, "contentType", {
+      configurable: false,
+      enumerable: true,
+      get() {
+        return exports.register.contentType;
+      },
+      set(value) {
+        exports.register.setContentType(value);
+      }
+    });
+    exports.prometheusContentType = exports.Registry.PROMETHEUS_CONTENT_TYPE;
+    exports.openMetricsContentType = exports.Registry.OPENMETRICS_CONTENT_TYPE;
+    exports.validateMetricName = require_validation().validateMetricName;
+    exports.Counter = require_counter();
+    exports.Gauge = require_gauge();
+    exports.Histogram = require_histogram();
+    exports.Summary = require_summary();
+    exports.Pushgateway = require_pushgateway();
+    exports.linearBuckets = require_bucketGenerators().linearBuckets;
+    exports.exponentialBuckets = require_bucketGenerators().exponentialBuckets;
+    exports.collectDefaultMetrics = require_defaultMetrics();
+    exports.aggregators = require_metricAggregators().aggregators;
+    exports.AggregatorRegistry = require_cluster();
+  }
+});
+
 // src/app.ts
-var import_express4 = __toESM(require_express2(), 1);
+var import_express5 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_cookie_parser = __toESM(require_cookie_parser(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
 // src/routes/index.ts
-var import_express3 = __toESM(require_express2(), 1);
+var import_express4 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -36500,7 +45275,7 @@ var TypeOverrides = import_lib.default.TypeOverrides;
 var defaults = import_lib.default.defaults;
 var esm_default = import_lib.default;
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/entity.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/entity.js
 var entityKind = /* @__PURE__ */ Symbol.for("drizzle:entityKind");
 function is(value, type) {
   if (!value || typeof value !== "object") {
@@ -36526,7 +45301,7 @@ function is(value, type) {
   return false;
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/logger.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/logger.js
 var ConsoleLogWriter = class {
   static [entityKind] = "ConsoleLogWriter";
   write(message) {
@@ -36557,7 +45332,7 @@ var NoopLogger = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/query-promise.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/query-promise.js
 var QueryPromise = class {
   static [entityKind] = "QueryPromise";
   [Symbol.toStringTag] = "QueryPromise";
@@ -36581,7 +45356,7 @@ var QueryPromise = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/column.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/column.js
 var Column = class {
   constructor(table, config) {
     this.table = table;
@@ -36632,7 +45407,7 @@ var Column = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/column-builder.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/column-builder.js
 var ColumnBuilder = class {
   static [entityKind] = "ColumnBuilder";
   config;
@@ -36735,10 +45510,10 @@ var ColumnBuilder = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/table.utils.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/table.utils.js
 var TableName = /* @__PURE__ */ Symbol.for("drizzle:Name");
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/foreign-keys.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/foreign-keys.js
 var ForeignKeyBuilder = class {
   static [entityKind] = "PgForeignKeyBuilder";
   /** @internal */
@@ -36795,15 +45570,12 @@ var ForeignKey = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/tracing-utils.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/unique-constraint.js
-function unique(name) {
-  return new UniqueOnConstraintBuilder(name);
-}
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/unique-constraint.js
 function uniqueKeyName(table, columns) {
   return `${table[TableName]}_${columns.join("_")}_unique`;
 }
@@ -36853,7 +45625,7 @@ var UniqueConstraint = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/utils/array.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/utils/array.js
 function parsePgArrayValue(arrayString, startFrom, inQuotes) {
   for (let i = startFrom; i < arrayString.length; i++) {
     const char2 = arrayString[i];
@@ -36929,7 +45701,7 @@ function makePgArray(array) {
   }).join(",")}}`;
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/common.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/common.js
 var PgColumnBuilder = class extends ColumnBuilder {
   foreignKeyConfigs = [];
   static [entityKind] = "PgColumnBuilder";
@@ -37113,7 +45885,7 @@ var PgArray = class _PgArray extends PgColumn {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/enum.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/enum.js
 var PgEnumObjectColumnBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgEnumObjectColumnBuilder";
   constructor(name, enumInstance) {
@@ -37171,7 +45943,7 @@ var PgEnumColumn = class extends PgColumn {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/subquery.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/subquery.js
 var Subquery = class {
   static [entityKind] = "Subquery";
   constructor(sql2, fields, alias, isWith = false, usedTables = []) {
@@ -37192,10 +45964,10 @@ var WithSubquery = class extends Subquery {
   static [entityKind] = "WithSubquery";
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/version.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/version.js
 var version = "0.45.2";
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/tracing.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/tracing.js
 var otel;
 var rawTracer;
 var tracer = {
@@ -37230,10 +46002,10 @@ var tracer = {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/view-common.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig = /* @__PURE__ */ Symbol.for("drizzle:ViewBaseConfig");
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/table.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/table.js
 var Schema = /* @__PURE__ */ Symbol.for("drizzle:Schema");
 var Columns = /* @__PURE__ */ Symbol.for("drizzle:Columns");
 var ExtraConfigColumns = /* @__PURE__ */ Symbol.for("drizzle:ExtraConfigColumns");
@@ -37298,7 +46070,7 @@ function getTableUniqueName(table) {
   return `${table[Schema] ?? "public"}.${table[TableName]}`;
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/sql/sql.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/sql/sql.js
 var FakePrimitiveParam = class {
   static [entityKind] = "FakePrimitiveParam";
 };
@@ -37695,7 +46467,7 @@ Subquery.prototype.getSQL = function() {
   return new SQL([this]);
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/alias.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/alias.js
 var ColumnAliasProxyHandler = class {
   constructor(table) {
     this.table = table;
@@ -37791,7 +46563,7 @@ function mapColumnsInSQLToAlias(query, alias) {
   }));
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/selection-proxy.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/selection-proxy.js
 var SelectionProxyHandler = class _SelectionProxyHandler {
   static [entityKind] = "SelectionProxyHandler";
   config;
@@ -37859,7 +46631,7 @@ var SelectionProxyHandler = class _SelectionProxyHandler {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/utils.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/utils.js
 function mapResultRow(columns, row, joinsNotNullableMap) {
   const nullifyMap = {};
   const result = columns.reduce(
@@ -37929,8 +46701,8 @@ function haveSameKeys(left, right) {
   if (leftKeys.length !== rightKeys.length) {
     return false;
   }
-  for (const [index, key] of leftKeys.entries()) {
-    if (key !== rightKeys[index]) {
+  for (const [index2, key] of leftKeys.entries()) {
+    if (key !== rightKeys[index2]) {
       return false;
     }
   }
@@ -38013,7 +46785,7 @@ function isConfig(data) {
 }
 var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder();
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/int.common.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/int.common.js
 var PgIntColumnBaseBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgIntColumnBaseBuilder";
   generatedAlwaysAsIdentity(sequence) {
@@ -38052,7 +46824,7 @@ var PgIntColumnBaseBuilder = class extends PgColumnBuilder {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/bigint.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/bigint.js
 var PgBigInt53Builder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgBigInt53Builder";
   constructor(name) {
@@ -38106,7 +46878,7 @@ function bigint(a, b) {
   return new PgBigInt64Builder(name);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/bigserial.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/bigserial.js
 var PgBigSerial53Builder = class extends PgColumnBuilder {
   static [entityKind] = "PgBigSerial53Builder";
   constructor(name) {
@@ -38166,7 +46938,7 @@ function bigserial(a, b) {
   return new PgBigSerial64Builder(name);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/boolean.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/boolean.js
 var PgBooleanBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgBooleanBuilder";
   constructor(name) {
@@ -38187,7 +46959,7 @@ function boolean(name) {
   return new PgBooleanBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/char.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/char.js
 var PgCharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCharBuilder";
   constructor(name, config) {
@@ -38216,7 +46988,7 @@ function char(a, b = {}) {
   return new PgCharBuilder(name, config);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/cidr.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/cidr.js
 var PgCidrBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCidrBuilder";
   constructor(name) {
@@ -38237,7 +47009,7 @@ function cidr(name) {
   return new PgCidrBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/custom.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/custom.js
 var PgCustomColumnBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCustomColumnBuilder";
   constructor(name, fieldConfig, customTypeParams) {
@@ -38281,7 +47053,7 @@ function customType(customTypeParams) {
   };
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/date.common.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/date.common.js
 var PgDateColumnBaseBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgDateColumnBaseBuilder";
   defaultNow() {
@@ -38289,7 +47061,7 @@ var PgDateColumnBaseBuilder = class extends PgColumnBuilder {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/date.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/date.js
 var PgDateBuilder = class extends PgDateColumnBaseBuilder {
   static [entityKind] = "PgDateBuilder";
   constructor(name) {
@@ -38344,7 +47116,7 @@ function date(a, b) {
   return new PgDateStringBuilder(name);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/double-precision.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/double-precision.js
 var PgDoublePrecisionBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgDoublePrecisionBuilder";
   constructor(name) {
@@ -38374,7 +47146,7 @@ function doublePrecision(name) {
   return new PgDoublePrecisionBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/inet.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/inet.js
 var PgInetBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgInetBuilder";
   constructor(name) {
@@ -38395,7 +47167,7 @@ function inet(name) {
   return new PgInetBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/integer.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/integer.js
 var PgIntegerBuilder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgIntegerBuilder";
   constructor(name) {
@@ -38422,7 +47194,7 @@ function integer(name) {
   return new PgIntegerBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/interval.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/interval.js
 var PgIntervalBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgIntervalBuilder";
   constructor(name, intervalConfig) {
@@ -38449,7 +47221,7 @@ function interval(a, b = {}) {
   return new PgIntervalBuilder(name, config);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/json.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/json.js
 var PgJsonBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgJsonBuilder";
   constructor(name) {
@@ -38486,7 +47258,7 @@ function json(name) {
   return new PgJsonBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/jsonb.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/jsonb.js
 var PgJsonbBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgJsonbBuilder";
   constructor(name) {
@@ -38523,7 +47295,7 @@ function jsonb(name) {
   return new PgJsonbBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/line.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/line.js
 var PgLineBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgLineBuilder";
   constructor(name) {
@@ -38584,7 +47356,7 @@ function line(a, b) {
   return new PgLineABCBuilder(name);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/macaddr.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/macaddr.js
 var PgMacaddrBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgMacaddrBuilder";
   constructor(name) {
@@ -38605,7 +47377,7 @@ function macaddr(name) {
   return new PgMacaddrBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
 var PgMacaddr8Builder = class extends PgColumnBuilder {
   static [entityKind] = "PgMacaddr8Builder";
   constructor(name) {
@@ -38626,7 +47398,7 @@ function macaddr8(name) {
   return new PgMacaddr8Builder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/numeric.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/numeric.js
 var PgNumericBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgNumericBuilder";
   constructor(name, precision, scale) {
@@ -38743,7 +47515,7 @@ function numeric(a, b) {
   return mode === "number" ? new PgNumericNumberBuilder(name, config?.precision, config?.scale) : mode === "bigint" ? new PgNumericBigIntBuilder(name, config?.precision, config?.scale) : new PgNumericBuilder(name, config?.precision, config?.scale);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/point.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/point.js
 var PgPointTupleBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgPointTupleBuilder";
   constructor(name) {
@@ -38810,7 +47582,7 @@ function point(a, b) {
   return new PgPointObjectBuilder(name);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
 function hexToBytes(hex) {
   const bytes = [];
   for (let c = 0; c < hex.length; c += 2) {
@@ -38849,7 +47621,7 @@ function parseEWKB(hex) {
   throw new Error("Unsupported geometry type");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
 var PgGeometryBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgGeometryBuilder";
   constructor(name) {
@@ -38909,7 +47681,7 @@ function geometry(a, b) {
   return new PgGeometryObjectBuilder(name);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/real.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/real.js
 var PgRealBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgRealBuilder";
   constructor(name, length) {
@@ -38940,7 +47712,7 @@ function real(name) {
   return new PgRealBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/serial.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/serial.js
 var PgSerialBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSerialBuilder";
   constructor(name) {
@@ -38963,7 +47735,7 @@ function serial(name) {
   return new PgSerialBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/smallint.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/smallint.js
 var PgSmallIntBuilder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgSmallIntBuilder";
   constructor(name) {
@@ -38990,7 +47762,7 @@ function smallint(name) {
   return new PgSmallIntBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/smallserial.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/smallserial.js
 var PgSmallSerialBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSmallSerialBuilder";
   constructor(name) {
@@ -39016,7 +47788,7 @@ function smallserial(name) {
   return new PgSmallSerialBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/text.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/text.js
 var PgTextBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgTextBuilder";
   constructor(name, config) {
@@ -39040,7 +47812,7 @@ function text(a, b = {}) {
   return new PgTextBuilder(name, config);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/time.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/time.js
 var PgTimeBuilder = class extends PgDateColumnBaseBuilder {
   constructor(name, withTimezone, precision) {
     super(name, "string", "PgTime");
@@ -39074,7 +47846,7 @@ function time(a, b = {}) {
   return new PgTimeBuilder(name, config.withTimezone ?? false, config.precision);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/timestamp.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/timestamp.js
 var PgTimestampBuilder = class extends PgDateColumnBaseBuilder {
   static [entityKind] = "PgTimestampBuilder";
   constructor(name, withTimezone, precision) {
@@ -39155,7 +47927,7 @@ function timestamp(a, b = {}) {
   return new PgTimestampBuilder(name, config?.withTimezone ?? false, config?.precision);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/uuid.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/uuid.js
 var PgUUIDBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgUUIDBuilder";
   constructor(name) {
@@ -39182,7 +47954,7 @@ function uuid(name) {
   return new PgUUIDBuilder(name ?? "");
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/varchar.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/varchar.js
 var PgVarcharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVarcharBuilder";
   constructor(name, config) {
@@ -39211,7 +47983,7 @@ function varchar(a, b = {}) {
   return new PgVarcharBuilder(name, config);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
 var PgBinaryVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgBinaryVectorBuilder";
   constructor(name, config) {
@@ -39238,7 +48010,7 @@ function bit(a, b) {
   return new PgBinaryVectorBuilder(name, config);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
 var PgHalfVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgHalfVectorBuilder";
   constructor(name, config) {
@@ -39271,7 +48043,7 @@ function halfvec(a, b) {
   return new PgHalfVectorBuilder(name, config);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
 var PgSparseVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSparseVectorBuilder";
   constructor(name, config) {
@@ -39298,7 +48070,7 @@ function sparsevec(a, b) {
   return new PgSparseVectorBuilder(name, config);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
 var PgVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVectorBuilder";
   constructor(name, config) {
@@ -39331,7 +48103,7 @@ function vector(a, b) {
   return new PgVectorBuilder(name, config);
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/columns/all.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/columns/all.js
 function getPgColumnBuilders() {
   return {
     bigint,
@@ -39369,7 +48141,7 @@ function getPgColumnBuilders() {
   };
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/table.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/table.js
 var InlineForeignKeys = /* @__PURE__ */ Symbol.for("drizzle:PgInlineForeignKeys");
 var EnableRLS = /* @__PURE__ */ Symbol.for("drizzle:EnableRLS");
 var PgTable = class extends Table {
@@ -39425,7 +48197,116 @@ var pgTable = (name, columns, extraConfig) => {
   return pgTableWithSchema(name, columns, extraConfig, void 0);
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/primary-keys.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/indexes.js
+var IndexBuilderOn = class {
+  constructor(unique, name) {
+    this.unique = unique;
+    this.name = name;
+  }
+  static [entityKind] = "PgIndexBuilderOn";
+  on(...columns) {
+    return new IndexBuilder(
+      columns.map((it) => {
+        if (is(it, SQL)) {
+          return it;
+        }
+        it = it;
+        const clonedIndexedColumn = new IndexedColumn(it.name, !!it.keyAsName, it.columnType, it.indexConfig);
+        it.indexConfig = JSON.parse(JSON.stringify(it.defaultConfig));
+        return clonedIndexedColumn;
+      }),
+      this.unique,
+      false,
+      this.name
+    );
+  }
+  onOnly(...columns) {
+    return new IndexBuilder(
+      columns.map((it) => {
+        if (is(it, SQL)) {
+          return it;
+        }
+        it = it;
+        const clonedIndexedColumn = new IndexedColumn(it.name, !!it.keyAsName, it.columnType, it.indexConfig);
+        it.indexConfig = it.defaultConfig;
+        return clonedIndexedColumn;
+      }),
+      this.unique,
+      true,
+      this.name
+    );
+  }
+  /**
+   * Specify what index method to use. Choices are `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`, or user-installed access methods like `bloom`. The default method is `btree.
+   *
+   * If you have the `pg_vector` extension installed in your database, you can use the `hnsw` and `ivfflat` options, which are predefined types.
+   *
+   * **You can always specify any string you want in the method, in case Drizzle doesn't have it natively in its types**
+   *
+   * @param method The name of the index method to be used
+   * @param columns
+   * @returns
+   */
+  using(method, ...columns) {
+    return new IndexBuilder(
+      columns.map((it) => {
+        if (is(it, SQL)) {
+          return it;
+        }
+        it = it;
+        const clonedIndexedColumn = new IndexedColumn(it.name, !!it.keyAsName, it.columnType, it.indexConfig);
+        it.indexConfig = JSON.parse(JSON.stringify(it.defaultConfig));
+        return clonedIndexedColumn;
+      }),
+      this.unique,
+      true,
+      this.name,
+      method
+    );
+  }
+};
+var IndexBuilder = class {
+  static [entityKind] = "PgIndexBuilder";
+  /** @internal */
+  config;
+  constructor(columns, unique, only, name, method = "btree") {
+    this.config = {
+      name,
+      columns,
+      unique,
+      only,
+      method
+    };
+  }
+  concurrently() {
+    this.config.concurrently = true;
+    return this;
+  }
+  with(obj) {
+    this.config.with = obj;
+    return this;
+  }
+  where(condition) {
+    this.config.where = condition;
+    return this;
+  }
+  /** @internal */
+  build(table) {
+    return new Index(this.config, table);
+  }
+};
+var Index = class {
+  static [entityKind] = "PgIndex";
+  config;
+  constructor(config, table) {
+    this.config = { ...config, table };
+  }
+};
+function index(name) {
+  return new IndexBuilderOn(false, name);
+}
+
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/primary-keys.js
 var PrimaryKeyBuilder = class {
   static [entityKind] = "PgPrimaryKeyBuilder";
   /** @internal */
@@ -39455,7 +48336,7 @@ var PrimaryKey = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/casing.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/casing.js
 function toSnakeCase(input) {
   const words = input.replace(/['\u2019]/g, "").match(/[\da-z]+|[A-Z]+(?![a-z])|[A-Z][\da-z]+/g) ?? [];
   return words.map((word) => word.toLowerCase()).join("_");
@@ -39507,7 +48388,7 @@ var CasingCache = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/errors.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/errors.js
 var DrizzleError = class extends Error {
   static [entityKind] = "DrizzleError";
   constructor({ message, cause }) {
@@ -39534,7 +48415,7 @@ var TransactionRollbackError = class extends DrizzleError {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/sql/expressions/conditions.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -39649,7 +48530,7 @@ function notIlike(column, value) {
   return sql`${column} not ilike ${value}`;
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/sql/expressions/select.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/sql/expressions/select.js
 function asc(column) {
   return sql`${column} asc`;
 }
@@ -39657,7 +48538,7 @@ function desc(column) {
   return sql`${column} desc`;
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/relations.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/relations.js
 var Relation = class {
   constructor(sourceTable, referencedTable, relationName) {
     this.sourceTable = sourceTable;
@@ -39918,12 +48799,17 @@ function mapRelationalRow(tablesConfig, tableConfig, row, buildQueryResultSelect
   return result;
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/view-base.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/sql/functions/aggregate.js
+function count(expression) {
+  return sql`count(${expression || sql.raw("*")})`.mapWith(Number);
+}
+
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/view-base.js
 var PgViewBase = class extends View {
   static [entityKind] = "PgViewBase";
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/dialect.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/dialect.js
 var PgDialect = class {
   static [entityKind] = "PgDialect";
   /** @internal */
@@ -40083,8 +48969,8 @@ var PgDialect = class {
       return void 0;
     }
     const joinsArray = [];
-    for (const [index, joinMeta] of joins.entries()) {
-      if (index === 0) {
+    for (const [index2, joinMeta] of joins.entries()) {
+      if (index2 === 0) {
         joinsArray.push(sql` `);
       }
       const table = joinMeta.table;
@@ -40111,7 +48997,7 @@ var PgDialect = class {
           sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${table}${onSql}`
         );
       }
-      if (index < joins.length - 1) {
+      if (index2 < joins.length - 1) {
         joinsArray.push(sql` `);
       }
     }
@@ -41028,7 +49914,7 @@ var PgDialect = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/query-builders/query-builder.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/query-builders/query-builder.js
 var TypedQueryBuilder = class {
   static [entityKind] = "TypedQueryBuilder";
   /** @internal */
@@ -41037,7 +49923,7 @@ var TypedQueryBuilder = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/query-builders/select.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/query-builders/select.js
 var PgSelectBuilder = class {
   static [entityKind] = "PgSelectBuilder";
   fields;
@@ -41853,7 +50739,7 @@ var intersectAll = createSetOperator("intersect", true);
 var except = createSetOperator("except", false);
 var exceptAll = createSetOperator("except", true);
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/query-builders/query-builder.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/query-builders/query-builder.js
 var QueryBuilder = class {
   static [entityKind] = "PgQueryBuilder";
   dialect;
@@ -41940,7 +50826,7 @@ var QueryBuilder = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/utils.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/utils.js
 function extractUsedTable(table) {
   if (is(table, PgTable)) {
     return [table[Schema] ? `${table[Schema]}.${table[Table.Symbol.BaseName]}` : table[Table.Symbol.BaseName]];
@@ -41954,7 +50840,7 @@ function extractUsedTable(table) {
   return [];
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/query-builders/delete.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/query-builders/delete.js
 var PgDeleteBase = class extends QueryPromise {
   constructor(table, session, dialect, withList) {
     super();
@@ -42050,7 +50936,7 @@ var PgDeleteBase = class extends QueryPromise {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/query-builders/insert.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/query-builders/insert.js
 var PgInsertBuilder = class {
   constructor(table, session, dialect, withList, overridingSystemValue_) {
     this.table = table;
@@ -42243,7 +51129,7 @@ var PgInsertBase = class extends QueryPromise {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/query-builders/refresh-materialized-view.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/query-builders/refresh-materialized-view.js
 var PgRefreshMaterializedView = class extends QueryPromise {
   constructor(view, session, dialect) {
     super();
@@ -42297,7 +51183,7 @@ var PgRefreshMaterializedView = class extends QueryPromise {
   };
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/query-builders/update.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/query-builders/update.js
 var PgUpdateBuilder = class {
   constructor(table, session, dialect, withList) {
     this.table = table;
@@ -42509,7 +51395,7 @@ var PgUpdateBase = class extends QueryPromise {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/query-builders/count.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/query-builders/count.js
 var PgCountBuilder = class _PgCountBuilder extends SQL {
   constructor(params) {
     super(_PgCountBuilder.buildEmbeddedCount(params.source, params.filters).queryChunks);
@@ -42560,7 +51446,7 @@ var PgCountBuilder = class _PgCountBuilder extends SQL {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/query-builders/query.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/query-builders/query.js
 var RelationalQueryBuilder = class {
   constructor(fullSchema, schema, tableNamesMap, table, tableConfig, dialect, session) {
     this.fullSchema = fullSchema;
@@ -42673,7 +51559,7 @@ var PgRelationalQuery = class extends QueryPromise {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/query-builders/raw.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/query-builders/raw.js
 var PgRaw = class extends QueryPromise {
   constructor(execute, sql2, query, mapBatchResult) {
     super();
@@ -42702,7 +51588,7 @@ var PgRaw = class extends QueryPromise {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/db.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/db.js
 var PgDatabase = class {
   constructor(dialect, session, schema) {
     this.dialect = dialect;
@@ -42981,7 +51867,7 @@ var PgDatabase = class {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/cache/core/cache.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/cache/core/cache.js
 var Cache = class {
   static [entityKind] = "Cache";
 };
@@ -43008,7 +51894,7 @@ async function hashQuery(sql2, params) {
   return hashHex;
 }
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/pg-core/session.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/pg-core/session.js
 var PgPreparedQuery = class {
   constructor(query, cache, queryMetadata, cacheConfig) {
     this.query = query;
@@ -43168,7 +52054,7 @@ var PgTransaction = class extends PgDatabase {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/node-postgres/session.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/node-postgres/session.js
 var { Pool: Pool2, types: types2 } = esm_default;
 var NodePgPreparedQuery = class extends PgPreparedQuery {
   constructor(client, queryString, params, logger2, cache, queryMetadata, cacheConfig, fields, name, _isResponseInArrayMode, customResultMapper) {
@@ -43384,7 +52270,7 @@ var NodePgTransaction = class _NodePgTransaction extends PgTransaction {
   }
 };
 
-// ../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.22.0/node_modules/drizzle-orm/node-postgres/driver.js
+// ../node_modules/.pnpm/drizzle-orm@0.45.2_@opentel_228eefb61488836a4f41d6ac83b2f909/node_modules/drizzle-orm/node-postgres/driver.js
 var NodePgDriver = class {
   constructor(client, dialect, options = {}) {
     this.client = client;
@@ -43467,6 +52353,7 @@ __export(schema_exports, {
   insertApiKeySchema: () => insertApiKeySchema,
   insertDecisionLogSchema: () => insertDecisionLogSchema,
   insertEntitySchema: () => insertEntitySchema,
+  insertInvitationSchema: () => insertInvitationSchema,
   insertOrganizationSchema: () => insertOrganizationSchema,
   insertPolicyAssignmentSchema: () => insertPolicyAssignmentSchema,
   insertPolicySchema: () => insertPolicySchema,
@@ -43475,6 +52362,7 @@ __export(schema_exports, {
   insertSessionSchema: () => insertSessionSchema,
   insertUserSchema: () => insertUserSchema,
   insertVerificationSchema: () => insertVerificationSchema,
+  invitationsTable: () => invitationsTable,
   organizationsTable: () => organizationsTable,
   policiesTable: () => policiesTable,
   policyAssignmentsTable: () => policyAssignmentsTable,
@@ -46090,10 +54978,10 @@ var ZodObject = class _ZodObject extends ZodType {
   //   }) as any;
   //   return merged;
   // }
-  catchall(index) {
+  catchall(index2) {
     return new _ZodObject({
       ...this._def,
-      catchall: index
+      catchall: index2
     });
   }
   pick(mask) {
@@ -46411,9 +55299,9 @@ function mergeValues(a, b) {
       return { valid: false };
     }
     const newArray = [];
-    for (let index = 0; index < a.length; index++) {
-      const itemA = a[index];
-      const itemB = b[index];
+    for (let index2 = 0; index2 < a.length; index2++) {
+      const itemA = a[index2];
+      const itemB = b[index2];
       const sharedValue = mergeValues(itemA, itemB);
       if (!sharedValue.valid) {
         return { valid: false };
@@ -46619,10 +55507,10 @@ var ZodMap = class extends ZodType {
     }
     const keyType = this._def.keyType;
     const valueType = this._def.valueType;
-    const pairs = [...ctx.data.entries()].map(([key, value], index) => {
+    const pairs = [...ctx.data.entries()].map(([key, value], index2) => {
       return {
-        key: keyType._parse(new ParseInputLazyPath(ctx, key, ctx.path, [index, "key"])),
-        value: valueType._parse(new ParseInputLazyPath(ctx, value, ctx.path, [index, "value"]))
+        key: keyType._parse(new ParseInputLazyPath(ctx, key, ctx.path, [index2, "key"])),
+        value: valueType._parse(new ParseInputLazyPath(ctx, value, ctx.path, [index2, "value"]))
       };
     });
     if (ctx.common.async) {
@@ -47526,7 +56414,7 @@ var coerce = {
 };
 var NEVER = INVALID;
 
-// ../node_modules/.pnpm/drizzle-zod@0.7.1_drizzle-o_1eae3b358ecde544c0ff40be8fc3bf5d/node_modules/drizzle-zod/index.mjs
+// ../node_modules/.pnpm/drizzle-zod@0.7.1_drizzle-o_617be0344948ea591265c1593670f47d/node_modules/drizzle-zod/index.mjs
 var CONSTANTS = {
   INT8_MIN: -128,
   INT8_MAX: 127,
@@ -47779,6 +56667,10 @@ var organizationsTable = pgTable("organizations", {
   id: text("id").primaryKey().default(genId()),
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  stripeStatus: text("stripe_status"),
+  stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
@@ -47794,8 +56686,13 @@ var usersTable = pgTable("user", {
   image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  organizationId: text("organization_id").references(() => organizationsTable.id, { onDelete: "set null" })
-});
+  organizationId: text("organization_id").references(() => organizationsTable.id, { onDelete: "set null" }),
+  role: text("role").default("member").notNull()
+}, (table) => ({
+  idxOrgRole: index("idx_users_org_role").on(table.organizationId, table.role),
+  idxOrgCreatedAt: index("idx_users_org_created").on(table.organizationId, table.createdAt.desc()),
+  idxEmail: index("idx_users_email").on(table.email)
+}));
 var insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true, updatedAt: true });
 
 // db/src/schema/sessions.ts
@@ -47852,7 +56749,11 @@ var apiKeysTable = pgTable("api_keys", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   organizationId: text("organization_id").notNull().references(() => organizationsTable.id, { onDelete: "cascade" })
-});
+}, (table) => ({
+  idxOrgRevoked: index("idx_api_keys_org_revoked").on(table.organizationId, table.revokedAt),
+  idxOrgCreatedAt: index("idx_api_keys_org_created").on(table.organizationId, table.createdAt.desc()),
+  idxHashedKey: index("idx_api_keys_hashed_key").on(table.hashedKey)
+}));
 var insertApiKeySchema = createInsertSchema(apiKeysTable).omit({ id: true, createdAt: true, updatedAt: true });
 
 // db/src/schema/entities.ts
@@ -47865,7 +56766,8 @@ var entitiesTable = pgTable("entities", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   organizationId: text("organization_id").notNull().references(() => organizationsTable.id, { onDelete: "cascade" })
 }, (table) => ({
-  uniqueOrgExternalIdType: unique().on(table.organizationId, table.externalId, table.type)
+  idxOrgType: index("idx_entities_org_type").on(table.organizationId, table.type),
+  idxOrgCreatedAt: index("idx_entities_org_created").on(table.organizationId, table.createdAt.desc())
 }));
 var insertEntitySchema = createInsertSchema(entitiesTable).omit({ id: true, createdAt: true, updatedAt: true });
 
@@ -47880,7 +56782,8 @@ var resourcesTable = pgTable("resources", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   organizationId: text("organization_id").notNull().references(() => organizationsTable.id, { onDelete: "cascade" })
 }, (table) => ({
-  uniqueOrgTypeName: unique().on(table.organizationId, table.type, table.name)
+  idxOrgType: index("idx_resources_org_type").on(table.organizationId, table.type),
+  idxOrgCreatedAt: index("idx_resources_org_created").on(table.organizationId, table.createdAt.desc())
 }));
 var insertResourceSchema = createInsertSchema(resourcesTable).omit({ id: true, createdAt: true, updatedAt: true });
 
@@ -47898,7 +56801,8 @@ var policiesTable = pgTable("policies", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   organizationId: text("organization_id").notNull().references(() => organizationsTable.id, { onDelete: "cascade" })
 }, (table) => ({
-  uniqueOrgName: unique().on(table.organizationId, table.name)
+  idxOrgPriority: index("idx_policies_org_priority").on(table.organizationId, table.priority.desc()),
+  idxOrgActiveEffect: index("idx_policies_org_active_effect").on(table.organizationId, table.active, table.effect)
 }));
 var insertPolicySchema = createInsertSchema(policiesTable).omit({ id: true, createdAt: true, updatedAt: true });
 
@@ -47913,7 +56817,8 @@ var policyVersionsTable = pgTable("policy_versions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   policyId: text("policy_id").notNull().references(() => policiesTable.id, { onDelete: "cascade" })
 }, (table) => ({
-  uniquePolicyVersion: unique().on(table.policyId, table.version)
+  idxPolicyCreated: index("idx_policy_versions_policy_created").on(table.policyId, table.createdAt.desc()),
+  idxPolicyVersion: index("idx_policy_versions_policy_version").on(table.policyId, table.version.desc())
 }));
 var insertPolicyVersionSchema = createInsertSchema(policyVersionsTable).omit({ id: true, createdAt: true });
 
@@ -47924,7 +56829,8 @@ var policyAssignmentsTable = pgTable("policy_assignments", {
   entityId: text("entity_id").notNull().references(() => entitiesTable.id, { onDelete: "cascade" }),
   policyId: text("policy_id").notNull().references(() => policiesTable.id, { onDelete: "cascade" })
 }, (table) => ({
-  uniqueEntityPolicy: unique().on(table.entityId, table.policyId)
+  idxEntityCreated: index("idx_policy_assignments_entity_created").on(table.entityId, table.createdAt.desc()),
+  idxPolicyCreated: index("idx_policy_assignments_policy_created").on(table.policyId, table.createdAt.desc())
 }));
 var insertPolicyAssignmentSchema = createInsertSchema(policyAssignmentsTable).omit({ id: true, createdAt: true });
 
@@ -47944,8 +56850,35 @@ var decisionLogsTable = pgTable("decision_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   organizationId: text("organization_id").notNull().references(() => organizationsTable.id, { onDelete: "cascade" }),
   matchedPolicyId: text("matched_policy_id").references(() => policiesTable.id, { onDelete: "set null" })
-});
+}, (table) => ({
+  idxOrgCreatedAt: index("idx_decisions_org_created").on(table.organizationId, table.createdAt.desc()),
+  idxOrgEntity: index("idx_decisions_org_entity").on(table.organizationId, table.entityId, table.entityType),
+  idxOrgDecision: index("idx_decisions_org_decision").on(table.organizationId, table.decision),
+  idxOrgActionResource: index("idx_decisions_org_action_resource").on(table.organizationId, table.action, table.resourceType),
+  idxRequestId: index("idx_decisions_request_id").on(table.requestId),
+  idxMatchedPolicy: index("idx_decisions_matched_policy").on(table.matchedPolicyId)
+}));
 var insertDecisionLogSchema = createInsertSchema(decisionLogsTable).omit({ id: true, createdAt: true });
+
+// db/src/schema/invitations.ts
+var invitationsTable = pgTable("invitations", {
+  id: text("id").primaryKey().default(genId()),
+  email: text("email").notNull(),
+  name: text("name"),
+  role: text("role").default("member").notNull(),
+  organizationId: text("organization_id").references(() => organizationsTable.id, { onDelete: "cascade" }).notNull(),
+  invitedById: text("invited_by_id").references(() => usersTable.id, { onDelete: "set null" }),
+  token: text("token").unique().notNull(),
+  accepted: boolean("accepted").default(false).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+}, (table) => ({
+  idxOrgEmail: index("idx_invitations_org_email").on(table.organizationId, table.email),
+  idxToken: index("idx_invitations_token").on(table.token),
+  idxOrgExpiresAt: index("idx_invitations_org_expires").on(table.organizationId, table.expiresAt)
+}));
+var insertInvitationSchema = createInsertSchema(invitationsTable).omit({ id: true, createdAt: true, updatedAt: true, token: true, accepted: true });
 
 // db/src/index.ts
 import_dotenv.default.config({ path: path.resolve(__dirname, "../../.env") });
@@ -47962,6 +56895,56 @@ var db = drizzle(pool, { schema: schema_exports });
 var HealthCheckResponse = objectType({
   status: stringType()
 });
+var DetailedHealthCheckResponse = objectType({
+  status: enumType(["ok", "degraded"]),
+  checks: objectType({
+    database: objectType({
+      status: enumType(["ok", "error"]),
+      latencyMs: numberType()
+    }),
+    memory: objectType({
+      heapUsed: numberType(),
+      heapTotal: numberType(),
+      rss: numberType()
+    }),
+    uptime: numberType(),
+    version: stringType(),
+    environment: stringType()
+  })
+});
+
+// src/lib/env.ts
+var envSchema = external_exports.object({
+  NODE_ENV: external_exports.enum(["development", "production", "test"]).default("development"),
+  PORT: external_exports.coerce.number().default(8080),
+  DATABASE_URL: external_exports.string().url().startsWith("postgresql://"),
+  JWT_SECRET: external_exports.string().min(32),
+  COOKIE_SECRET: external_exports.string().min(32),
+  FRONTEND_URL: external_exports.string().url().optional(),
+  STRIPE_SECRET_KEY: external_exports.string().startsWith("sk_").optional(),
+  STRIPE_WEBHOOK_SECRET: external_exports.string().startsWith("whsec_").optional(),
+  STRIPE_PRICE_PRO: external_exports.string().startsWith("price_").optional(),
+  STRIPE_PRICE_ENTERPRISE: external_exports.string().startsWith("price_").optional()
+});
+var validatedEnv = null;
+function validateEnv() {
+  if (validatedEnv) return validatedEnv;
+  const result = envSchema.safeParse(process.env);
+  if (!result.success) {
+    const errors = result.error.flatten().fieldErrors;
+    const messages = Object.entries(errors).flatMap(([field, errs]) => errs.map((e) => `${field}: ${e}`)).join("\n");
+    throw new Error(`Invalid environment variables:
+${messages}`);
+  }
+  validatedEnv = result.data;
+  return validatedEnv;
+}
+function getEnv() {
+  if (!validatedEnv) {
+    return validateEnv();
+  }
+  return validatedEnv;
+}
 
 // src/routes/health.ts
 var router = (0, import_express.Router)();
@@ -47976,6 +56959,44 @@ router.get("/healthz", async (_req, res) => {
   } catch {
     res.status(503).json({ status: "error" });
   }
+});
+router.get("/healthz/detailed", async (_req, res) => {
+  const env2 = getEnv();
+  const start = Date.now();
+  let dbStatus = "ok";
+  let dbLatency = 0;
+  try {
+    const dbStart = Date.now();
+    await Promise.race([
+      db.execute(sql`SELECT 1`),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("DB timeout")), 2e3))
+    ]);
+    dbLatency = Date.now() - dbStart;
+  } catch {
+    dbStatus = "error";
+    dbLatency = Date.now() - start;
+  }
+  const uptime = process.uptime();
+  const memory = process.memoryUsage();
+  const data = DetailedHealthCheckResponse.parse({
+    status: dbStatus === "ok" ? "ok" : "degraded",
+    checks: {
+      database: {
+        status: dbStatus,
+        latencyMs: dbLatency
+      },
+      memory: {
+        heapUsed: Math.round(memory.heapUsed / 1024 / 1024),
+        heapTotal: Math.round(memory.heapTotal / 1024 / 1024),
+        rss: Math.round(memory.rss / 1024 / 1024)
+      },
+      uptime: Math.round(uptime),
+      version: process.env.npm_package_version || "0.0.0",
+      environment: env2.NODE_ENV
+    }
+  });
+  const statusCode = data.status === "ok" ? 200 : 503;
+  res.status(statusCode).json(data);
 });
 var health_default = router;
 
@@ -48980,7 +58001,7 @@ var HOUR = 60 * MINUTE;
 var DAY = 24 * HOUR;
 
 // src/routes/axiom.ts
-import { randomUUID, createHash as createHash2 } from "crypto";
+import { randomUUID as randomUUID2, createHash as createHash2 } from "crypto";
 
 // ../node_modules/.pnpm/bcryptjs@3.0.3/node_modules/bcryptjs/index.js
 import nodeCrypto from "crypto";
@@ -50601,13 +59622,13 @@ function _crypt(b, salt, rounds, callback, progressCallback) {
     } else {
       for (i = 0; i < 64; i++)
         for (j = 0; j < clen >> 1; j++) _encipher(cdata, j << 1, P, S);
-      var ret = [];
+      var ret2 = [];
       for (i = 0; i < clen; i++)
-        ret.push((cdata[i] >> 24 & 255) >>> 0), ret.push((cdata[i] >> 16 & 255) >>> 0), ret.push((cdata[i] >> 8 & 255) >>> 0), ret.push((cdata[i] & 255) >>> 0);
+        ret2.push((cdata[i] >> 24 & 255) >>> 0), ret2.push((cdata[i] >> 16 & 255) >>> 0), ret2.push((cdata[i] >> 8 & 255) >>> 0), ret2.push((cdata[i] & 255) >>> 0);
       if (callback) {
-        callback(null, ret);
+        callback(null, ret2);
         return;
-      } else return ret;
+      } else return ret2;
     }
     if (callback) nextTick(next);
   }
@@ -50706,8 +59727,48 @@ var bcryptjs_default = {
 };
 
 // src/routes/axiom.ts
+var stripe = null;
+async function getStripe() {
+  if (!stripe && process.env.STRIPE_SECRET_KEY) {
+    const { default: Stripe2 } = await Promise.resolve().then(() => (init_stripe_esm_node(), stripe_esm_node_exports));
+    stripe = new Stripe2(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
+  }
+  return stripe;
+}
+var MAX_LIMIT = 100;
+var DEFAULT_LIMIT = 20;
+function getPagination(req) {
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(req.query.limit) || DEFAULT_LIMIT));
+  const offset = (page - 1) * limit;
+  return { page, limit, offset };
+}
+function getSearchTerm(req) {
+  const q = req.query.q;
+  return q?.trim() ? q.trim() : void 0;
+}
+async function paginate(query, countQuery, { page, limit, offset }) {
+  const [items, [{ value: total }]] = await Promise.all([
+    query.limit(limit).offset(offset),
+    countQuery
+  ]);
+  const totalPages = Math.ceil(Number(total) / limit);
+  return {
+    data: items,
+    pagination: {
+      page,
+      limit,
+      total: Number(total),
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1
+    }
+  };
+}
+function sortByColumn(table, sortBy) {
+  return table[sortBy] ?? table.id;
+}
 var router2 = (0, import_express2.Router)();
-var updatePolicySchema = createInsertSchema(policiesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true, version: true });
 var updateEntitySchema = createInsertSchema(entitiesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true });
 var updateResourceSchema = createInsertSchema(resourcesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true });
 var updateOrganizationSchema = createInsertSchema(organizationsTable).partial().omit({ id: true, createdAt: true, updatedAt: true });
@@ -50740,8 +59801,8 @@ async function requireAuth(req, res, next) {
   }
 }
 async function createSession(userId, res) {
-  const id = randomUUID();
-  const token = randomUUID();
+  const id = randomUUID2();
+  const token = randomUUID2();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3);
   await db.insert(sessionsTable).values({
     id,
@@ -50805,14 +59866,14 @@ router2.post("/auth/sign-up", signupRateLimit, async (req, res) => {
     if (existing) {
       return res.status(409).json({ error: { message: "Email already in use" } });
     }
-    const orgId = randomUUID();
+    const orgId = randomUUID2();
     await db.insert(organizationsTable).values({
       id: orgId,
       name: `${name}'s Org`,
-      slug: `org-${randomUUID().slice(0, 8)}`
+      slug: `org-${randomUUID2().slice(0, 8)}`
     });
     const passwordHash = await bcryptjs_default.hash(password, 12);
-    const userId = randomUUID();
+    const userId = randomUUID2();
     await db.insert(usersTable).values({
       id: userId,
       name,
@@ -50857,6 +59918,69 @@ router2.get("/auth/session", async (req, res) => {
     return res.status(500).json({ error: { message: "Internal server error" } });
   }
 });
+router2.get("/auth/profile", requireAuth, async (req, res) => {
+  try {
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const { passwordHash, ...safeUser } = user;
+    return res.json({ data: safeUser });
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Internal server error" } });
+  }
+});
+var updateProfileSchema = createInsertSchema(usersTable).pick({ name: true, image: true }).partial();
+router2.patch("/auth/profile", requireAuth, async (req, res) => {
+  try {
+    const parsed = updateProfileSchema.parse(req.body);
+    const [user] = await db.update(usersTable).set({ ...parsed, updatedAt: /* @__PURE__ */ new Date() }).where(eq(usersTable.id, req.user.id)).returning();
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const { passwordHash, ...safeUser } = user;
+    return res.json({ data: safeUser });
+  } catch (error) {
+    return res.status(400).json({ error: { message: error.message || "Invalid request" } });
+  }
+});
+var changePasswordSchema = external_exports.object({
+  currentPassword: external_exports.string().min(1),
+  newPassword: external_exports.string().min(8)
+});
+router2.post("/auth/change-password", requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
+    if (!user || !user.passwordHash) {
+      return res.status(401).json({ error: { message: "Invalid credentials" } });
+    }
+    const valid = await bcryptjs_default.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      return res.status(401).json({ error: { message: "Current password is incorrect" } });
+    }
+    const passwordHash = await bcryptjs_default.hash(newPassword, 12);
+    await db.update(usersTable).set({ passwordHash, updatedAt: /* @__PURE__ */ new Date() }).where(eq(usersTable.id, req.user.id));
+    await db.delete(sessionsTable).where(eq(sessionsTable.userId, req.user.id));
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(400).json({ error: { message: error.message || "Invalid request" } });
+  }
+});
+router2.get("/auth/sessions", requireAuth, async (req, res) => {
+  try {
+    const sessions = await db.select().from(sessionsTable).where(and(eq(sessionsTable.userId, req.user.id), sql`${sessionsTable.expiresAt} > NOW()`)).orderBy(desc(sessionsTable.createdAt));
+    return res.json(sessions);
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Internal server error" } });
+  }
+});
+router2.delete("/auth/sessions/:id", requireAuth, async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+    const [session] = await db.delete(sessionsTable).where(and(eq(sessionsTable.id, sessionId), eq(sessionsTable.userId, req.user.id))).returning();
+    if (!session) return res.status(404).json({ error: "Session not found" });
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Internal server error" } });
+  }
+});
 router2.get("/organizations", requireAuth, async (req, res) => {
   const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, req.user.organizationId)).limit(1);
   return res.json(org ? [org] : []);
@@ -50880,8 +60004,22 @@ router2.patch("/organizations/:id", requireAuth, async (req, res) => {
   return res.json(org);
 });
 router2.get("/policies", requireAuth, async (req, res) => {
-  const policies = await db.select().from(policiesTable).where(eq(policiesTable.organizationId, req.user.organizationId)).orderBy(desc(policiesTable.priority));
-  return res.json(policies);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const effect = req.query.effect;
+  const active = req.query.active;
+  const sortBy = req.query.sortBy || "priority";
+  const sortOrder = req.query.sortOrder || "desc";
+  const conditions = [eq(policiesTable.organizationId, req.user.organizationId)];
+  if (search) conditions.push(or(ilike(policiesTable.name, `%${search}%`), ilike(policiesTable.description, `%${search}%`)));
+  if (effect && ["allow", "deny"].includes(effect)) conditions.push(eq(policiesTable.effect, effect));
+  if (active && ["true", "false"].includes(active)) conditions.push(eq(policiesTable.active, active === "true"));
+  const sortByColumn2 = (table, sortBy2) => table[sortBy2] ?? table.id;
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn2(policiesTable, sortBy)) : desc(sortByColumn2(policiesTable, sortBy));
+  const baseQuery = db.select().from(policiesTable).where(and(...conditions)).orderBy(orderBy);
+  const countQuery = db.select({ value: count() }).from(policiesTable).where(and(...conditions));
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 router2.get("/policies/:id", requireAuth, async (req, res) => {
   const id = req.params.id;
@@ -50890,7 +60028,7 @@ router2.get("/policies/:id", requireAuth, async (req, res) => {
   return res.json(policy);
 });
 router2.post("/policies", requireAuth, async (req, res) => {
-  const parsed = insertPolicySchema.parse(req.body);
+  const parsed = createPolicySchema.parse(req.body);
   const [policy] = await db.insert(policiesTable).values({
     ...parsed,
     organizationId: req.user.organizationId
@@ -50932,9 +60070,19 @@ router2.get("/policies/:id/versions", requireAuth, async (req, res) => {
   return res.json(versions);
 });
 router2.get("/entities", requireAuth, async (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit) || 50, 100);
-  const items = await db.select().from(entitiesTable).where(eq(entitiesTable.organizationId, req.user.organizationId)).orderBy(desc(entitiesTable.createdAt)).limit(limit);
-  return res.json(items);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const type = req.query.type;
+  const sortBy = req.query.sortBy || "createdAt";
+  const sortOrder = req.query.sortOrder || "desc";
+  const conditions = [eq(entitiesTable.organizationId, req.user.organizationId)];
+  if (search) conditions.push(or(ilike(entitiesTable.externalId, `%${search}%`), ilike(entitiesTable.type, `%${search}%`)));
+  if (type) conditions.push(eq(entitiesTable.type, type));
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn(entitiesTable, sortBy)) : desc(sortByColumn(entitiesTable, sortBy));
+  const baseQuery = db.select().from(entitiesTable).where(and(...conditions)).orderBy(orderBy);
+  const countQuery = db.select({ value: count() }).from(entitiesTable).where(and(...conditions));
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 router2.get("/entities/:id", requireAuth, async (req, res) => {
   const id = req.params.id;
@@ -50956,7 +60104,7 @@ router2.delete("/entities/:id", requireAuth, async (req, res) => {
   return res.json({ success: true });
 });
 router2.post("/entities", requireAuth, async (req, res) => {
-  const parsed = insertEntitySchema.parse(req.body);
+  const parsed = createEntitySchema.parse(req.body);
   const [entity] = await db.insert(entitiesTable).values({
     ...parsed,
     organizationId: req.user.organizationId
@@ -50964,9 +60112,19 @@ router2.post("/entities", requireAuth, async (req, res) => {
   return res.status(201).json(entity);
 });
 router2.get("/resources", requireAuth, async (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit) || 50, 100);
-  const items = await db.select().from(resourcesTable).where(eq(resourcesTable.organizationId, req.user.organizationId)).orderBy(desc(resourcesTable.createdAt)).limit(limit);
-  return res.json(items);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const type = req.query.type;
+  const sortBy = req.query.sortBy || "createdAt";
+  const sortOrder = req.query.sortOrder || "desc";
+  const conditions = [eq(resourcesTable.organizationId, req.user.organizationId)];
+  if (search) conditions.push(or(ilike(resourcesTable.name, `%${search}%`), ilike(resourcesTable.description, `%${search}%`), ilike(resourcesTable.type, `%${search}%`)));
+  if (type) conditions.push(eq(resourcesTable.type, type));
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn(resourcesTable, sortBy)) : desc(sortByColumn(resourcesTable, sortBy));
+  const baseQuery = db.select().from(resourcesTable).where(and(...conditions)).orderBy(orderBy);
+  const countQuery = db.select({ value: count() }).from(resourcesTable).where(and(...conditions));
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 router2.get("/resources/:id", requireAuth, async (req, res) => {
   const id = req.params.id;
@@ -50988,7 +60146,7 @@ router2.delete("/resources/:id", requireAuth, async (req, res) => {
   return res.json({ success: true });
 });
 router2.post("/resources", requireAuth, async (req, res) => {
-  const parsed = insertResourceSchema.parse(req.body);
+  const parsed = createResourceSchema.parse(req.body);
   const [resource] = await db.insert(resourcesTable).values({
     ...parsed,
     organizationId: req.user.organizationId
@@ -51053,9 +60211,35 @@ function evaluatePolicies(policies, context) {
   return { decision: "deny", reason: "No matching allow policy found", matchedPolicyId: null };
 }
 router2.get("/decisions", requireAuth, async (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit) || 50, 100);
-  const items = await db.select().from(decisionLogsTable).where(eq(decisionLogsTable.organizationId, req.user.organizationId)).orderBy(desc(decisionLogsTable.createdAt)).limit(limit);
-  return res.json(items);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const entityId = req.query.entityId;
+  const entityType = req.query.entityType;
+  const action = req.query.action;
+  const resourceType = req.query.resourceType;
+  const decision = req.query.decision;
+  const since = req.query.since;
+  const until = req.query.until;
+  const sortBy = req.query.sortBy || "createdAt";
+  const sortOrder = req.query.sortOrder || "desc";
+  const conditions = [eq(decisionLogsTable.organizationId, req.user.organizationId)];
+  if (search) conditions.push(or(
+    ilike(decisionLogsTable.entityId, `%${search}%`),
+    ilike(decisionLogsTable.resourceId, `%${search}%`),
+    ilike(decisionLogsTable.requestId, `%${search}%`)
+  ));
+  if (entityId) conditions.push(eq(decisionLogsTable.entityId, entityId));
+  if (entityType) conditions.push(eq(decisionLogsTable.entityType, entityType));
+  if (action) conditions.push(eq(decisionLogsTable.action, action));
+  if (resourceType) conditions.push(eq(decisionLogsTable.resourceType, resourceType));
+  if (decision && ["allow", "deny"].includes(decision)) conditions.push(eq(decisionLogsTable.decision, decision));
+  if (since) conditions.push(sql`${decisionLogsTable.createdAt} >= ${since}`);
+  if (until) conditions.push(sql`${decisionLogsTable.createdAt} <= ${until}`);
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn(decisionLogsTable, sortBy)) : desc(sortByColumn(decisionLogsTable, sortBy));
+  const baseQuery = db.select().from(decisionLogsTable).where(and(...conditions)).orderBy(orderBy);
+  const countQuery = db.select({ value: count() }).from(decisionLogsTable).where(and(...conditions));
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 router2.post("/decisions/evaluate", requireAuth, async (req, res) => {
   const { entity, action, resource } = req.body;
@@ -51116,7 +60300,7 @@ router2.post("/decisions/evaluate", requireAuth, async (req, res) => {
     const latencyMs = Date.now() - start;
     if (entity?.id && organizationId) {
       const logEntry = insertDecisionLogSchema.parse({
-        requestId: randomUUID(),
+        requestId: randomUUID2(),
         entityId: entity.id,
         entityType: entity.type || "unknown",
         action: action || "unknown",
@@ -51142,12 +60326,23 @@ router2.post("/decisions/evaluate", requireAuth, async (req, res) => {
   }
 });
 router2.get("/api-keys", requireAuth, async (req, res) => {
-  const keys = await db.select().from(apiKeysTable).where(eq(apiKeysTable.organizationId, req.user.organizationId));
-  return res.json(keys);
+  const { page, limit, offset } = getPagination(req);
+  const search = getSearchTerm(req);
+  const includeRevoked = req.query.includeRevoked === "true";
+  const sortBy = req.query.sortBy || "createdAt";
+  const sortOrder = req.query.sortOrder || "desc";
+  const conditions = [eq(apiKeysTable.organizationId, req.user.organizationId)];
+  if (!includeRevoked) conditions.push(isNull(apiKeysTable.revokedAt));
+  if (search) conditions.push(or(ilike(apiKeysTable.name, `%${search}%`), ilike(apiKeysTable.prefix, `%${search}%`)));
+  const orderBy = sortOrder === "asc" ? asc(sortByColumn(apiKeysTable, sortBy)) : desc(sortByColumn(apiKeysTable, sortBy));
+  const baseQuery = db.select().from(apiKeysTable).where(and(...conditions)).orderBy(orderBy);
+  const countQuery = db.select({ value: count() }).from(apiKeysTable).where(and(...conditions));
+  const result = await paginate(baseQuery, countQuery, { page, limit, offset });
+  return res.json(result);
 });
 router2.post("/api-keys", requireAuth, async (req, res) => {
-  const parsed = insertApiKeySchema.parse(req.body);
-  const rawKey = `ak_${randomUUID()}`;
+  const parsed = createApiKeySchema.parse(req.body);
+  const rawKey = `ak_${randomUUID2()}`;
   const hashedKey = createHash2("sha256").update(rawKey).digest("hex");
   const prefix = rawKey.slice(0, 8);
   const [key] = await db.insert(apiKeysTable).values({
@@ -51173,6 +60368,42 @@ router2.delete("/api-keys/:id", requireAuth, async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: { message: "Failed to revoke API key" } });
   }
+});
+router2.get("/team", requireAuth, async (req, res) => {
+  const orgId = req.user.organizationId;
+  const members = await db.select().from(usersTable).where(eq(usersTable.organizationId, orgId)).orderBy(usersTable.name);
+  return res.json(members);
+});
+router2.post("/team/invite", requireAuth, async (req, res) => {
+  try {
+    const { email, name, role } = req.body;
+    if (!email) return res.status(400).json({ error: { message: "Email is required" } });
+    const parsed = insertInvitationSchema.parse({ email, name, role: role || "member", organizationId: req.user.organizationId, invitedById: req.user.id });
+    const token = randomUUID2();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3);
+    const [invite] = await db.insert(invitationsTable).values({ ...parsed, token, expiresAt }).returning();
+    return res.status(201).json(invite);
+  } catch (err) {
+    return res.status(400).json({ error: { message: err.message || "Invalid request" } });
+  }
+});
+router2.patch("/team/:id", requireAuth, async (req, res) => {
+  try {
+    const memberId = req.params.id;
+    const { role } = req.body;
+    if (!role) return res.status(400).json({ error: { message: "Role is required" } });
+    const [member] = await db.update(usersTable).set({ role, updatedAt: /* @__PURE__ */ new Date() }).where(and(eq(usersTable.id, memberId), eq(usersTable.organizationId, req.user.organizationId))).returning();
+    if (!member) return res.status(404).json({ error: "Not found" });
+    return res.json(member);
+  } catch (err) {
+    return res.status(400).json({ error: { message: err.message || "Invalid request" } });
+  }
+});
+router2.delete("/team/:id", requireAuth, async (req, res) => {
+  const memberId = req.params.id;
+  const [member] = await db.delete(usersTable).where(and(eq(usersTable.id, memberId), eq(usersTable.organizationId, req.user.organizationId))).returning();
+  if (!member) return res.status(404).json({ error: "Not found" });
+  return res.json({ success: true });
 });
 router2.post("/v1/evaluate", async (req, res) => {
   const { entity, action, resource } = req.body;
@@ -51257,13 +60488,155 @@ router2.delete("/entities/:id/policies/:policyId", requireAuth, async (req, res)
   if (!assignment) return res.status(404).json({ error: "Assignment not found" });
   return res.json({ success: true });
 });
+var createCheckoutSchema = external_exports.object({
+  priceId: external_exports.string().min(1),
+  successUrl: external_exports.string().url().optional(),
+  cancelUrl: external_exports.string().url().optional()
+});
+router2.get("/billing/subscription", requireAuth, async (req, res) => {
+  try {
+    const st = await getStripe();
+    if (!st) return res.status(503).json({ error: { message: "Billing not configured" } });
+    const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, req.user.organizationId)).limit(1);
+    if (!org || !org.stripeCustomerId) {
+      return res.json({ data: null });
+    }
+    const subscriptions = await st.subscriptions.list({ customer: org.stripeCustomerId, status: "all", limit: 1 });
+    const sub = subscriptions.data[0] || null;
+    return res.json({ data: sub });
+  } catch (error) {
+    return res.status(500).json({ error: { message: error.message || "Billing error" } });
+  }
+});
+router2.post("/billing/checkout", requireAuth, async (req, res) => {
+  try {
+    const st = await getStripe();
+    if (!st) return res.status(503).json({ error: { message: "Billing not configured" } });
+    const parsed = createCheckoutSchema.parse(req.body);
+    const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, req.user.organizationId)).limit(1);
+    if (!org) return res.status(404).json({ error: { message: "Organization not found" } });
+    let customerId = org.stripeCustomerId;
+    if (!customerId) {
+      const customer = await st.customers.create({ email: req.user.email, name: org.name, metadata: { organizationId: org.id } });
+      customerId = customer.id;
+      await db.update(organizationsTable).set({ stripeCustomerId: customerId }).where(eq(organizationsTable.id, org.id));
+    }
+    const session = await st.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
+      line_items: [{ price: parsed.priceId, quantity: 1 }],
+      success_url: parsed.successUrl || `${process.env.FRONTEND_URL}/settings/billing?success=true`,
+      cancel_url: parsed.cancelUrl || `${process.env.FRONTEND_URL}/settings/billing?canceled=true`,
+      allow_promotion_codes: true,
+      subscription_data: { metadata: { organizationId: org.id } }
+    });
+    return res.json({ data: { url: session.url } });
+  } catch (error) {
+    return res.status(400).json({ error: { message: error.message || "Checkout failed" } });
+  }
+});
+router2.post("/billing/portal", requireAuth, async (req, res) => {
+  try {
+    const st = await getStripe();
+    if (!st) return res.status(503).json({ error: { message: "Billing not configured" } });
+    const [org] = await db.select().from(organizationsTable).where(eq(organizationsTable.id, req.user.organizationId)).limit(1);
+    if (!org || !org.stripeCustomerId) {
+      return res.status(404).json({ error: { message: "No billing account found" } });
+    }
+    const session = await st.billingPortal.sessions.create({
+      customer: org.stripeCustomerId,
+      return_url: `${process.env.FRONTEND_URL}/settings/billing`
+    });
+    return res.json({ data: { url: session.url } });
+  } catch (error) {
+    return res.status(500).json({ error: { message: error.message || "Portal error" } });
+  }
+});
+router2.post("/billing/webhook", async (req, res) => {
+  try {
+    const st = await getStripe();
+    if (!st || !process.env.STRIPE_WEBHOOK_SECRET) {
+      return res.status(503).json({ error: { message: "Webhook not configured" } });
+    }
+    const sig = req.headers["stripe-signature"];
+    const event = st.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object;
+      const orgId = subscription.metadata?.organizationId;
+      if (orgId) {
+        await db.update(organizationsTable).set({
+          stripeSubscriptionId: subscription.id,
+          stripeStatus: subscription.status,
+          stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1e3)
+        }).where(eq(organizationsTable.id, orgId));
+      }
+    }
+    return res.json({ received: true });
+  } catch (error) {
+    console.error("Webhook error:", error);
+    return res.status(400).json({ error: { message: `Webhook error: ${error.message}` } });
+  }
+});
+var conditionSchema = external_exports.object({
+  field: external_exports.string().min(1),
+  operator: external_exports.enum(["equals", "not_equals", "in", "not_in", "contains", "not_contains", "exists", "not_exists", "gt", "lt", "gte", "lte"]),
+  value: external_exports.unknown()
+});
+var policyConditionsSchema = external_exports.array(conditionSchema);
+var createPolicySchema = insertPolicySchema.omit({ organizationId: true }).extend({
+  conditions: policyConditionsSchema
+});
+var updatePolicySchema = createInsertSchema(policiesTable).partial().omit({ id: true, organizationId: true, createdAt: true, updatedAt: true, version: true }).extend({ conditions: policyConditionsSchema.optional() });
+var createEntitySchema = insertEntitySchema.omit({ organizationId: true });
+var createResourceSchema = insertResourceSchema.omit({ organizationId: true });
+var createApiKeySchema = insertApiKeySchema.omit({ organizationId: true, hashedKey: true, prefix: true, revokedAt: true, lastUsedAt: true }).extend({
+  name: external_exports.string().min(1).max(100),
+  expiresAt: external_exports.coerce.date().optional().nullable()
+});
 var axiom_default = router2;
 
-// src/routes/index.ts
+// src/routes/metrics.ts
+var import_express3 = __toESM(require_express2(), 1);
+var import_prom_client = __toESM(require_prom_client(), 1);
+var register = new import_prom_client.Registry();
+(0, import_prom_client.collectDefaultMetrics)({ register });
 var router3 = (0, import_express3.Router)();
-router3.use(health_default);
-router3.use(axiom_default);
-var routes_default = router3;
+var requestCount = 0;
+var totalResponseTime = 0;
+var errorCount = 0;
+router3.use((req, res, next) => {
+  const start = Date.now();
+  requestCount++;
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    totalResponseTime += duration;
+    if (res.statusCode >= 400) errorCount++;
+  });
+  next();
+});
+router3.get("/metrics", async (_req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.send(await register.metrics());
+});
+router3.get("/metrics/summary", (_req, res) => {
+  const avgResponseTime = requestCount > 0 ? totalResponseTime / requestCount : 0;
+  res.json({
+    requestCount,
+    errorCount,
+    errorRate: requestCount > 0 ? errorCount / requestCount : 0,
+    avgResponseTimeMs: Math.round(avgResponseTime),
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
+});
+var metrics_default = router3;
+
+// src/routes/index.ts
+var router4 = (0, import_express4.Router)();
+router4.use(health_default);
+router4.use(axiom_default);
+router4.use(metrics_default);
+var routes_default = router4;
 
 // src/lib/logger.ts
 var import_pino = __toESM(require_pino(), 1);
@@ -51284,7 +60657,8 @@ var logger = (0, import_pino.default)({
 });
 
 // src/app.ts
-var app = (0, import_express4.default)();
+validateEnv();
+var app = (0, import_express5.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -51309,8 +60683,8 @@ app.use((0, import_cors.default)({
   credentials: true
 }));
 app.use((0, import_cookie_parser.default)());
-app.use(import_express4.default.json());
-app.use(import_express4.default.urlencoded({ extended: true }));
+app.use(import_express5.default.json());
+app.use(import_express5.default.urlencoded({ extended: true }));
 app.use("/api", routes_default);
 var app_default = app;
 

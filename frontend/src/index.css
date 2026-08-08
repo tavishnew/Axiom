@@ -166,14 +166,6 @@ html, body {
 }
 .animate-pulse-soft { animation: pulse-soft 4s ease-in-out infinite; }
 
-/* Dashboard specific */
-.gradient-text {
-    background: linear-gradient(135deg, #d97706, #ea580c);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
 /* Card base */
 .card-hover {
     transition: all 0.2s ease;

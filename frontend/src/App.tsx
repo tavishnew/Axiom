@@ -11,6 +11,7 @@ import { AuthProvider, ProtectedRoute } from '@/lib/auth.tsx';
 import LandingPage from './app/landing/page';
 import SignInPage from './app/auth/sign-in/page';
 import SignUpPage from './app/auth/sign-up/page';
+import DashboardPage from './app/dashboard/page';
 import PoliciesPage from './app/policies/page';
 import EntitiesPage from './app/entities/page';
 import ResourcesPage from './app/resources/page';
@@ -45,12 +46,14 @@ function Router() {
         <Route path="/landing" component={LandingPage} />
         <Route path="/auth/sign-in" component={SignInPage} />
         <Route path="/auth/sign-up" component={SignUpPage} />
+        <Route path="/dashboard" component={() => <ProtectedDashboardRoute component={DashboardPage} />} />
         <Route path="/policies" component={() => <ProtectedDashboardRoute component={PoliciesPage} />} />
         <Route path="/entities" component={() => <ProtectedDashboardRoute component={EntitiesPage} />} />
         <Route path="/resources" component={() => <ProtectedDashboardRoute component={ResourcesPage} />} />
         <Route path="/decisions" component={() => <ProtectedDashboardRoute component={DecisionsPage} />} />
         <Route path="/test" component={() => <ProtectedDashboardRoute component={TestConsolePage} />} />
         <Route path="/settings" component={() => <ProtectedDashboardRoute component={SettingsPage} />} />
+        <Route path="/settings/*" component={() => <ProtectedDashboardRoute component={SettingsPage} />} />
         <Route component={NotFound} />
       </Switch>
     </>

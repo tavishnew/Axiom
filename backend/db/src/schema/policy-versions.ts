@@ -1,4 +1,4 @@
-import { pgTable, text, jsonb, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, jsonb, integer, boolean, timestamp, index } from "drizzle-orm/pg-core";
 import { policiesTable } from "./policies";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -14,7 +14,8 @@ export const policyVersionsTable = pgTable("policy_versions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   policyId: text("policy_id").notNull().references(() => policiesTable.id, { onDelete: "cascade" }),
 }, (table) => ({
-  uniquePolicyVersion: unique().on(table.policyId, table.version),
+  idxPolicyCreated: index("idx_policy_versions_policy_created").on(table.policyId, table.createdAt.desc()),
+  idxPolicyVersion: index("idx_policy_versions_policy_version").on(table.policyId, table.version.desc()),
 }));
 
 export const insertPolicyVersionSchema = createInsertSchema(policyVersionsTable).omit({ id: true, createdAt: true });

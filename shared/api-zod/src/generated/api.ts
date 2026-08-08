@@ -14,3 +14,25 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns detailed health check with database, memory, and uptime info
+ * @summary Detailed health check
+ */
+export const DetailedHealthCheckResponse = zod.object({
+  status: zod.enum(["ok", "degraded"]),
+  checks: zod.object({
+    database: zod.object({
+      status: zod.enum(["ok", "error"]),
+      latencyMs: zod.number(),
+    }),
+    memory: zod.object({
+      heapUsed: zod.number(),
+      heapTotal: zod.number(),
+      rss: zod.number(),
+    }),
+    uptime: zod.number(),
+    version: zod.string(),
+    environment: zod.string(),
+  }),
+});

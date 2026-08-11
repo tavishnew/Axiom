@@ -3,6 +3,7 @@ import healthRouter from "./health";
 import axiomRouter from "./axiom";
 import metricsRouter from "./metrics";
 import invitationsRouter from "./invitations";
+import internalRouter from "./internal";
 
 const router: IRouter = Router();
 
@@ -10,5 +11,6 @@ router.use(healthRouter);
 router.use(axiomRouter);
 router.use(metricsRouter);
 router.use(invitationsRouter);
+router.use(internalRouter);
 
 export default router;

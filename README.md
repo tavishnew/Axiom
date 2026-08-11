@@ -252,6 +252,20 @@ Render uses `render.yaml` for service config. Set these environment variables in
 - **Invitations**: token-based, 7-day expiry, single-use
 - **Stripe webhooks**: signature-verified, idempotent subscription sync
 
+## Database Retention
+
+Automatic cleanup runs every 24h via internal cron:
+
+- `decision_logs` older than `LOG_RETENTION_DAYS` (default: 7)
+- Expired `session` rows (where `expires_at < NOW()`)
+
+Also exposes `POST /internal/cleanup` endpoint protected by `INTERNAL_CLEANUP_SECRET` for external schedulers (Render Cron Jobs, etc.).
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `LOG_RETENTION_DAYS` | optional | `7` | Days to retain decision_logs |
+| `INTERNAL_CLEANUP_SECRET` | optional | — | Bearer token for cleanup endpoint |
+
 ---
 
 ## Environment
@@ -275,6 +289,8 @@ Render uses `render.yaml` for service config. Set these environment variables in
 | `RESEND_API_KEY` | optional | — | Resend API key for invitations |
 | `RESEND_FROM_EMAIL` | optional | — | Sender email address |
 | `INVITE_BASE_URL` | optional | — | Base URL for invitation links |
+| `LOG_RETENTION_DAYS` | optional | `7` | Days to retain decision_logs (cron cleanup) |
+| `INTERNAL_CLEANUP_SECRET` | optional | — | Secret for POST /internal/cleanup endpoint |
 
 Copy `.env.example` to `.env` for development. Use `.env.production.example` template for production.
 

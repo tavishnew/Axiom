@@ -1,14 +1,28 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm -F @workspace/frontend build",
-  "devCommand": "pnpm -F @workspace/frontend dev",
-  "installCommand": "pnpm install --frozen-lockfile",
-  "framework": "vite",
-  "outputDirectory": "frontend/dist/public",
+  "services": {
+    "frontend": {
+      "root": "frontend",
+      "framework": "vite"
+    },
+    "backend": {
+      "root": "backend"
+    }
+  },
   "rewrites": [
     {
+      "source": "/api(/.*)?",
+      "destination": {
+        "type": "service",
+        "service": "backend"
+      }
+    },
+    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": {
+        "type": "service",
+        "service": "frontend"
+      }
     }
   ]
 }

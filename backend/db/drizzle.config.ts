@@ -1,8 +1,20 @@
 import { defineConfig } from "drizzle-kit";
 import dotenv from "dotenv";
 import path from "path";
+import { existsSync } from "fs";
+import { fileURLToPath } from "url";
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+let dir = __dirname;
+for (let i = 0; i < 6; i++) {
+  const candidate = path.join(dir, ".env");
+  if (existsSync(candidate)) {
+    dotenv.config({ path: candidate });
+    break;
+  }
+  dir = path.dirname(dir);
+}
 
 export default defineConfig({
   schema: [
@@ -10,6 +22,7 @@ export default defineConfig({
     "./src/schema/api-keys.ts",
     "./src/schema/decision-logs.ts",
     "./src/schema/entities.ts",
+    "./src/schema/invitations.ts",
     "./src/schema/organizations.ts",
     "./src/schema/resources.ts",
     "./src/schema/policies.ts",

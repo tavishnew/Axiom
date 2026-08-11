@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { ShieldHalf, ArrowRight, Mail, Lock } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
@@ -10,6 +11,17 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [, navigate] = useLocation();
+
+  const inviteToken = searchParams.get('invite_token');
+
+  useEffect(() => {
+    if (inviteToken) {
+      // Store the token for use after successful sign-in
+      sessionStorage.setItem('pending_invite_token', inviteToken);
+    }
+  }, [inviteToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +33,14 @@ export default function SignInPage() {
       setError(result.error.message);
       setLoading(false);
     } else {
-      window.location.href = '/policies';
+      // After successful sign-in, check for pending invite token
+      const pendingToken = sessionStorage.getItem('pending_invite_token');
+      sessionStorage.removeItem('pending_invite_token');
+      if (pendingToken) {
+        window.location.href = `/invite/${encodeURIComponent(pendingToken)}`;
+      } else {
+        window.location.href = '/policies';
+      }
     }
   };
 

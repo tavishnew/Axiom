@@ -136,6 +136,19 @@ export interface Session {
  createdAt: string;
 }
 
+export interface Invitation {
+ id: string;
+ email: string;
+ name: string | null;
+ role: string;
+ status: "pending" | "accepted" | "expired" | "revoked";
+ expiresAt: string;
+ acceptedAt: string | null;
+ createdAt: string;
+ invitedById: string | null;
+ invitedBy?: { id: string; name: string | null; email: string } | null;
+}
+
 export interface StatCardData {
   label: string;
   value: number;
@@ -262,12 +275,44 @@ export const api = {
  // Team
  team: {
  list: () => request<any[]>('/team'),
- invite: (data: { email: string; name?: string; role?: string }) =>
- request<any>('/team/invite', { method: 'POST', body: JSON.stringify(data) }),
  update: (id: string, data: { role: string }) =>
  request<any>(`/team/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
  remove: (id: string) =>
  request<{ success: boolean }>(`/team/${id}`, { method: 'DELETE' }),
+ },
+
+ // Invitations
+ invitations: {
+ list: (params?: { includeTerminal?: boolean }) =>
+ request<{ data: Invitation[] }>(`/invitations${params?.includeTerminal !== undefined ? '?includeTerminal=' + params.includeTerminal : ''}`),
+ create: (data: { email: string; name?: string; role?: string }) =>
+ request<{ data: Invitation & { acceptUrl?: string; inviteLink?: string; emailDelivered?: boolean; emailReason?: string | null } }>(
+ '/invitations',
+ { method: 'POST', body: JSON.stringify(data) }
+ ),
+ resend: (id: string) =>
+ request<{ data: Invitation & { inviteLink?: string; emailDelivered?: boolean } }>(
+ `/invitations/${id}/resend`,
+ { method: 'POST' }
+ ),
+ revoke: (id: string) =>
+ request<{ success: boolean; id: string }>(`/invitations/${id}`, { method: 'DELETE' }),
+ accept: (token: string) =>
+ request<{ data: { organization: Organization; role: string } }>(
+ '/invitations/accept',
+ { method: 'POST', body: JSON.stringify({ token }) }
+ ),
+ validate: (token: string) =>
+ request<{
+ data: {
+ email: string;
+ role: string;
+ workspaceName: string;
+ status: Invitation["status"];
+ expiresAt: string;
+ } | null;
+ error?: { code: string; message: string };
+ }>(`/invitations/validate?token=${encodeURIComponent(token)}`),
  },
 
  // Auth / Profile

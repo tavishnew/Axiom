@@ -14,11 +14,11 @@ Built with Express 5, Drizzle ORM, PostgreSQL, React 19, Vite 7, Tailwind 4.
 
 pnpm install
 pnpm --filter @workspace/db run push    # apply schema to Postgres
-pnpm dev                               # starts frontend (3002) + backend (8080)
+pnpm dev                                # starts frontend (3002) + backend (8787)
 ```
 
 Frontend: `http://localhost:3002`  
-Backend:  `http://localhost:8080`
+Backend:  `http://localhost:8787`
 
 ---
 
@@ -31,14 +31,16 @@ Axiom/
 │   │   ├── routes/
 │   │   │   ├── axiom.ts        # main router (~1300 lines)
 │   │   │   ├── health.ts       # /healthz + /healthz/detailed
-│   │   │   └── metrics.ts      # Prometheus /metrics + /metrics/summary
+│   │   │   ├── metrics.ts      # Prometheus /metrics + /metrics/summary
+│   │   │   └── invitations.ts  # team invitations (create/accept/resend/revoke)
 │   │   ├── lib/
 │   │   │   ├── env.ts          # validated env (Zod)
+│   │   │   ├── email.ts        # Resend email provider
 │   │   │   └── policy-evaluator.ts
 │   │   └── app.ts              # CORS, cookie-parser, router mount
 │   ├── db/                     # Drizzle schema + connection
 │   │   └── src/schema/*.ts     # one file per table
-│   └── dist/                   # bundled output (vite-node)
+│   └── dist/                   # bundled output (esbuild)
 ├── frontend/                   # React SPA (Vite)
 │   └── src/
 │       ├── app/                # wouter routes (pages)
@@ -50,7 +52,8 @@ Axiom/
 │       │   ├── decisions/      # audit log with filters/latency
 │       │   ├── test/           # live eval console + SDK snippet
 │       │   ├── settings/       # org, billing, team, profile, API keys
-│       │   └── landing/        # marketing landing page
+│       │   ├── landing/        # marketing landing page
+│       │   └── invite/         # invitation acceptance flow
 │       ├── components/         # shadcn/ui + custom (DashboardLayout, Sidebar, TableSkeleton)
 │       └── lib/
 │           ├── api.ts          # typed API client (hand-written)
@@ -58,9 +61,10 @@ Axiom/
 ├── shared/
 │   └── api-zod/                # shared Zod contracts (types + responses)
 ├── scripts/                    # repo tooling
-├── nginx/                      # nginx configs (dev + prod)
-├── docker-compose.yml          # dev stack
-└── docker-compose.prod.yml     # prod stack (multi-stage builds)
+├── docker-compose.yml          # dev stack (PostgreSQL)
+├── vercel.json                 # Vercel deployment config (frontend)
+├── render.yaml                 # Render deployment config (backend)
+└── package.json                # workspace root scripts
 ```
 
 ---
@@ -185,16 +189,55 @@ pnpm dev
 
 ```bash
 # Build images
-docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.yml build
 
-# Run stack (PostgreSQL + backend + frontend via nginx)
-docker compose -f docker-compose.prod.yml up -d
+# Run stack (PostgreSQL + backend)
+docker compose -f docker-compose.yml up -d
 
 # View logs
-docker compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.yml logs -f
 ```
 
-Production stack uses multi-stage builds, nginx reverse proxy, and non-root containers.
+Production uses nginx reverse proxy (see `nginx/nginx.prod.conf`) and non-root containers.
+
+---
+
+## Deployment
+
+### Vercel (Frontend)
+
+```bash
+# Connect repo to Vercel, or:
+pnpm run build    # builds frontend to dist/public
+vercel --prod
+```
+
+Configure in Vercel dashboard:
+- Framework: Vite
+- Build Command: `pnpm -F @workspace/frontend build`
+- Output Directory: `frontend/dist/public`
+- Environment Variable: `VITE_API_URL` → your Render backend URL
+
+### Render (Backend)
+
+```bash
+# Push to connected GitHub repo, or:
+git push render main
+```
+
+Render uses `render.yaml` for service config. Set these environment variables in Render dashboard:
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Neon/Postgres connection string |
+| `JWT_SECRET` | Min 32 chars |
+| `COOKIE_SECRET` | Min 32 chars |
+| `FRONTEND_URL` | Vercel frontend URL (CORS) |
+| `RESEND_API_KEY` | Resend API key for invitations |
+| `RESEND_FROM_EMAIL` | Sender email (e.g. noreply@yourdomain.com) |
+| `INVITE_BASE_URL` | Frontend invite URL (e.g. https://yourapp.vercel.app) |
+| `PORT` | `8080` (Render sets this) |
+| `NODE_ENV` | `production` |
 
 ---
 
@@ -219,9 +262,9 @@ Production stack uses multi-stage builds, nginx reverse proxy, and non-root cont
 | `POSTGRES_DB` | prod | — | Database name (prod) |
 | `POSTGRES_USER` | prod | — | Database user (prod) |
 | `POSTGRES_PASSWORD` | prod | — | Database password (prod) |
-| `PORT` | no | `8080` | Backend port |
+| `PORT` | no | `8787` | Backend port (dev) |
 | `NODE_ENV` | no | `development` | `production` enables secure cookies |
-| `VITE_API_URL` | no | `http://localhost:8080` | Frontend API base |
+| `VITE_API_URL` | no | `http://localhost:8787` | Frontend API base |
 | `FRONTEND_URL` | no | `http://localhost:3002` | Frontend origin (CORS + Stripe redirects) |
 | `JWT_SECRET` | prod | — | Min 32 chars, for tokens if used |
 | `COOKIE_SECRET` | prod | — | Min 32 chars, for session signing |
@@ -229,6 +272,9 @@ Production stack uses multi-stage builds, nginx reverse proxy, and non-root cont
 | `STRIPE_WEBHOOK_SECRET` | optional | — | Validates Stripe webhooks |
 | `STRIPE_PRICE_PRO` | optional | — | Price ID for Pro tier |
 | `STRIPE_PRICE_ENTERPRISE` | optional | — | Price ID for Enterprise tier |
+| `RESEND_API_KEY` | optional | — | Resend API key for invitations |
+| `RESEND_FROM_EMAIL` | optional | — | Sender email address |
+| `INVITE_BASE_URL` | optional | — | Base URL for invitation links |
 
 Copy `.env.example` to `.env` for development. Use `.env.production.example` template for production.
 

@@ -11,6 +11,9 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
   STRIPE_PRICE_PRO: z.string().startsWith("price_").optional(),
   STRIPE_PRICE_ENTERPRISE: z.string().startsWith("price_").optional(),
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().email().optional(),
+  INVITE_BASE_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

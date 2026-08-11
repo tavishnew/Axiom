@@ -4,7 +4,7 @@ import { useLocation } from 'wouter';
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Settings as SettingsIcon, Copy, Trash2, Plus, Building2, Key, Users as UsersIcon, CreditCard, User as LucideUser, Check, RefreshCw, Loader2, Mail, Lock, Shield, X } from 'lucide-react';
-import { api, type Organization, type ApiKey, type Session } from '@/lib/api';
+import { api, type Organization, type ApiKey, type Session, type Invitation } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -35,6 +35,15 @@ export default function SettingsPage() {
  const [inviteName, setInviteName] = useState('');
  const [inviteRole, setInviteRole] = useState('member');
  const [inviting, setInviting] = useState(false);
+ const [inviteError, setInviteError] = useState<string | null>(null);
+
+ // Pending invitations state
+ const [invitations, setInvitations] = useState<Invitation[]>([]);
+ const [invitationsLoading, setInvitationsLoading] = useState(false);
+ const [resendingId, setResendingId] = useState<string | null>(null);
+ const [revokingId, setRevokingId] = useState<string | null>(null);
+ const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
+ const [lastInviteLink, setLastInviteLink] = useState<{ email: string; url: string } | null>(null);
 
  // Billing state
  const [billing, setBilling] = useState<any>(null);
@@ -79,6 +88,25 @@ export default function SettingsPage() {
  }
  }, []);
 
+ const fetchInvitations = useCallback(async () => {
+ setInvitationsLoading(true);
+ try {
+ const { data } = await api.invitations.list();
+ const liveStatuses = data.map((inv) => {
+ if (inv.status === 'pending' && new Date(inv.expiresAt).getTime() < Date.now()) {
+ return { ...inv, status: 'expired' as const };
+ }
+ return inv;
+ });
+ setInvitations(liveStatuses);
+ } catch (err) {
+ console.error(err);
+ toast.error('Failed to load invitations');
+ } finally {
+ setInvitationsLoading(false);
+ }
+ }, []);
+
  const fetchBilling = useCallback(async () => {
  setBillingLoading(true);
  try {
@@ -101,11 +129,10 @@ export default function SettingsPage() {
  const user = profileRes.data;
  const sessions = sessionsRes.map(s => ({
  id: s.id,
- location: 'Unknown', // Would need geoIP in real impl
+ location: 'Unknown',
  device: 'Current session',
  current: true,
  }));
- // The current session should be first; others marked as not current
  if (sessions.length > 0) {
  sessions[0].current = true;
  sessions.slice(1).forEach(s => s.current = false);
@@ -113,9 +140,9 @@ export default function SettingsPage() {
  setProfile({
  name: user.name,
  email: user.email,
- timezone: 'utc', // Profile doesn't have timezone yet
+ timezone: 'utc',
  lastPasswordChange: user.updatedAt?.split('T')[0] || '2025-01-10',
- twoFactorEnabled: false, // Would need 2FA table
+ twoFactorEnabled: false,
  activeSessions: sessions,
  });
  } catch (err) {
@@ -135,8 +162,11 @@ export default function SettingsPage() {
  }, [pathname, fetchOrgAndKeys]);
 
  useEffect(() => {
- if (pathname.startsWith('/settings/team')) fetchTeam();
- }, [pathname, fetchTeam]);
+ if (pathname.startsWith('/settings/team')) {
+ fetchTeam();
+ fetchInvitations();
+ }
+ }, [pathname, fetchTeam, fetchInvitations]);
 
  useEffect(() => {
  if (pathname.startsWith('/settings/billing')) fetchBilling();
@@ -177,7 +207,6 @@ export default function SettingsPage() {
  try {
  const key = await api.apiKeys.create({ name: newKeyName.trim() });
  toast.success('API key created! Save it now - you won\'t see it again.');
- // Show the raw key in a toast/alert since it's only returned once
  alert(`Your new API key:\n\n${key.key}\n\nSave this securely.`);
  setNewKeyName('');
  setNewKeyDialogOpen(false);
@@ -194,31 +223,100 @@ export default function SettingsPage() {
  const handleSaveOrg = async () => {
  if (!org) return;
  try {
- // await api.organizations.update(org.id, { name: org.name, slug: org.slug });
  toast.success('Organization saved (backend update endpoint needed)');
  } catch (err) {
  toast.error('Failed to save organization');
  }
  };
 
- const handleInviteMember = async () => {
- if (!inviteEmail.trim()) return;
+ const isValidEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
+ const handleInviteMember = async (e?: React.FormEvent) => {
+ if (e) e.preventDefault();
+ const email = inviteEmail.trim();
+ if (!email) {
+ setInviteError('Email is required');
+ return;
+ }
+ if (!isValidEmail(email)) {
+ setInviteError('Enter a valid email address');
+ return;
+ }
+ setInviteError(null);
  setInviting(true);
  try {
- await api.team.invite({ email: inviteEmail.trim(), name: inviteName.trim() || undefined, role: inviteRole });
- toast.success('Invitation sent');
+ const { data } = await api.invitations.create({ email, name: inviteName.trim() || undefined, role: inviteRole });
+ toast.success('Invitation sent to ' + email);
  setInviteDialogOpen(false);
  setInviteEmail('');
  setInviteName('');
  setInviteRole('member');
- fetchTeam();
- } catch (err) {
- console.error(err);
- toast.error('Failed to send invitation');
+ const link = data.inviteLink || data.acceptUrl;
+ if (link) setLastInviteLink({ email, url: link });
+ fetchInvitations();
+ } catch (err: any) {
+ const msg = err?.message || 'Failed to send invitation';
+ setInviteError(msg);
+ toast.error(msg);
  } finally {
  setInviting(false);
  }
  };
+
+ const handleResendInvitation = async (inv: Invitation) => {
+ setResendingId(inv.id);
+ try {
+ const { data } = await api.invitations.resend(inv.id);
+ toast.success('Invitation resent to ' + inv.email);
+ if (data.inviteLink) setLastInviteLink({ email: inv.email, url: data.inviteLink });
+ await fetchInvitations();
+ } catch (err: any) {
+ toast.error(err?.message || 'Failed to resend invitation');
+ } finally {
+ setResendingId(null);
+ }
+ };
+
+ const handleRevokeInvitation = async (inv: Invitation) => {
+ if (!window.confirm('Revoke the invitation to ' + inv.email + '?')) return;
+ setRevokingId(inv.id);
+ const snapshot = invitations;
+ setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
+ try {
+ await api.invitations.revoke(inv.id);
+ toast.success('Invitation revoked');
+ } catch (err: any) {
+ setInvitations(snapshot);
+ toast.error(err?.message || 'Failed to revoke invitation');
+ } finally {
+ setRevokingId(null);
+ }
+ };
+
+ const handleCopyInviteLink = async (inv: Invitation) => {
+ const url = lastInviteLink && lastInviteLink.email === inv.email ? lastInviteLink.url : '';
+ const text = url || (window.location.origin + '/invite/' + encodeURIComponent(inv.email));
+ try {
+ await navigator.clipboard.writeText(text);
+ setCopiedInviteId(inv.id);
+ window.setTimeout(() => setCopiedInviteId(null), 1800);
+ toast.success(url ? 'Invite link copied to clipboard' : 'Copied. The full link is only available right after sending.');
+ } catch {
+ toast.error('Could not access clipboard');
+ }
+ };
+
+ function expiresInLabel(expiresAt: string): { label: string; expired: boolean } {
+ const target = new Date(expiresAt).getTime();
+ const diffMs = target - Date.now();
+ if (diffMs <= 0) return { label: 'expired', expired: true };
+ const days = Math.floor(diffMs / 86400000);
+ const hours = Math.floor(diffMs / 3600000) % 24;
+ if (days >= 1) return { label: 'in ' + days + ' day' + (days === 1 ? '' : 's'), expired: false };
+ if (hours >= 1) return { label: 'in ' + hours + ' hour' + (hours === 1 ? '' : 's'), expired: false };
+ const mins = Math.max(1, Math.floor(diffMs / 60000));
+ return { label: 'in ' + mins + ' minute' + (mins === 1 ? '' : 's'), expired: false };
+ }
 
  const handleRemoveMember = async (member: any) => {
  if (!window.confirm(`Remove ${member.name || member.email} from the team?`)) return;
@@ -301,12 +399,10 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  toast.success('Password changed successfully');
  e.currentTarget.reset();
  } catch (err) {
- console.error(err);
  toast.error('Failed to change password');
  }
  };
 
- // Determine which section to show based on pathname
  const isOrganizationPage = pathname === '/settings';
  const isApiKeysPage = pathname.startsWith('/settings/api-keys');
  const isTeamPage = pathname.startsWith('/settings/team');
@@ -315,14 +411,12 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 
  return (
  <div className="p-6 md:p-8">
- {/* Header */}
  <div className="mb-6">
  <h1 className="text-2xl font-bold text-ink">Settings</h1>
  <p className="mt-0.5 text-sm text-muted">Manage your organization and API access</p>
- </div>
+</div>
 
  <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
- {/* Sidebar Navigation */}
  <div className="lg:col-span-1">
  <nav className="rounded-xl border border-border bg-white p-2 shadow-sm">
  {navItems.map((item, i) => {
@@ -338,105 +432,64 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <motion.a
  key={item.label}
  href={item.href}
- onClick={(e) => {
- e.preventDefault();
- router(item.href);
- }}
+ onClick={(e) => { e.preventDefault(); router(item.href); }}
  initial={{ opacity: 0, x: -8 }}
  animate={{ opacity: 1, x: 0 }}
  transition={{ delay: i * 0.03 }}
- className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
- isActive
- ? 'bg-accent text-white shadow-sm'
- : 'text-muted hover:bg-surface-2 hover:text-ink'
- }`}
+ className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${isActive ? 'bg-accent text-white shadow-sm' : 'text-muted hover:bg-surface-2 hover:text-ink'}`}
  >
  <Icon className="h-4 w-4" />
  {item.label}
- </motion.a>
+</motion.a>
  );
  })}
- </nav>
- </div>
+</nav>
+</div>
 
- {/* Main Content */}
  <div className="space-y-5 lg:col-span-3">
  {isOrganizationPage && (
- <>
- {/* Organization */}
- <motion.div
- initial={{ opacity: 0, y: 12 }}
- animate={{ opacity: 1, y: 0 }}
- className="rounded-xl border border-border bg-white p-6 shadow-sm"
- >
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
- <Building2 className="h-5 w-5 text-accent" />
- Organization
- </h2>
+ <Building2 className="h-5 w-5 text-accent" /> Organization
+</h2>
  {loading ? (
- <p className="mt-5 text-sm text-muted">Loading...</p>
+ <p className="mt-5 text-sm text-muted">Loading</p>
  ) : (
  <div className="mt-5 space-y-4">
  <div>
- <Label className="block text-sm font-medium text-ink mb-1.5">
- Organization Name
- </Label>
- <Input
- value={org?.name || ''}
- onChange={e => setOrg(o => o ? { ...o, name: e.target.value } : null)}
- className="w-full max-w-md"
- />
- </div>
+ <Label className="mb-1.5 block text-sm font-medium text-ink">Organization Name</Label>
+ <Input value={org?.name || ''} onChange={e => setOrg(o => o ? { ...o, name: e.target.value } : null)} className="w-full max-w-md" />
+</div>
  <div>
- <Label className="block text-sm font-medium text-ink mb-1.5">
- Organization Slug
- </Label>
- <Input
- value={org?.slug || ''}
- onChange={e => setOrg(o => o ? { ...o, slug: e.target.value } : null)}
- className="w-full max-w-md"
- />
- <p className="mt-1 text-xs text-muted">
- Used in API requests: api.axiom.dev/v1/orgs/{org?.slug || 'your-org'}
- </p>
- </div>
- </div>
+ <Label className="mb-1.5 block text-sm font-medium text-ink">Organization Slug</Label>
+ <Input value={org?.slug || ''} onChange={e => setOrg(o => o ? { ...o, slug: e.target.value } : null)} className="w-full max-w-md" />
+ <p className="mt-1 text-xs text-muted">Used in API requests: api.axiom.dev/v1/orgs/{org?.slug || 'your-org'}</p>
+</div>
+</div>
  )}
- <div className="mt-6 pt-4 border-t border-border">
+ <div className="mt-6 border-t border-border pt-4">
  <Button onClick={handleSaveOrg} className="px-4 py-2" disabled={loading}>
  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
- </Button>
- </div>
- </motion.div>
- </>
+</Button>
+</div>
+</motion.div>
  )}
 
  {isApiKeysPage && (
- <>
- {/* API Keys */}
- <motion.div
- initial={{ opacity: 0, y: 12 }}
- animate={{ opacity: 1, y: 0 }}
- transition={{ delay: 0.05 }}
- className="rounded-xl border border-border bg-white p-6 shadow-sm"
- >
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
  <div className="flex items-center justify-between">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
- <Key className="h-5 w-5 text-accent" />
- API Keys
- </h2>
- <Button variant="outline" onClick={() => setNewKeyDialogOpen(true)} className="gap-2">
- <Plus className="h-4 w-4" />
- New Key
- </Button>
- </div>
+ <Key className="h-5 w-5 text-accent" /> API Keys
+</h2>
+ <Button variant="outline" onClick={() => setNewKeyDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" />New Key</Button>
+</div>
  {loading ? (
- <p className="mt-5 text-sm text-muted">Loading...</p>
+ <p className="mt-5 text-sm text-muted">Loading</p>
  ) : apiKeys.length === 0 ? (
  <div className="mt-5 flex flex-col items-center justify-center py-8 text-sm text-muted">
- <Key className="h-8 w-8 mb-2 opacity-30" />
+ <Key className="mb-2 h-8 w-8 opacity-30" />
  <p>No API keys yet</p>
- </div>
+</div>
  ) : (
  <div className="mt-5 space-y-3">
  {apiKeys.map((key, i) => (
@@ -444,339 +497,314 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <div>
  <p className="text-sm font-medium text-ink">{key.name}</p>
  <div className="mt-0.5 flex items-center gap-3 text-xs text-muted">
- <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono">{key.prefix}...</code>
+ <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono">{key.prefix}</code>
  <span>Created: {new Date(key.createdAt).toLocaleDateString()}</span>
  {key.lastUsedAt && <span>Last used: {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
  {key.revokedAt && <span className="text-red-500">Revoked</span>}
- </div>
- </div>
+</div>
+</div>
  <div className="flex items-center gap-2">
- <Button
- variant="ghost"
- size="sm"
- onClick={() => handleCopy(`${key.prefix}...`, i)}
- className="gap-1"
- >
- {copiedIndex === i ? (
- <>
- <Check className="h-3.5 w-3.5 inline mr-1" />
- Copied
- </>
- ) : (
- <>
- <Copy className="h-3.5 w-3.5 inline mr-1" />
- Copy
- </>
- )}
- </Button>
+ <Button variant="ghost" size="sm" onClick={() => handleCopy(`${key.prefix}...`, i)} className="gap-1">
+ {copiedIndex === i ? (<><Check className="mr-1 inline h-3.5 w-3.5" />Copied</>) : (<><Copy className="mr-1 inline h-3.5 w-3.5" />Copy</>)}
+</Button>
  {!key.revokedAt && (
- <Button
- variant="ghost"
- size="sm"
- onClick={() => handleRevoke(key.id)}
- className="gap-1 text-red-600 hover:bg-red-50"
- >
- <Trash2 className="h-3.5 w-3.5" />
- Revoke
- </Button>
+ <Button variant="ghost" size="sm" onClick={() => handleRevoke(key.id)} className="gap-1 text-red-600 hover:bg-red-50">
+ <Trash2 className="h-3.5 w-3.5" />Revoke
+</Button>
  )}
- </div>
- </div>
+</div>
+</div>
  ))}
- </div>
+</div>
  )}
- </motion.div>
-
- {/* New API Key Dialog */}
  <Dialog open={newKeyDialogOpen} onOpenChange={setNewKeyDialogOpen}>
  <DialogContent className="sm:max-w-[500px]">
  <DialogHeader>
  <DialogTitle>Create API Key</DialogTitle>
- <DialogDescription>
- Give your API key a descriptive name. The key will only be shown once.
- </DialogDescription>
- </DialogHeader>
- <form onSubmit={handleCreateApiKey} className="p-6 space-y-4">
+ <DialogDescription>Give your API key a descriptive name. The key will only be shown once</DialogDescription>
+</DialogHeader>
+ <form onSubmit={handleCreateApiKey} className="space-y-4 p-6">
  <div className="space-y-2">
  <Label htmlFor="key-name">Key Name</Label>
- <Input
- id="key-name"
- value={newKeyName}
- onChange={e => setNewKeyName(e.target.value)}
- placeholder="e.g., Production Server, CI/CD Pipeline"
- autoFocus
- />
- </div>
+ <Input id="key-name" value={newKeyName} onChange={e => setNewKeyName(e.target.value)} placeholder="e.g., Production Server, CI/CD Pipeline" autoFocus />
+</div>
  <DialogFooter className="flex justify-end space-x-3">
- <Button type="button" variant="outline" onClick={() => setNewKeyDialogOpen(false)} disabled={creatingKey}>
- Cancel
- </Button>
+ <Button type="button" variant="outline" onClick={() => setNewKeyDialogOpen(false)} disabled={creatingKey}>Cancel</Button>
  <Button type="submit" disabled={creatingKey || !newKeyName.trim()}>
  {creatingKey ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Key'}
- </Button>
- </DialogFooter>
- </form>
- </DialogContent>
- </Dialog>
- </>
+</Button>
+</DialogFooter>
+</form>
+</DialogContent>
+</Dialog>
+</motion.div>
  )}
 
  {isTeamPage && (
- <>
- {/* Team Members */}
- <motion.div
- initial={{ opacity: 0, y: 12 }}
- animate={{ opacity: 1, y: 0 }}
- className="rounded-xl border border-border bg-white p-6 shadow-sm"
- >
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
  <div className="flex items-center justify-between">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
- <UsersIcon className="h-5 w-5 text-accent" />
- Team Members
- </h2>
- <Button onClick={() => setInviteDialogOpen(true)} className="gap-2">
- <Plus className="h-4 w-4" />
- Invite Member
- </Button>
- </div>
- <p className="mt-4 text-sm text-muted">
- Manage team members and their roles within your organization
- </p>
- <div className="mt-6">
- {teamLoading ? (
- <div className="flex items-center justify-center py-8">
- <Loader2 className="h-8 w-8 animate-spin text-accent" />
- </div>
- ) : (
- <div className="space-y-4">
- {teamMembers.map((member, i) => (
- <div key={member.id} className="flex items-center justify-between p-4 rounded-lg border border-surface-2">
- <div className="flex items-center gap-3">
- <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
- <LucideUser className="h-5 w-5 text-blue-600" />
- </div>
+ <UsersIcon className="h-5 w-5 text-accent" /> Team Members
+</h2>
+ <Button onClick={() => setInviteDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" />Invite Member</Button>
+</div>
+ <p className="mt-4 text-sm text-muted">Manage team members and their roles within your organization</p>
+ <div className="mt-6 space-y-6">
  <div>
- <p className="font-medium text-ink">{member.name || member.email}</p>
+ <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Active members ({teamMembers.length})</h3>
+ {teamLoading ? (
+ <div className="flex items-center justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+ ) : teamMembers.length === 0 ? (
+ <div className="rounded-lg border border-dashed border-border bg-surface-2/30 py-6 text-center text-sm text-muted">
+ <LucideUser className="mx-auto mb-1 h-6 w-6 opacity-40" />No members yet
+</div>
+ ) : (
+ <div className="space-y-2">
+ {teamMembers.map((member) => (
+ <div key={member.id} className="flex items-center justify-between rounded-lg border border-surface-2 p-3 transition-colors hover:bg-surface-2/40">
+ <div className="flex items-center gap-3">
+ <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
+ <LucideUser className="h-4 w-4 text-blue-600" />
+</div>
+ <div>
+ <p className="text-sm font-medium text-ink">{member.name || member.email}</p>
  <p className="text-xs text-muted">{member.email}</p>
- </div>
- </div>
- <div className="flex items-center gap-2 text-xs">
- <select
- value={member.role?.toLowerCase?.() || 'member'}
- onChange={e => handleUpdateMemberRole(member, e.target.value)}
- className="rounded border border-border bg-white px-2 py-1 text-xs"
- >
+</div>
+</div>
+ <div className="flex items-center gap-2">
+ <select aria-label="Role" value={member.role?.toLowerCase?.() || 'member'} onChange={e => handleUpdateMemberRole(member, e.target.value)} className="rounded border border-border bg-white px-2 py-1 text-xs">
  <option value="owner">Owner</option>
  <option value="admin">Admin</option>
  <option value="member">Member</option>
- </select>
- <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member)} className="text-red-600 hover:bg-red-50">
+</select>
+ <Button aria-label="Remove member" variant="ghost" size="sm" onClick={() => handleRemoveMember(member)} className="h-8 w-8 p-0 text-red-600 hover:bg-red-50">
  <Trash2 className="h-3.5 w-3.5" />
- Remove
- </Button>
- </div>
- </div>
+</Button>
+</div>
+</div>
  ))}
- </div>
+</div>
  )}
- </div>
- </motion.div>
+</div>
 
- {/* Invite Member Dialog */}
- <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+ <div>
+ <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Pending invitations ({invitations.length})</h3>
+ {invitationsLoading ? (
+ <div className="flex items-center justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+ ) : invitations.length === 0 ? (
+ <div className="rounded-lg border border-dashed border-border bg-surface-2/30 py-6 text-center text-sm text-muted">
+ <Mail className="mx-auto mb-1 h-6 w-6 opacity-40" />No pending invitations
+</div>
+ ) : (
+ <div className="space-y-2">
+ {invitations.map((inv) => {
+ const exp = expiresInLabel(inv.expiresAt);
+ const expired = inv.status !== 'pending' || exp.expired;
+ const rowColor = expired ? 'border-surface-2 bg-surface-2/20' : 'border-surface-2 bg-white';
+ const statusColor = expired ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700';
+ return (
+ <div key={inv.id} className={rowColor + ' flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between'}>
+ <div className="flex min-w-0 items-start gap-3">
+ <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
+ <Mail className="h-4 w-4 text-amber-600" />
+</div>
+ <div className="min-w-0 flex-1">
+ <p className="truncate text-sm font-medium text-ink">{inv.email}</p>
+ <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+ <span className="inline-flex items-center rounded-full bg-surface-2 px-2 py-0.5 font-medium capitalize text-ink/80">{inv.role}</span>
+ <span>Invited by {inv.invitedBy?.name || inv.invitedBy?.email || 'unknown'}</span>
+ <span>on {new Date(inv.createdAt).toLocaleDateString()}</span>
+ <span>expires {exp.label}</span>
+</div>
+</div>
+</div>
+ <div className="flex shrink-0 items-center gap-2">
+ <span className={statusColor + ' inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium'}>
+ {expired ? 'expired' : inv.status}
+</span>
+ {!expired && (
+ <>
+ <Button aria-label={'Copy invite link for ' + inv.email} variant="ghost" size="sm" onClick={() => handleCopyInviteLink(inv)} className="h-8 gap-1 px-2 text-xs">
+ {copiedInviteId === inv.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+ {copiedInviteId === inv.id ? 'Copied' : 'Copy'}
+</Button>
+ <Button aria-label={'Resend invitation to ' + inv.email} variant="ghost" size="sm" onClick={() => handleResendInvitation(inv)} disabled={resendingId === inv.id} className="h-8 gap-1 px-2 text-xs">
+ {resendingId === inv.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+ Resend
+</Button>
+ <Button aria-label={'Revoke invitation to ' + inv.email} variant="ghost" size="sm" onClick={() => handleRevokeInvitation(inv)} disabled={revokingId === inv.id} className="h-8 w-8 p-0 text-red-600 hover:bg-red-50">
+ {revokingId === inv.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+</Button>
+ </>
+ )}
+</div>
+</div>
+ );
+ })}
+</div>
+ )}
+</div>
+</div>
+
+ <Dialog open={inviteDialogOpen} onOpenChange={(open) => { if (!inviting) setInviteDialogOpen(open); }}>
  <DialogContent className="sm:max-w-[500px]">
  <DialogHeader>
  <DialogTitle>Invite Team Member</DialogTitle>
- <DialogDescription>
- Enter the email and role for the new team member.
- </DialogDescription>
- </DialogHeader>
- <form onSubmit={handleInviteMember} className="p-6 space-y-4">
+ <DialogDescription>Enter the email and role for the new team member</DialogDescription>
+</DialogHeader>
+ <form onSubmit={handleInviteMember} className="space-y-4 p-6" noValidate>
  <div className="space-y-2">
  <Label htmlFor="invite-email">Email</Label>
- <Input id="invite-email" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="colleague@example.com" required />
- </div>
+ <Input id="invite-email" type="email" value={inviteEmail} onChange={e => { setInviteEmail(e.target.value); setInviteError(null); }} placeholder="colleague@example.com" required aria-invalid={!!inviteError || undefined} aria-describedby={inviteError ? 'invite-email-error' : undefined} />
+ {inviteError && <p id="invite-email-error" className="text-xs text-red-600">{inviteError}</p>}
+</div>
  <div className="space-y-2">
  <Label htmlFor="invite-name">Name (optional)</Label>
  <Input id="invite-name" value={inviteName} onChange={e => setInviteName(e.target.value)} placeholder="John Doe" />
- </div>
+</div>
  <div className="space-y-2">
  <Label htmlFor="invite-role">Role</Label>
- <Select value={inviteRole} onValueChange={e => setInviteRole(e)}>
- <SelectTrigger id="invite-role">
- <SelectValue placeholder="Select role" />
- </SelectTrigger>
+ <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as string)}>
+ <SelectTrigger id="invite-role"><SelectValue placeholder="Select role" /></SelectTrigger>
  <SelectContent>
  <SelectItem value="member">Member</SelectItem>
  <SelectItem value="admin">Admin</SelectItem>
- </SelectContent>
- </Select>
- </div>
+</SelectContent>
+</Select>
+</div>
  <DialogFooter className="flex justify-end space-x-3">
- <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)} disabled={inviting}>
- Cancel
- </Button>
- <Button type="submit" disabled={inviting || !inviteEmail.trim()}>
- {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Invitation'}
- </Button>
- </DialogFooter>
- </form>
- </DialogContent>
- </Dialog>
- </>
+ <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)} disabled={inviting}>Cancel</Button>
+ <Button type="submit" disabled={inviting || !isValidEmail(inviteEmail.trim())}>
+ {inviting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending</>) : 'Send Invitation'}
+</Button>
+</DialogFooter>
+</form>
+</DialogContent>
+</Dialog>
+</motion.div>
  )}
 
  {isBillingPage && (
- <>
- {/* Billing */}
- <motion.div
- initial={{ opacity: 0, y: 12 }}
- animate={{ opacity: 1, y: 0 }}
- className="rounded-xl border border-border bg-white p-6 shadow-sm"
- >
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
- <CreditCard className="h-5 w-5 text-accent" />
- Billing
- </h2>
+ <CreditCard className="h-5 w-5 text-accent" /> Billing
+</h2>
  {billingLoading ? (
- <p className="mt-5 text-sm text-muted">Loading...</p>
+ <p className="mt-5 text-sm text-muted">Loading</p>
  ) : billing ? (
  <div className="mt-5 space-y-4">
  <div className="rounded-lg border border-border bg-white p-4">
  <h3 className="font-medium text-ink">Current Plan</h3>
  <p className="mt-1 text-sm text-muted">Pro Plan — $29/month</p>
- <p className="mt-2 text-xs text-muted">
- Renews on {billing.current_period_end ? new Date(billing.current_period_end * 1000).toLocaleDateString() : 'N/A'}
- </p>
- </div>
+ <p className="mt-2 text-xs text-muted">Renews on {billing.current_period_end ? new Date(billing.current_period_end * 1000).toLocaleDateString() : 'N/A'}</p>
+</div>
  <div className="flex gap-2">
- <Button onClick={handleUpdatePayment} className="gap-2">
- <CreditCard className="h-4 w-4" />
- Manage Subscription
- </Button>
- </div>
- </div>
+ <Button onClick={handleUpdatePayment} className="gap-2"><CreditCard className="h-4 w-4" />Manage Subscription</Button>
+</div>
+</div>
  ) : (
  <div className="mt-5 space-y-4">
  <div className="rounded-lg border border-border bg-white p-4">
  <h3 className="font-medium text-ink">No active subscription</h3>
  <p className="mt-1 text-sm text-muted">Upgrade to Pro to unlock all features</p>
- </div>
+</div>
  <div className="flex gap-2">
- <Button onClick={handleUpgrade} className="gap-2">
- <Plus className="h-4 w-4" />
- Upgrade to Pro
- </Button>
- </div>
- </div>
+ <Button onClick={handleUpgrade} className="gap-2"><Plus className="h-4 w-4" />Upgrade to Pro</Button>
+</div>
+</div>
  )}
- </motion.div>
- </>
+</motion.div>
  )}
 
  {isProfilePage && (
- <>
- {/* Profile */}
- <motion.div
- initial={{ opacity: 0, y: 12 }}
- animate={{ opacity: 1, y: 0 }}
- className="rounded-xl border border-border bg-white p-6 shadow-sm"
- >
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
- <LucideUser className="h-5 w-5 text-accent" />
- Profile
- </h2>
+ <LucideUser className="h-5 w-5 text-accent" /> Profile
+</h2>
  {profileLoading ? (
- <p className="mt-5 text-sm text-muted">Loading...</p>
+ <p className="mt-5 text-sm text-muted">Loading</p>
  ) : profile ? (
  <div className="mt-5 space-y-6">
  <div className="space-y-1.5">
  <Label>Full Name</Label>
  <Input value={profile.name} onChange={e => setProfile((p: typeof profile) => ({ ...p, name: e.target.value }))} className="w-full max-w-md" />
- </div>
+</div>
  <div className="space-y-1.5">
  <Label>Email</Label>
  <Input value={profile.email} type="email" disabled className="w-full max-w-md bg-surface-2" />
- </div>
+</div>
  <div className="space-y-1.5">
  <Label>Timezone</Label>
  <Select value={profile.timezone} onValueChange={e => setProfile((p: typeof profile) => ({ ...p, timezone: e }))}>
- <SelectTrigger className="w-full max-w-md">
- <SelectValue placeholder="Select timezone" />
- </SelectTrigger>
+ <SelectTrigger className="w-full max-w-md"><SelectValue placeholder="Select timezone" /></SelectTrigger>
  <SelectContent>
  <SelectItem value="utc">UTC</SelectItem>
- <SelectItem value="america/new_york">Eastern Time (US & Canada)</SelectItem>
- <SelectItem value="america/los_angeles">Pacific Time (US & Canada)</SelectItem>
+ <SelectItem value="america/new_york">Eastern Time (US & Canada</SelectItem>
+ <SelectItem value="america/los_angeles">Pacific Time (US & Canada</SelectItem>
  <SelectItem value="europe/london">London</SelectItem>
  <SelectItem value="europe/paris">Paris</SelectItem>
  <SelectItem value="asia/tokyo">Tokyo</SelectItem>
- </SelectContent>
- </Select>
- </div>
+</SelectContent>
+</Select>
+</div>
  <div className="space-y-1.5">
  <Label>Last Password Change</Label>
  <p className="text-sm text-muted">{profile.lastPasswordChange}</p>
- </div>
+</div>
  <div className="space-y-1.5">
  <Label>Two-Factor Authentication</Label>
  <div className="flex items-center gap-2">
  <input type="checkbox" defaultChecked={profile.twoFactorEnabled} className="h-4 w-4" disabled />
  <span className="text-sm text-muted">{profile.twoFactorEnabled ? 'Enabled' : 'Disabled'}</span>
- </div>
- </div>
+</div>
+</div>
  <div className="space-y-1.5">
  <Label>Active Sessions</Label>
  <div className="space-y-2">
  {profile.activeSessions.map((session: any, i: number) => (
- <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-surface-2">
+ <div key={i} className="flex items-center justify-between rounded-lg border border-surface-2 p-3">
  <div className="flex items-center gap-3">
  <div className={`h-2.5 w-2.5 rounded-full ${session.current ? 'bg-emerald-500' : 'bg-gray-400'}`} />
  <div>
  <p className="text-sm font-medium text-ink">{session.location}</p>
  <p className="text-xs text-muted">{session.device} {session.current && '(Current)'}</p>
- </div>
- </div>
+</div>
+</div>
  {!session.current && (
  <Button variant="ghost" size="sm" onClick={() => handleRevokeSession(session.id)} className="text-red-600 hover:bg-red-50">
- <X className="h-3.5 w-3.5" />
- Revoke
- </Button>
+ <X className="h-3.5 w-3.5" />Revoke
+</Button>
  )}
- </div>
+</div>
  ))}
- </div>
- </div>
- <div className="pt-4 border-t border-border">
- <h4 className="text-sm font-medium text-ink mb-3">Change Password</h4>
+</div>
+</div>
+ <div className="border-t border-border pt-4">
+ <h4 className="mb-3 text-sm font-medium text-ink">Change Password</h4>
  <form onSubmit={handleChangePassword} className="space-y-3">
  <div className="space-y-1.5">
  <Label htmlFor="current-password">Current Password</Label>
  <Input id="current-password" type="password" name="currentPassword" required className="w-full max-w-md" />
- </div>
+</div>
  <div className="space-y-1.5">
  <Label htmlFor="new-password">New Password</Label>
  <Input id="new-password" type="password" name="newPassword" minLength={8} required className="w-full max-w-md" />
- </div>
+</div>
  <div className="space-y-1.5">
  <Label htmlFor="confirm-password">Confirm New Password</Label>
  <Input id="confirm-password" type="password" name="confirmPassword" required className="w-full max-w-md" />
- </div>
- <Button type="submit" className="gap-2">
- <Lock className="h-4 w-4" />
- Change Password
- </Button>
- </form>
- </div>
- </div>
+</div>
+ <Button type="submit" className="gap-2"><Lock className="h-4 w-4" />Change Password</Button>
+</form>
+</div>
+</div>
  ) : (
  <p className="mt-5 text-sm text-muted">No profile data available</p>
  )}
- </motion.div>
- </>
+</motion.div>
  )}
- </div>
- </div>
- </div>
-);
+</div>
+</div>
+</div>
+ );
 }

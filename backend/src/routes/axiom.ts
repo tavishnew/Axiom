@@ -178,7 +178,7 @@ async function createSession(userId: string, res: Response) {
   res.cookie("session_token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     expires: expiresAt,
   });
   return token;
@@ -992,20 +992,7 @@ router.get("/team", requireAuth, async (req: Request, res: Response) => {
   return res.json(members);
 });
 
-router.post("/team/invite", requireAuth, async (req: Request, res: Response) => {
-  try {
-    const { email, name, role } = req.body;
-    if (!email) return res.status(400).json({ error: { message: "Email is required" } });
-
-    const parsed = insertInvitationSchema.parse({ email, name, role: role || "member", organizationId: req.user!.organizationId, invitedById: req.user!.id });
-    const token = randomUUID();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const [invite] = await db.insert(invitationsTable).values({ ...parsed, token, expiresAt }).returning();
-    return res.status(201).json(invite);
-  } catch (err: any) {
-    return res.status(400).json({ error: { message: err.message || "Invalid request" } });
-  }
-});
+// Team invitations now live under /api/invitations (see routes/invitations.ts).
 
 router.patch("/team/:id", requireAuth, async (req: Request, res: Response) => {
   try {

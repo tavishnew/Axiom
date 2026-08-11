@@ -78,11 +78,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   const [, navigate] = useLocation();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
-      </div>
-    );
+    return <SessionSpinner />;
   }
 
   if (!isAuthenticated) {
@@ -91,4 +87,15 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   return <>{children}</>;
+}
+
+function SessionSpinner() {
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center bg-bg" data-testid="session-spinner">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-surface-2 border-t-accent" />
+        <p className="text-sm text-muted">Checking session…</p>
+      </div>
+    </div>
+  );
 }

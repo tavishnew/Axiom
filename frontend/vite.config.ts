@@ -70,12 +70,12 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8787',
         changeOrigin: true,
         secure: false,
       },
       '/v1': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8787',
         changeOrigin: true,
         secure: false,
       }

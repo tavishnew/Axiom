@@ -1,0 +1,12 @@
+node_modules
+dist
+*.log
+*.err
+*.pid
+*.out
+*.bak
+*.db
+.env
+.env.local
+*.tsbuildinfo
+.DS_Store

@@ -1,14 +1,19 @@
 {
-    "scripts": {
-        "dev": "concurrently \"pnpm -F @workspace/frontend dev\" \"pnpm -F @workspace/backend dev\"",
-        "build": "pnpm -r run build",
-        "start": "pnpm -F @workspace/backend start",
-        "typecheck": "pnpm -r run typecheck",
-        "lint": "pnpm -r run lint"
-    },
-    "devDependencies": {
-        "concurrently": "^10.0.4",
-        "cross-env": "^7.0.3",
-        "typescript": "~5.9.3"
-    }
+  "scripts": {
+    "dev": "concurrently \"pnpm -F @workspace/frontend dev\" \"pnpm -F @workspace/backend dev\"",
+    "build": "pnpm -r run build",
+    "start": "pnpm -F @workspace/backend start",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "pnpm -r run lint",
+    "db:push": "pnpm -F @workspace/db push",
+    "db:push-force": "pnpm -F @workspace/db push-force",
+    "db:studio": "pnpm -F @workspace/db studio",
+    "deploy:vercel": "pnpm run build && vercel --prod",
+    "deploy:render": "git push render main"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.4",
+    "cross-env": "^7.0.3",
+    "typescript": "~5.9.3"
+  }
 }

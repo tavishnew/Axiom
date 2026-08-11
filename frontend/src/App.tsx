@@ -18,6 +18,7 @@ import ResourcesPage from './app/resources/page';
 import DecisionsPage from './app/decisions/page';
 import TestConsolePage from './app/test/page';
 import SettingsPage from './app/settings/page';
+import InvitePage from './app/invite/[token]/page';
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ function Router() {
         <Route path="/landing" component={LandingPage} />
         <Route path="/auth/sign-in" component={SignInPage} />
         <Route path="/auth/sign-up" component={SignUpPage} />
+        <Route path="/invite/:token" component={InvitePage} />
         <Route path="/dashboard" component={() => <ProtectedDashboardRoute component={DashboardPage} />} />
         <Route path="/policies" component={() => <ProtectedDashboardRoute component={PoliciesPage} />} />
         <Route path="/entities" component={() => <ProtectedDashboardRoute component={EntitiesPage} />} />

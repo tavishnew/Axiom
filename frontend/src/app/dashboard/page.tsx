@@ -130,7 +130,7 @@ export default function DashboardPage() {
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Button
               variant="outline"
-              className="h-auto py-4 text-left justify-start gap-3"
+              className="group h-auto py-4 text-left justify-start gap-3"
               onClick={() => window.location.href = '/policies'}
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
@@ -144,7 +144,7 @@ export default function DashboardPage() {
             </Button>
             <Button
               variant="outline"
-              className="h-auto py-4 text-left justify-start gap-3"
+              className="group h-auto py-4 text-left justify-start gap-3"
               onClick={() => window.location.href = '/entities'}
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
@@ -158,7 +158,7 @@ export default function DashboardPage() {
             </Button>
             <Button
               variant="outline"
-              className="h-auto py-4 text-left justify-start gap-3"
+              className="group h-auto py-4 text-left justify-start gap-3"
               onClick={() => window.location.href = '/resources'}
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
@@ -172,7 +172,7 @@ export default function DashboardPage() {
             </Button>
             <Button
               variant="outline"
-              className="h-auto py-4 text-left justify-start gap-3"
+              className="group h-auto py-4 text-left justify-start gap-3"
               onClick={() => window.location.href = '/test'}
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50">

@@ -290,11 +290,9 @@ export const api = {
  },
 
  // Organizations
- organizations: {
- list: () => request<Organization[]>('/organizations'),
- create: (data: Partial<Organization>) =>
- request<Organization>('/organizations', { method: 'POST', body: JSON.stringify(data) }),
- },
+  organizations: {
+  list: () => request<Organization[]>('/organizations'),
+  },
 
  // Team
  team: {

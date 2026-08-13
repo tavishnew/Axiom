@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Plus, Search, FileText, Database, Server as ServerIcon, CreditCard, X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { api, type Resource, type PaginatedResponse } from '@/lib/api';
 import { ResourceForm } from '@/components/ResourceForm';
+import { useConfirm } from '@/components/ConfirmProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,13 +13,14 @@ import { TableSkeleton, ResourceTableSkeleton } from '@/components/ui/table-skel
 import { toast } from 'sonner';
 
 const resourceIcons: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
-  document: { icon: FileText, color: 'text-blue-500', bg: 'bg-blue-50' },
-  database: { icon: Database, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-  api: { icon: ServerIcon, color: 'text-violet-500', bg: 'bg-violet-50' },
-  billing: { icon: CreditCard, color: 'text-amber-500', bg: 'bg-amber-50' },
+  document: { icon: FileText, color: 'text-accent', bg: 'bg-surface-2' },
+  database: { icon: Database, color: 'text-accent', bg: 'bg-surface-2' },
+  api: { icon: ServerIcon, color: 'text-accent', bg: 'bg-surface-2' },
+  billing: { icon: CreditCard, color: 'text-accent', bg: 'bg-surface-2' },
 };
 
 export default function ResourcesPage() {
+  const confirm = useConfirm();
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false });
@@ -76,7 +78,12 @@ export default function ResourcesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this resource?')) return;
+    if (!(await confirm({
+      title: 'Delete this resource?',
+      description: 'This permanently removes the resource and may affect policy decisions that reference it.',
+      confirmLabel: 'Delete resource',
+      cancelLabel: 'Keep resource',
+    }))) return;
     try {
       await api.resources.delete(id);
       toast.success('Resource deleted');
@@ -89,11 +96,11 @@ export default function ResourcesPage() {
   const hasFilters = search || typeFilter;
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
+    <div className="editorial-page animate-editorial-rise">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Resources</h1>
+          <h1 className="font-serif text-[clamp(2rem,4vw,3.1rem)] font-normal leading-[0.98] tracking-[-0.035em] text-ink">Resources</h1>
           <p className="mt-0.5 text-sm text-muted">Manage protected resources and access patterns</p>
         </div>
         <Button onClick={handleCreate} className="w-full gap-2 sm:w-auto">
@@ -113,7 +120,7 @@ export default function ResourcesPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
-              className="rounded-xl border border-border bg-white p-4 shadow-sm transition-all hover:shadow-md"
+              className="rounded-md border border-border bg-surface p-4 shadow-[0_12px_28px_-24px_rgba(29,26,24,0.42)] transition-all hover:border-accent/50"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -130,7 +137,7 @@ export default function ResourcesPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
+      <div className="mb-4 rounded-md border border-border bg-surface p-4 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
@@ -167,11 +174,16 @@ export default function ResourcesPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+      <div className="overflow-hidden rounded-md border border-border bg-surface shadow-[0_14px_28px_-24px_rgba(29,26,24,0.4)]">
         {loading ? (
           <ResourceTableSkeleton />
         ) : resources.length === 0 ? (
-          <ResourceTableSkeleton />
+          <div className="flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-accent"><FileText className="h-5 w-5" /></div>
+            <p className="font-serif text-xl text-ink">{hasFilters ? 'No matching resources' : 'No resources yet'}</p>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-muted">{hasFilters ? 'Change or clear your filters to widen the result set.' : 'Add the first protected resource to begin modeling access decisions.'}</p>
+            {!hasFilters && <Button onClick={handleCreate} className="mt-5 gap-2"><Plus className="h-4 w-4" />Add resource</Button>}
+          </div>
         ) : (
         <>
           <div className="overflow-x-auto">
@@ -187,7 +199,7 @@ export default function ResourcesPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {resources.map((r, i) => {
-                  const typeDef = resourceIcons[r.type] || { icon: FileText, color: 'text-gray-500', bg: 'bg-gray-50' };
+                  const typeDef = resourceIcons[r.type] || { icon: FileText, color: 'text-muted', bg: 'bg-surface-2' };
                   const Icon = typeDef.icon;
                   return (
                     <motion.tr

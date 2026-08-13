@@ -51,7 +51,7 @@ export default function SignInPage() {
         <div aria-hidden className="pointer-events-none hero-glow-1 absolute left-1/2 top-1/3 -z-10 h-[400px] w-[400px] -translate-x-1/2 rounded-full blur-3xl" />
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 1, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-sm"
@@ -59,49 +59,49 @@ export default function SignInPage() {
           {/* Logo */}
           <div className="mb-8 text-center">
             <a href="/" className="inline-flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-2 text-white shadow-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white shadow-sm">
                 <ShieldHalf className="h-5 w-5" />
               </div>
-              <span className="font-tight text-xl font-semibold tracking-tight text-ink">
+              <span className="font-serif text-2xl leading-none tracking-[-0.045em] text-ink">
                 Axiom<span className="text-accent">.</span>
               </span>
             </a>
           </div>
 
-          <div className="rounded-2xl border border-border bg-white p-8 shadow-sm">
-            <h1 className="text-xl font-semibold text-ink">Welcome back</h1>
+          <div className="auth-panel border border-line bg-paper-raised p-6 sm:p-8">
+            <h1 className="font-serif text-3xl font-normal leading-[0.98] tracking-[-0.04em] text-ink">Welcome back</h1>
             <p className="mt-1 text-sm text-muted">Sign in to your account</p>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">
+            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+              <div className="auth-field-group">
+                <label className="text-sm font-medium text-ink">
                   Email
                 </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                <div className="auth-field-wrap">
+                  <Mail className="auth-field-icon" aria-hidden />
                   <input
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="w-full pl-10"
+                    className="auth-field"
                     autoComplete="email"
                     required
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">
+              <div className="auth-field-group">
+                <label className="text-sm font-medium text-ink">
                   Password
                 </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                <div className="auth-field-wrap">
+                  <Lock className="auth-field-icon" aria-hidden />
                   <input
                     type="password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full pl-10"
+                    className="auth-field"
                     autoComplete="current-password"
                     required
                   />
@@ -109,7 +109,7 @@ export default function SignInPage() {
               </div>
 
               {error && (
-                <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 border border-red-200">
+                <div className="border-l-2 border-danger bg-danger-wash px-3 py-2 text-xs text-danger">
                   {error}
                 </div>
               )}
@@ -117,7 +117,7 @@ export default function SignInPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-accent/90 hover:shadow-md disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-accent py-2.5 text-sm font-medium text-white shadow-[0_8px_18px_-12px_rgba(47,96,74,0.34)] transition-all hover:bg-accent/90 hover:shadow-md disabled:opacity-50"
               >
                 {loading ? 'Signing in...' : 'Sign in'}
                 <ArrowRight className="h-4 w-4" />

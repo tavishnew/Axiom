@@ -10,7 +10,7 @@ export default function NotFound() {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="mx-4 max-w-md text-center"
       >
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/10 to-accent-2/10">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
           <ShieldOff className="h-8 w-8 text-accent" />
         </div>
         <h1 className="mb-2 font-serif text-5xl font-bold text-ink">

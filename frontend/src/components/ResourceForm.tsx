@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription as AlertDescription, AlertDialogFooter as AlertFooter, AlertDialogHeader as AlertHeader, AlertDialogTitle as AlertTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type Resource } from "@/lib/api";
@@ -31,6 +32,7 @@ export function ResourceForm({ open, onOpenChange, resource, onSuccess }: Resour
   );
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const isEdit = !!resource;
 
@@ -72,7 +74,6 @@ export function ResourceForm({ open, onOpenChange, resource, onSuccess }: Resour
 
   const handleDelete = async () => {
     if (!resource) return;
-    if (!window.confirm(`Delete resource "${resource.name}"?`)) return;
     setDeleting(true);
     try {
       await api.resources.delete(resource.id);
@@ -159,7 +160,7 @@ export function ResourceForm({ open, onOpenChange, resource, onSuccess }: Resour
             {isEdit && (
               <Button
                 variant="destructive"
-                onClick={handleDelete}
+                onClick={() => setDeleteConfirmOpen(true)}
                 disabled={deleting}
                 className="px-4 py-2"
               >
@@ -184,6 +185,18 @@ export function ResourceForm({ open, onOpenChange, resource, onSuccess }: Resour
             </Button>
           </div>
         </DialogFooter>
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertHeader>
+              <AlertTitle>Delete {resource?.name}?</AlertTitle>
+              <AlertDescription>This permanently removes the protected resource and may change the access decisions that depend on it.</AlertDescription>
+            </AlertHeader>
+            <AlertFooter>
+              <AlertDialogCancel disabled={deleting}>Keep resource</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete resource"}</AlertDialogAction>
+            </AlertFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );

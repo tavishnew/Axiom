@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
-import { ShieldHalf, ArrowRight, Mail, Lock, User, Loader2, UserRoundCheck } from 'lucide-react';
+import { ShieldHalf, ArrowRight, ChevronDown, Mail, Lock, User, Loader2, UserRoundCheck } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { api } from '@/lib/api';
 
@@ -103,45 +103,45 @@ export default function SignUpPage() {
         <div aria-hidden className="pointer-events-none hero-glow-1 absolute left-1/2 top-1/3 -z-10 h-[400px] w-[400px] -translate-x-1/2 rounded-full blur-3xl" />
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 1, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-sm"
         >
           <div className="mb-6 text-center sm:mb-8">
             <a href="/" className="inline-flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-2 text-white shadow-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white shadow-sm">
                 <ShieldHalf className="h-5 w-5" />
               </div>
-              <span className="font-tight text-xl font-semibold tracking-tight text-ink">
+              <span className="font-serif text-2xl leading-none tracking-[-0.045em] text-ink">
                 Axiom<span className="text-accent">.</span>
               </span>
             </a>
           </div>
 
-          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-8">
-            <h1 className="text-xl font-semibold text-ink">Create an account</h1>
+          <div className="auth-panel border border-line bg-paper-raised p-6 sm:p-8">
+            <h1 className="font-serif text-3xl font-normal leading-[0.98] tracking-[-0.04em] text-ink">Create an account</h1>
             <p className="mt-1 text-sm text-muted">
               {inviteWorkspace ? `Join ${inviteWorkspace} with your invitation.` : 'Create a secure authorization workspace'}
             </p>
 
             {inviteLoading && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-muted">
+              <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-muted">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Validating your invitation…
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink">Name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+              <div className="auth-field-group">
+                <label className="text-sm font-medium text-ink">Name</label>
+                <div className="auth-field-wrap">
+                  <User className="auth-field-icon" aria-hidden />
                   <input
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="w-full pl-10"
+                    className="auth-field"
                     placeholder="Your name"
                     autoComplete="name"
                     required
@@ -150,15 +150,15 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              <div className="auth-field-group">
+                <label className="text-sm font-medium text-ink">Email</label>
+                <div className="auth-field-wrap">
+                  <Mail className="auth-field-icon" aria-hidden />
                   <input
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="w-full pl-10"
+                    className="auth-field"
                     placeholder="you@example.com"
                     autoComplete="email"
                     required
@@ -169,22 +169,23 @@ export default function SignUpPage() {
                 {inviteToken && <p className="mt-1.5 text-xs text-muted">The invitation is linked to this email address.</p>}
               </div>
 
-              <div>
-                <label htmlFor="workspace-role" className="mb-1.5 block text-sm font-medium text-ink">Workspace role</label>
-                <div className="relative">
-                  <UserRoundCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              <div className="auth-field-group">
+                <label htmlFor="workspace-role" className="text-sm font-medium text-ink">Workspace role</label>
+                <div className="auth-field-wrap">
+                  <UserRoundCheck className="auth-field-icon" aria-hidden />
                   <select
                     id="workspace-role"
                     aria-label="Workspace role"
                     value={effectiveRole}
                     onChange={e => setRole(e.target.value as WorkspaceRole)}
                     disabled={Boolean(inviteToken) || inviteUnavailable || inviteLoading || loading}
-                    className="w-full appearance-none pl-10"
+                    className="auth-select"
                   >
                     <option value="owner">Owner — create a new workspace</option>
                     <option value="admin">Admin — join an existing workspace</option>
                     <option value="member">Member — join an existing workspace</option>
                   </select>
+                  <ChevronDown className="auth-select-indicator" aria-hidden />
                 </div>
                 {inviteToken ? (
                   <p className="mt-1.5 text-xs text-muted">Your invitation assigns the <span className="font-medium text-ink">{ROLE_LABELS[effectiveRole]}</span> role. It cannot be changed here.</p>
@@ -193,15 +194,15 @@ export default function SignUpPage() {
                 )}
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              <div className="auth-field-group">
+                <label className="text-sm font-medium text-ink">Password</label>
+                <div className="auth-field-wrap">
+                  <Lock className="auth-field-icon" aria-hidden />
                   <input
                     type="password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="w-full pl-10"
+                    className="auth-field"
                     placeholder="Create a password"
                     autoComplete="new-password"
                     required
@@ -212,7 +213,7 @@ export default function SignUpPage() {
               </div>
 
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                <div className="border-l-2 border-danger bg-danger-wash px-3 py-2 text-xs text-danger">
                   {error}
                 </div>
               )}
@@ -220,7 +221,7 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={loading || inviteLoading || inviteUnavailable}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-accent/90 hover:shadow-md disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-accent py-2.5 text-sm font-medium text-white shadow-[0_8px_18px_-12px_rgba(47,96,74,0.34)] transition-all hover:bg-accent/90 hover:shadow-md disabled:opacity-50"
               >
                 {loading ? 'Creating account...' : inviteWorkspace ? `Join ${inviteWorkspace}` : role === 'owner' ? 'Create owner workspace' : `Request ${ROLE_LABELS[role]} access`}
                 <ArrowRight className="h-4 w-4" />

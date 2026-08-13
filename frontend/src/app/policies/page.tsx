@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Plus, Search, Shield, ShieldOff, ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react';
 import { api, type Policy } from '@/lib/api';
 import PolicyForm from '@/components/PolicyForm';
+import { useConfirm } from '@/components/ConfirmProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,7 +13,7 @@ import { PolicyTableSkeleton } from '@/components/ui/table-skeleton';
 import { toast } from 'sonner';
 
 // --- Constants ---
-const CARD_SHELL = 'rounded-xl border border-border bg-white p-3 shadow-sm sm:p-4';
+const CARD_SHELL = 'rounded-md border border-border bg-surface p-3 shadow-sm sm:p-4';
 const TABLE_HEADER_CELL = 'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted cursor-pointer hover:text-ink';
 const BADGE_BASE = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium';
 const ICON_BUTTON = 'gap-1';
@@ -25,7 +26,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
   return (
     <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-testid="policies-header">
       <div>
-        <h1 className="text-2xl font-bold text-ink">Policies</h1>
+        <h1 className="font-serif text-[clamp(2rem,4vw,3.1rem)] font-normal leading-[0.98] tracking-[-0.035em] text-ink">Policies</h1>
         <p className="mt-0.5 text-sm text-muted">Manage your access control policies</p>
       </div>
       <Button onClick={onCreate} className="w-full gap-2 sm:w-auto" data-testid="create-policy-btn">
@@ -224,7 +225,7 @@ function PolicyTable({ policies, loading, pagination, onSort, onEdit, onDelete, 
   if (loading) return <PolicyTableSkeleton />;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm" data-testid="policies-table">
+    <div className="overflow-hidden rounded-md border border-border bg-surface shadow-[0_14px_28px_-24px_rgba(29,26,24,0.4)]" data-testid="policies-table">
       <div className="overflow-x-auto">
         <table className="min-w-[680px] w-full">
           <TableHeader onSort={onSort} />
@@ -247,6 +248,7 @@ function PolicyTable({ policies, loading, pagination, onSort, onEdit, onDelete, 
 // --- Main Component ---
 
 export default function PoliciesPage() {
+  const confirm = useConfirm();
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false });
@@ -329,7 +331,12 @@ export default function PoliciesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this policy?')) return;
+    if (!(await confirm({
+      title: 'Delete this policy?',
+      description: 'This permanently removes the policy and stops it from contributing to future access decisions.',
+      confirmLabel: 'Delete policy',
+      cancelLabel: 'Keep policy',
+    }))) return;
     try {
       await api.policies.delete(id);
       toast.success('Policy deleted');
@@ -346,7 +353,7 @@ export default function PoliciesPage() {
   const hasFilters = Boolean(search || effectFilter || activeFilter);
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
+    <div className="editorial-page animate-editorial-rise">
       <PageHeader onCreate={handleCreate} />
       <FilterBar
         search={search} onSearchChange={handleSearch}

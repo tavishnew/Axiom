@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -31,6 +32,7 @@ interface PolicyFormProps {
 
 
 export default function PolicyForm({ open, onOpenChange, onSuccess, policy }:PolicyFormProps) {
+    const confirm = useConfirm();
     const [name, setName] = useState(policy?.name ?? "");
     const [description, setDescription] = useState(policy?.description ?? "");
     const [effect, setEffect] = useState(policy?.effect ?? "allow");
@@ -84,7 +86,12 @@ export default function PolicyForm({ open, onOpenChange, onSuccess, policy }:Pol
   
     const handleDelete = async () => {
       if (!policy) return;
-      if (!window.confirm(`Delete policy "${policy.name}"?`)) return;
+      if (!(await confirm({
+        title: `Delete ${policy.name}?`,
+        description: 'This permanently removes the policy and stops it from contributing to future access decisions.',
+        confirmLabel: 'Delete policy',
+        cancelLabel: 'Keep policy',
+      }))) return;
       setDeleting(true);
       try {
         await api.policies.delete(policy.id);

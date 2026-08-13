@@ -20,23 +20,10 @@ export interface PasswordResetEmailParams {
 
 export type EmailResult = {
   delivered: boolean;
-  status: "sent" | "failed" | "not_configured";
+  status: "sent" | "failed" | "configuration_error";
   providerMessageId?: string;
   reason?: string;
 };
-
-export function toPersistedDeliveryStatus(status: EmailResult["status"]): "pending" | "sent" | "failed" | "configuration_error" {
-  switch (status) {
-    case "sent":
-      return "sent";
-    case "failed":
-      return "failed";
-    case "not_configured":
-      return "configuration_error";
-    default:
-      return "pending";
-  }
-}
 
 let resendClient: Resend | null | undefined;
 
@@ -164,7 +151,7 @@ async function sendMail(input: {
 
   if (!client || !env.RESEND_FROM_EMAIL) {
     logger.warn({ to: input.to, subject: input.subject }, "Email delivery is not configured");
-    return { delivered: false, status: "not_configured", reason: "Email delivery is not configured" };
+    return { delivered: false, status: "configuration_error", reason: "Email delivery is not configured" };
   }
 
   try {

@@ -84,7 +84,7 @@ export default function InvitePage() {
           transition={{ duration: 0.5 }}
           className="mx-4 max-w-md text-center"
         >
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/10 to-accent-2/10">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
             <Loader2 className="h-8 w-8 animate-spin text-accent" />
           </div>
           <h1 className="mb-2 font-serif text-3xl font-bold text-ink">Validating invitation...</h1>
@@ -126,8 +126,8 @@ export default function InvitePage() {
           transition={{ duration: 0.5 }}
           className="mx-4 max-w-md text-center"
         >
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50">
-            <Shield className="h-8 w-8 text-amber-500" />
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-2">
+            <Shield className="h-8 w-8 text-accent" />
           </div>
           <h1 className="mb-2 font-serif text-3xl font-bold text-ink">Invitation Expired</h1>
           <p className="mb-8 text-sm text-muted">This invitation has expired. Please request a new one from your team admin.</p>
@@ -230,8 +230,8 @@ export default function InvitePage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <div className="rounded-2xl border border-border bg-white p-8 shadow-xl">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/10 to-accent-2/10">
+        <div className="rounded-2xl border border-border bg-surface p-8 shadow-xl">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
             <Shield className="h-8 w-8 text-accent" />
           </div>
 

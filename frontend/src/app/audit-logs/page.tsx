@@ -58,21 +58,21 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
+    <div className="editorial-page animate-editorial-rise">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5 text-accent" />
-            <h1 className="text-2xl font-bold text-ink">Audit log</h1>
+            <h1 className="font-serif text-[clamp(2rem,4vw,3.1rem)] font-normal leading-[0.98] tracking-[-0.035em] text-ink">Audit log</h1>
           </div>
           <p className="mt-1 text-sm text-muted">Organization activity history for security and operational review.</p>
         </div>
-        <div className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-muted shadow-sm">
+        <div className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-muted shadow-sm">
           {pagination.total.toLocaleString()} recorded events
         </div>
       </div>
 
-      <section className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
+      <section className="mb-4 rounded-md border border-border bg-surface p-4 shadow-sm">
         <div className="mb-3 flex items-center gap-2 text-sm font-medium text-ink">
           <Filter className="h-4 w-4 text-muted" />
           Filters
@@ -110,7 +110,7 @@ export default function AuditLogsPage() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+      <section className="overflow-hidden rounded-md border border-border bg-surface shadow-[0_14px_28px_-24px_rgba(29,26,24,0.4)]">
         <div className="overflow-x-auto">
           <table className="min-w-[720px] w-full">
             <thead>

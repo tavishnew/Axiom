@@ -1,11 +1,5 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="faviconGradient" x1="4" y1="3" x2="28" y2="29" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#f59e0b" />
-      <stop offset="1" stop-color="#ea580c" />
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="7" fill="url(#faviconGradient)" />
-  <path d="M16 5.25 24 8.3v7.2c0 5.5-3.45 9.25-8 11.05-4.55-1.8-8-5.55-8-11.05V8.3l8-3.05Z" fill="white" fill-opacity="0.08" stroke="white" stroke-width="1.9" stroke-linejoin="round" />
-  <path d="M16 5.65v20.55" stroke="white" stroke-width="1.8" stroke-linecap="round" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="15" fill="#2F604A"/>
+  <path d="M32 10.5 49 16.8v14.6c0 11.7-7.15 18.6-17 22.1-9.85-3.5-17-10.4-17-22.1V16.8L32 10.5Z" stroke="#FCFBF8" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M23.5 35.6 29.25 41 41.5 25.5" stroke="#FCFBF8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

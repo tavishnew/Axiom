@@ -29,26 +29,10 @@ app.use(
     },
   }),
 );
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-// Allow Vercel preview deployments through while production remains on the exact FRONTEND_URL list.
-const vercelPreviewPattern = /^https:\/\/axiom-[a-z0-9]+-tavish0554-9516s-projects\.vercel\.app$/;
-
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin) || vercelPreviewPattern.test(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
-    },
-    credentials: true,
-  }),
-);
+app.use(cors({
+  origin: [process.env.FRONTEND_URL || "http://localhost:5173"].filter(Boolean),
+  credentials: true,
+}));
 app.use(cookieParser());
 // Stripe validates the exact, unparsed payload. Register this exception before the JSON parser.
 app.use("/api/billing/webhook", express.raw({ type: "application/json" }));

@@ -6,6 +6,7 @@ import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { useEffect } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { AuthProvider, ProtectedRoute } from '@/lib/auth.tsx';
+import { ConfirmProvider } from '@/components/ConfirmProvider';
 
 // Pages
 import LandingPage from './app/landing/page';
@@ -74,7 +75,9 @@ function App() {
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <AuthProvider>
-            <Router />
+            <ConfirmProvider>
+              <Router />
+            </ConfirmProvider>
           </AuthProvider>
         </WouterRouter>
         <Toaster />

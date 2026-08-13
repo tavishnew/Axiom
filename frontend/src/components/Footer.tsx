@@ -1,16 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ShieldHalf, ArrowUpRight, Github, Mail } from "lucide-react";
-
-const XLogo = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-    <path
-      d="M18.901 2h3.68l-8.04 9.19L22 22h-7.406l-5.8-8.015L3.17 22H-0.51l8.6-9.83L2 2h7.594l5.243 7.417L18.901 2Zm-1.29 18h2.028L7.338 3.91H5.19L17.611 20Z"
-      fill="currentColor"
-    />
-  </svg>
-);
+import { ShieldHalf, ArrowUpRight, Twitter, Github, Mail } from "lucide-react";
 
 const columns = {
   Product: ["Overview", "Policies", "SDKs", "Changelog"],
@@ -20,14 +11,14 @@ const columns = {
 };
 
 const socialLinks = [
-  { icon: XLogo, href: "https://x.com/Tavish54" },
-  { icon: Github, href: "https://github.com/tavishnew" },
-  { icon: Mail, href: "mailto:tavish0554@gmail.com" },
+  { icon: Twitter, href: "#" },
+  { icon: Github, href: "#" },
+  { icon: Mail, href: "#" },
 ];
 
 export function Footer() {
   return (
-    <footer className="relative border-t border-border bg-white">
+    <footer className="relative border-t border-border bg-surface">
       <div className="mx-auto max-w-7xl px-6 pt-20 pb-10">
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
@@ -36,11 +27,11 @@ export function Footer() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              className="font-serif text-5xl leading-[0.95] tracking-tight md:text-7xl"
+              className="font-serif text-5xl font-normal leading-[0.92] tracking-[-0.055em] md:text-7xl"
             >
               Ship the right
               <br />
-              <span className="bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
+              <span className="text-accent">
                 access
               </span>
               . Every time.
@@ -55,9 +46,7 @@ export function Footer() {
                 <a
                   key={i}
                   href={href}
-                  target={href.startsWith("http") ? "_blank" : undefined}
-                  rel={href.startsWith("http") ? "noreferrer" : undefined}
-                  className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted transition-all hover:border-accent hover:text-accent hover:bg-accent/5"
+                  className="grid h-9 w-9 place-items-center rounded-md border border-border text-muted transition-all hover:border-accent hover:bg-accent/5 hover:text-accent"
                 >
                   <Icon className="h-4 w-4" />
                 </a>
@@ -91,7 +80,7 @@ export function Footer() {
 
         <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-border pt-6 md:flex-row md:items-center">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-accent to-accent-2 text-white shadow-sm">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-white shadow-[0_6px_16px_-11px_rgba(47,96,74,0.34)]">
               <ShieldHalf className="h-3.5 w-3.5" />
             </div>
             <span className="font-mono text-xs text-muted">

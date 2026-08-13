@@ -77,16 +77,21 @@ export function useAuth() {
 }
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isLoading, isAuthenticated, user } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/auth/sign-in');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   if (isLoading) {
     return <SessionSpinner />;
   }
 
   if (!isAuthenticated) {
-    navigate('/auth/sign-in');
-    return null;
+    return <SessionRedirect />;
   }
 
   return <>{children}</>;
@@ -98,6 +103,18 @@ function SessionSpinner() {
       <div className="flex flex-col items-center gap-4">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-surface-2 border-t-accent" />
         <p className="text-sm text-muted">Checking session…</p>
+      </div>
+    </div>
+  );
+}
+
+function SessionRedirect() {
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center bg-bg" data-testid="session-redirect">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="h-7 w-7 animate-spin rounded-full border-2 border-surface-2 border-t-accent" />
+        <p className="font-serif text-2xl text-ink">Taking you to sign in</p>
+        <p className="text-sm text-muted">Your session has ended or you need to authenticate first.</p>
       </div>
     </div>
   );

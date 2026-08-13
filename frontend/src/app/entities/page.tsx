@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Plus, Search, User, Server, Key, Shield, X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { api, type Entity, type Policy, type PaginatedResponse } from '@/lib/api';
 import { EntityForm } from '@/components/EntityForm';
+import { useConfirm } from '@/components/ConfirmProvider';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,12 +15,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 const typeConfig: Record<string, { icon: typeof User; bg: string; text: string }> = {
-  user: { icon: User, bg: 'bg-blue-50', text: 'text-blue-700' },
+  user: { icon: User, bg: 'bg-surface-2', text: 'text-accent' },
   service: { icon: Server, bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  api_key: { icon: Key, bg: 'bg-amber-50', text: 'text-amber-700' },
+  api_key: { icon: Key, bg: 'bg-surface-2', text: 'text-accent' },
 };
 
 export default function EntitiesPage() {
+  const confirm = useConfirm();
   const [entities, setEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false });
@@ -125,7 +127,12 @@ export default function EntitiesPage() {
   };
 
   const handleDeleteEntity = async (id: string) => {
-    if (!window.confirm('Delete this entity?')) return;
+    if (!(await confirm({
+      title: 'Delete this entity?',
+      description: 'This permanently removes the entity and any access assignments that depend on it.',
+      confirmLabel: 'Delete entity',
+      cancelLabel: 'Keep entity',
+    }))) return;
     try {
       await api.entities.delete(id);
       toast.success('Entity deleted');
@@ -146,11 +153,11 @@ export default function EntitiesPage() {
   const hasFilters = search || typeFilter;
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
+    <div className="editorial-page animate-editorial-rise">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Entities</h1>
+          <h1 className="font-serif text-[clamp(2rem,4vw,3.1rem)] font-normal leading-[0.98] tracking-[-0.035em] text-ink">Entities</h1>
           <p className="mt-0.5 text-sm text-muted">Manage users, services, and API keys</p>
         </div>
         <Button onClick={handleCreate} className="w-full gap-2 sm:w-auto">
@@ -160,7 +167,7 @@ export default function EntitiesPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
+      <div className="mb-4 rounded-md border border-border bg-surface p-4 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
@@ -193,7 +200,7 @@ export default function EntitiesPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+      <div className="overflow-hidden rounded-md border border-border bg-surface shadow-[0_14px_28px_-24px_rgba(29,26,24,0.4)]">
         {loading ? (
           <EntityTableSkeleton />
         ) : entities.length === 0 ? (
@@ -325,7 +332,7 @@ export default function EntitiesPage() {
                   {assignedPolicies.map((a) => {
                     const policy = availablePolicies.find(p => p.id === a.policyId);
                     return (
-                      <div key={a.policyId} className="flex flex-col gap-3 rounded-lg border border-border bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div key={a.policyId} className="flex flex-col gap-3 rounded-md border border-border bg-surface p-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3">
                           <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
                             policy?.effect === 'allow' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
@@ -375,7 +382,7 @@ export default function EntitiesPage() {
                   {filteredPolicies.map((p) => {
                     const assigned = isPolicyAssigned(p.id);
                     return (
-                      <div key={p.id} className="flex flex-col gap-3 rounded-lg border border-border bg-white p-3 transition-colors hover:bg-surface-2/50 sm:flex-row sm:items-center sm:justify-between">
+                      <div key={p.id} className="flex flex-col gap-3 rounded-md border border-border bg-surface p-3 transition-colors hover:bg-surface-2/50 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3">
                           <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
                             p.effect === 'allow' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'

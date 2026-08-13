@@ -83,11 +83,11 @@ export default function DecisionsPage() {
   const hasFilters = search || outcomeFilter || entityFilter || timeFilter;
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
+    <div className="editorial-page animate-editorial-rise">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Decisions</h1>
+          <h1 className="font-serif text-[clamp(2rem,4vw,3.1rem)] font-normal leading-[0.98] tracking-[-0.035em] text-ink">Decisions</h1>
           <p className="mt-0.5 text-sm text-muted">View and analyze authorization decisions</p>
         </div>
         <Button variant="outline" className="w-full gap-2 sm:w-auto" onClick={() => toast.info('Export coming soon')}>
@@ -97,7 +97,7 @@ export default function DecisionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
+      <div className="mb-4 rounded-md border border-border bg-surface p-4 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
@@ -154,11 +154,11 @@ export default function DecisionsPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06 }}
-            className="rounded-xl border border-border bg-white p-4 shadow-sm"
+            className="rounded-md border border-border bg-surface p-4 shadow-sm"
           >
             <p className="text-xs font-medium text-muted">{s.title}</p>
             <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-ink">{s.value}</span>
+              <span className="font-serif text-[clamp(2rem,4vw,3.1rem)] font-normal leading-[0.98] tracking-[-0.035em] text-ink">{s.value}</span>
               <span className={`text-xs font-medium ${
                 s.trend === 'up' ? 'text-emerald-600' : 'text-[--ember]'
               }`}>
@@ -170,7 +170,7 @@ export default function DecisionsPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+      <div className="overflow-hidden rounded-md border border-border bg-surface shadow-[0_14px_28px_-24px_rgba(29,26,24,0.4)]">
         {loading ? (
           <DecisionTableSkeleton />
         ) : (

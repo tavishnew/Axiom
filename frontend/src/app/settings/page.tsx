@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth.tsx';
+import { useConfirm } from '@/components/ConfirmProvider';
 
 const navItems = [
  { href: '/settings', label: 'Organization', icon: Building2 },
@@ -22,6 +23,7 @@ const navItems = [
 ];
 
 export default function SettingsPage() {
+ const confirm = useConfirm();
  const [pathname, router] = useLocation();
  const { user } = useAuth();
  const canManageTeam = user?.role === 'owner' || user?.role === 'admin';
@@ -63,6 +65,7 @@ export default function SettingsPage() {
  const [newKeyDialogOpen, setNewKeyDialogOpen] = useState(false);
  const [newKeyName, setNewKeyName] = useState('');
  const [creatingKey, setCreatingKey] = useState(false);
+ const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
 
  const fetchOrgAndKeys = useCallback(async () => {
  setLoading(true);
@@ -188,7 +191,12 @@ export default function SettingsPage() {
  };
 
  const handleRevoke = async (id: string) => {
- if (!window.confirm('Are you sure you want to revoke this API key?')) return;
+ if (!(await confirm({
+ title: 'Revoke this API key?',
+ description: 'Any service using this key will immediately lose access. This cannot be undone.',
+ confirmLabel: 'Revoke key',
+ cancelLabel: 'Keep key',
+ }))) return;
  try {
  await api.apiKeys.delete(id);
  const keys = await api.apiKeys.list({ limit: 100 });
@@ -206,8 +214,12 @@ export default function SettingsPage() {
  setCreatingKey(true);
  try {
  const key = await api.apiKeys.create({ name: newKeyName.trim() });
- toast.success('API key created! Save it now - you won\'t see it again.');
- alert(`Your new API key:\n\n${key.key}\n\nSave this securely.`);
+ if (!key.key) {
+ toast.error('The API key was created, but its one-time secret was not returned. Revoke it and create a new key.');
+ return;
+ }
+ setNewKeyValue(key.key);
+ toast.success('API key created. Copy it now — it will not be shown again.');
  setNewKeyName('');
  setNewKeyDialogOpen(false);
  const keys = await api.apiKeys.list({ limit: 100 });
@@ -217,15 +229,6 @@ export default function SettingsPage() {
  toast.error('Failed to create API key');
  } finally {
  setCreatingKey(false);
- }
- };
-
- const handleSaveOrg = async () => {
- if (!org) return;
- try {
- toast.success('Organization saved (backend update endpoint needed)');
- } catch (err) {
- toast.error('Failed to save organization');
  }
  };
 
@@ -290,7 +293,12 @@ export default function SettingsPage() {
  };
 
  const handleRevokeInvitation = async (inv: Invitation) => {
- if (!window.confirm('Revoke the invitation to ' + inv.email + '?')) return;
+ if (!(await confirm({
+ title: `Revoke invitation to ${inv.email}?`,
+ description: 'The recipient will no longer be able to use this invitation link.',
+ confirmLabel: 'Revoke invitation',
+ cancelLabel: 'Keep invitation',
+ }))) return;
  setRevokingId(inv.id);
   try {
   await api.invitations.revoke(inv.id);
@@ -332,7 +340,12 @@ export default function SettingsPage() {
  }
 
  const handleRemoveMember = async (member: any) => {
- if (!window.confirm(`Remove ${member.name || member.email} from the team?`)) return;
+ if (!(await confirm({
+ title: `Remove ${member.name || member.email}?`,
+ description: 'This removes their workspace access. You can invite them again later if needed.',
+ confirmLabel: 'Remove member',
+ cancelLabel: 'Keep member',
+ }))) return;
  try {
  await api.team.remove(member.id);
  toast.success('Team member removed');
@@ -363,12 +376,15 @@ const handleUpgrade = async () => {
  }
 };
 
- const handleSaveProfile = () => {
- toast.info('Profile save - backend endpoint needed');
- };
+
 
 const handleRevokeSession = async (sessionId: string) => {
- if (!window.confirm('Revoke this session?')) return;
+ if (!(await confirm({
+ title: 'Revoke this session?',
+ description: 'That device will be signed out and must authenticate again to regain access.',
+ confirmLabel: 'Revoke session',
+ cancelLabel: 'Keep session',
+ }))) return;
  try {
  await api.auth.revokeSession(sessionId);
  toast.success('Session revoked');
@@ -430,15 +446,15 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  const isProfilePage = pathname.startsWith('/settings/profile');
 
  return (
- <div className="p-4 sm:p-6 md:p-8">
+ <div className="editorial-page animate-editorial-rise">
  <div className="mb-6">
- <h1 className="text-2xl font-bold text-ink">Settings</h1>
+ <h1 className="font-serif text-[clamp(2rem,4vw,3.1rem)] font-normal leading-[0.98] tracking-[-0.035em] text-ink">Settings</h1>
  <p className="mt-0.5 text-sm text-muted">Manage your organization and API access</p>
 </div>
 
  <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
  <div className="lg:col-span-1">
- <nav className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-white p-2 shadow-sm lg:block">
+ <nav className="grid grid-cols-2 gap-1 rounded-md border border-border bg-surface p-2 shadow-sm lg:block">
  {navItems.map((item, i) => {
  const Icon = item.icon;
  const isActive =
@@ -468,7 +484,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 
  <div className="space-y-5 lg:col-span-3">
  {isOrganizationPage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-md border border-border bg-surface p-4 shadow-sm sm:p-6">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <Building2 className="h-5 w-5 text-accent" /> Organization
 </h2>
@@ -478,25 +494,23 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <div className="mt-5 space-y-4">
  <div>
  <Label className="mb-1.5 block text-sm font-medium text-ink">Organization Name</Label>
- <Input value={org?.name || ''} onChange={e => setOrg(o => o ? { ...o, name: e.target.value } : null)} className="w-full max-w-md" />
+ <Input value={org?.name || ''} readOnly aria-readonly="true" className="w-full max-w-md cursor-not-allowed bg-surface-2 text-muted" />
 </div>
  <div>
  <Label className="mb-1.5 block text-sm font-medium text-ink">Organization Slug</Label>
- <Input value={org?.slug || ''} onChange={e => setOrg(o => o ? { ...o, slug: e.target.value } : null)} className="w-full max-w-md" />
+ <Input value={org?.slug || ''} readOnly aria-readonly="true" className="w-full max-w-md cursor-not-allowed bg-surface-2 text-muted" />
  <p className="mt-1 text-xs text-muted">Used in API requests: api.axiom.dev/v1/orgs/{org?.slug || 'your-org'}</p>
 </div>
 </div>
  )}
  <div className="mt-6 border-t border-border pt-4">
- <Button onClick={handleSaveOrg} className="px-4 py-2" disabled={loading}>
- {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
-</Button>
-</div>
+ <p className="max-w-xl text-sm leading-6 text-muted">Organization name and slug are shown for reference. Updating organization details is not available in this workspace yet, so no changes can be saved from this page.</p>
+ </div>
 </motion.div>
  )}
 
  {isApiKeysPage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-md border border-border bg-surface p-4 shadow-sm sm:p-6">
  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <Key className="h-5 w-5 text-accent" /> API Keys
@@ -513,7 +527,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  ) : (
  <div className="mt-5 space-y-3">
  {apiKeys.map((key, i) => (
- <div key={key.id} className="flex flex-col gap-3 rounded-lg border border-border bg-white p-3 transition-colors hover:bg-surface-2/50 sm:flex-row sm:items-center sm:justify-between">
+ <div key={key.id} className="flex flex-col gap-3 rounded-md border border-border bg-surface p-3 transition-colors hover:bg-surface-2/50 sm:flex-row sm:items-center sm:justify-between">
  <div className="min-w-0">
  <p className="truncate text-sm font-medium text-ink">{key.name}</p>
  <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-muted">
@@ -556,12 +570,27 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 </DialogFooter>
 </form>
 </DialogContent>
-</Dialog>
-</motion.div>
- )}
+	</Dialog>
+	<Dialog open={Boolean(newKeyValue)} onOpenChange={(open) => { if (!open) setNewKeyValue(null); }}>
+	  <DialogContent className="sm:max-w-[560px]">
+	    <DialogHeader>
+	      <DialogTitle>Copy your API key now</DialogTitle>
+	      <DialogDescription>This is the only time the full secret will be displayed. Store it in a secure password manager or secret vault.</DialogDescription>
+	    </DialogHeader>
+	    <div className="space-y-4 px-4 pb-4 sm:px-6 sm:pb-6">
+	      <code className="block max-h-32 overflow-auto rounded-md border border-border bg-surface-2 p-3 font-mono text-xs leading-6 text-ink">{newKeyValue}</code>
+	      <DialogFooter>
+	        <Button variant="outline" onClick={() => setNewKeyValue(null)}>I stored it safely</Button>
+	        <Button onClick={() => { if (newKeyValue) handleCopy(newKeyValue, -1); }} className="gap-2"><Copy className="h-4 w-4" />Copy key</Button>
+	      </DialogFooter>
+	    </div>
+	  </DialogContent>
+	</Dialog>
+	</motion.div>
+	)}
 
- {isTeamPage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
+	 {isTeamPage && (
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-md border border-border bg-surface p-4 shadow-sm sm:p-6">
  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <UsersIcon className="h-5 w-5 text-accent" /> Team Members
@@ -583,8 +612,8 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  {teamMembers.map((member) => (
  <div key={member.id} className="flex flex-col gap-3 rounded-lg border border-surface-2 p-3 transition-colors hover:bg-surface-2/40 sm:flex-row sm:items-center sm:justify-between">
  <div className="flex min-w-0 items-center gap-3">
- <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
- <LucideUser className="h-4 w-4 text-blue-600" />
+ <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-2">
+ <LucideUser className="h-4 w-4 text-accent" />
 </div>
  <div className="min-w-0">
  <p className="truncate text-sm font-medium text-ink">{member.name || member.email}</p>
@@ -617,22 +646,22 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  const exp = expiresInLabel(inv.expiresAt);
  const isActionable = inv.status === 'pending' && !exp.expired;
  const statusColor = {
- pending: 'bg-amber-50 text-amber-700',
+ pending: 'bg-surface-2 text-accent',
  accepted: 'bg-emerald-50 text-emerald-700',
  expired: 'bg-red-50 text-red-700',
  revoked: 'bg-slate-100 text-slate-700',
  }[inv.status];
  const deliveryColor = {
  pending: 'bg-slate-100 text-slate-700',
- sent: 'bg-blue-50 text-blue-700',
+ sent: 'bg-surface-2 text-accent',
  failed: 'bg-red-50 text-red-700',
  configuration_error: 'bg-red-50 text-red-700',
  }[inv.deliveryStatus];
  return (
- <div key={inv.id} className="flex flex-col gap-3 rounded-lg border border-surface-2 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+ <div key={inv.id} className="flex flex-col gap-3 rounded-lg border border-surface-2 bg-surface p-3 sm:flex-row sm:items-center sm:justify-between">
  <div className="flex min-w-0 items-start gap-3">
- <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
- <Mail className="h-4 w-4 text-amber-600" />
+ <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-2">
+ <Mail className="h-4 w-4 text-accent" />
 </div>
  <div className="min-w-0 flex-1">
  <p className="truncate text-sm font-medium text-ink">{inv.email}</p>
@@ -717,7 +746,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  )}
 
  {isBillingPage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-md border border-border bg-surface p-4 shadow-sm sm:p-6">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <CreditCard className="h-5 w-5 text-accent" /> Billing
 </h2>
@@ -725,7 +754,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <p className="mt-5 text-sm text-muted">Loading</p>
  ) : billing ? (
  <div className="mt-5 space-y-4">
- <div className="rounded-lg border border-border bg-white p-4">
+ <div className="rounded-md border border-border bg-surface p-4">
  <h3 className="font-medium text-ink">Current Plan</h3>
  <p className="mt-1 text-sm text-muted">Pro Plan — $29/month</p>
  <p className="mt-2 text-xs text-muted">Renews on {billing.current_period_end ? new Date(billing.current_period_end * 1000).toLocaleDateString() : 'N/A'}</p>
@@ -736,7 +765,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 </div>
  ) : (
  <div className="mt-5 space-y-4">
- <div className="rounded-lg border border-border bg-white p-4">
+ <div className="rounded-md border border-border bg-surface p-4">
  <h3 className="font-medium text-ink">No active subscription</h3>
  <p className="mt-1 text-sm text-muted">Upgrade to Pro to unlock all features</p>
 </div>
@@ -749,7 +778,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  )}
 
  {isProfilePage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-md border border-border bg-surface p-4 shadow-sm sm:p-6">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <LucideUser className="h-5 w-5 text-accent" /> Profile
 </h2>
@@ -759,7 +788,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <div className="mt-5 space-y-6">
  <div className="space-y-1.5">
  <Label>Full Name</Label>
- <Input value={profile.name} onChange={e => setProfile((p: typeof profile) => ({ ...p, name: e.target.value }))} className="w-full max-w-md" />
+ <Input value={profile.name} readOnly className="w-full max-w-md bg-surface-2" />
 </div>
  <div className="space-y-1.5">
  <Label>Email</Label>
@@ -767,8 +796,8 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 </div>
  <div className="space-y-1.5">
  <Label>Timezone</Label>
- <Select value={profile.timezone} onValueChange={e => setProfile((p: typeof profile) => ({ ...p, timezone: e }))}>
- <SelectTrigger className="w-full max-w-md"><SelectValue placeholder="Select timezone" /></SelectTrigger>
+ <Select value={profile.timezone} disabled>
+ <SelectTrigger className="w-full max-w-md bg-surface-2"><SelectValue placeholder="Select timezone" /></SelectTrigger>
  <SelectContent>
  <SelectItem value="utc">UTC</SelectItem>
  <SelectItem value="america/new_york">Eastern Time (US & Canada</SelectItem>
@@ -779,6 +808,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 </SelectContent>
 </Select>
 </div>
+ <p className="-mt-2 text-sm leading-6 text-muted">Profile identity details are managed through your identity provider and are read-only in this workspace.</p>
  <div className="space-y-1.5">
  <Label>Last Password Change</Label>
  <p className="text-sm text-muted">{profile.lastPasswordChange}</p>

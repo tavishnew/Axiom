@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription as AlertDescription, AlertDialogFooter as AlertFooter, AlertDialogHeader as AlertHeader, AlertDialogTitle as AlertTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type Entity } from "@/lib/api";
@@ -30,6 +31,7 @@ export function EntityForm({ open, onOpenChange, entity, onSuccess }: EntityForm
   );
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const isEdit = !!entity;
 
@@ -70,7 +72,6 @@ export function EntityForm({ open, onOpenChange, entity, onSuccess }: EntityForm
 
   const handleDelete = async () => {
     if (!entity) return;
-    if (!window.confirm(`Delete entity "${entity.externalId}"?`)) return;
     setDeleting(true);
     try {
       await api.entities.delete(entity.id);
@@ -145,7 +146,7 @@ export function EntityForm({ open, onOpenChange, entity, onSuccess }: EntityForm
             {isEdit && (
               <Button
                 variant="destructive"
-                onClick={handleDelete}
+                onClick={() => setDeleteConfirmOpen(true)}
                 disabled={deleting}
                 className="px-4 py-2"
               >
@@ -170,6 +171,18 @@ export function EntityForm({ open, onOpenChange, entity, onSuccess }: EntityForm
             </Button>
           </div>
         </DialogFooter>
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertHeader>
+              <AlertTitle>Delete {entity?.externalId}?</AlertTitle>
+              <AlertDescription>This permanently removes the entity and may affect any policy assignments that reference it.</AlertDescription>
+            </AlertHeader>
+            <AlertFooter>
+              <AlertDialogCancel disabled={deleting}>Keep entity</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete entity"}</AlertDialogAction>
+            </AlertFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );

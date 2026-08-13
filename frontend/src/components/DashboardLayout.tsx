@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Sidebar } from '@/components/sidebar';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 const SIDEBAR_STORAGE_KEY = 'axiom.sidebar.collapsed';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true');
@@ -18,18 +19,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg warm-mesh">
       <Sidebar
         collapsed={collapsed}
         onCollapsedChange={handleCollapsedChange}
         mobileOpen={mobileOpen}
         onMobileOpenChange={setMobileOpen}
       />
-      <main className={`min-h-screen transition-[margin] duration-300 ease-out ${collapsed ? 'md:ml-20' : 'md:ml-64'} pt-16 md:pt-0`}>
+      <main className={`min-h-screen transition-[margin] duration-300 [transition-timing-function:var(--ease-out)] ${collapsed ? 'md:ml-20' : 'md:ml-64'} pt-16 md:pt-0`}>
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
+          transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.23, 1, 0.32, 1] }}
           className="min-h-screen"
         >
           {children}

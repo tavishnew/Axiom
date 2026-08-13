@@ -16,7 +16,7 @@ import {
   createOrganizationInvitationSchema,
   invitationTokenSchema,
 } from "@workspace/api-zod";
-import { sendInvitationEmail, type EmailResult, toPersistedDeliveryStatus } from "../lib/email";
+import { sendInvitationEmail, type EmailResult } from "../lib/email";
 import { getEnv } from "../lib/env";
 import { logger } from "../lib/logger";
 import { logAuditEvent } from "../lib/audit";
@@ -166,11 +166,10 @@ async function sendAndRecordInvitationEmail(
   },
 ): Promise<EmailResult> {
   const result = await sendInvitationEmail(input);
-  const persistedStatus = toPersistedDeliveryStatus(result.status);
   await db
     .update(invitationsTable)
     .set({
-      deliveryStatus: persistedStatus,
+      deliveryStatus: result.status,
       deliveryError: result.delivered ? null : (result.reason ?? "Email delivery failed"),
       providerMessageId: result.providerMessageId ?? null,
       updatedAt: new Date(),

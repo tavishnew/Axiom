@@ -44,24 +44,24 @@ export default function ResetPasswordPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <a href="/" className="inline-flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-2 text-white shadow-sm"><ShieldHalf className="h-5 w-5" /></div>
-              <span className="font-tight text-xl font-semibold tracking-tight text-ink">Axiom<span className="text-accent">.</span></span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white shadow-sm"><ShieldHalf className="h-5 w-5" /></div>
+              <span className="font-serif text-2xl leading-none tracking-[-0.045em] text-ink">Axiom<span className="text-accent">.</span></span>
             </a>
           </div>
 
-          <section className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
-            <h1 className="text-xl font-semibold text-ink">Choose a new password</h1>
+          <section className="auth-panel border border-border bg-surface p-6 shadow-[0_20px_40px_-32px_rgba(29,26,24,0.5)] sm:p-8">
+            <h1 className="font-serif text-3xl font-normal leading-[0.98] tracking-[-0.04em] text-ink">Choose a new password</h1>
             <p className="mt-1 text-sm text-muted">Your reset link can be used once and expires after one hour.</p>
 
             {!token ? (
               <div className="mt-6 space-y-4">
-                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">This password reset link is incomplete. Request a new one to continue.</p>
-                <a href="/auth/forgot-password" className="flex w-full items-center justify-center rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-sm hover:bg-accent/90">Request a new link</a>
+                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">This password reset link is incomplete. Request a new one to continue.</p>
+                <a href="/auth/forgot-password" className="flex w-full items-center justify-center rounded-md bg-accent py-2.5 text-sm font-medium text-white shadow-sm hover:bg-accent/90">Request a new link</a>
               </div>
             ) : complete ? (
               <div className="mt-6 space-y-4">
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">Your password has been reset. All existing sessions were signed out for your security.</div>
-                <a href="/auth/sign-in" className="flex w-full items-center justify-center rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-sm hover:bg-accent/90">Sign in with your new password</a>
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">Your password has been reset. All existing sessions were signed out for your security.</div>
+                <a href="/auth/sign-in" className="flex w-full items-center justify-center rounded-md bg-accent py-2.5 text-sm font-medium text-white shadow-sm hover:bg-accent/90">Sign in with your new password</a>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -79,8 +79,8 @@ export default function ResetPasswordPage() {
                     <input id="confirm-new-password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="w-full pl-10" autoComplete="new-password" minLength={8} required />
                   </div>
                 </div>
-                {error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
-                <button type="submit" disabled={loading} className="flex w-full items-center justify-center rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent/90 disabled:opacity-50">
+                {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
+                <button type="submit" disabled={loading} className="flex w-full items-center justify-center rounded-md bg-accent py-2.5 text-sm font-medium text-white shadow-[0_8px_18px_-12px_rgba(47,96,74,0.34)] transition-colors hover:bg-accent/90 disabled:opacity-50">
                   {loading ? 'Resetting password…' : 'Reset password'}
                 </button>
               </form>

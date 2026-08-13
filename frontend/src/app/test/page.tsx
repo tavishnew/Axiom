@@ -99,23 +99,23 @@ export default function TestConsolePage() {
   };
 
   const entityTypeIcons = {
-    user: { icon: User, bg: 'bg-blue-50', color: 'text-blue-600' },
+    user: { icon: User, bg: 'bg-surface-2', color: 'text-accent' },
     service: { icon: Server, bg: 'bg-emerald-50', color: 'text-emerald-600' },
-    api_key: { icon: Key, bg: 'bg-amber-50', color: 'text-amber-600' },
+    api_key: { icon: Key, bg: 'bg-surface-2', color: 'text-accent' },
   };
 
   const resourceTypeIcons = {
-    document: { icon: FileText, bg: 'bg-blue-50', color: 'text-blue-600' },
+    document: { icon: FileText, bg: 'bg-surface-2', color: 'text-accent' },
     database: { icon: Database, bg: 'bg-emerald-50', color: 'text-emerald-600' },
-    api: { icon: Server, bg: 'bg-violet-50', color: 'text-violet-600' },
-    billing: { icon: FileText, bg: 'bg-amber-50', color: 'text-amber-600' },
+    api: { icon: Server, bg: 'bg-surface-2', color: 'text-accent' },
+    billing: { icon: FileText, bg: 'bg-surface-2', color: 'text-accent' },
   };
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="editorial-page animate-editorial-rise">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">Test Console</h1>
+        <h1 className="font-serif text-[clamp(2rem,4vw,3.1rem)] font-normal leading-[0.98] tracking-[-0.035em] text-ink">Test Console</h1>
         <p className="mt-0.5 text-sm text-muted">Test your policies against the live evaluation engine</p>
       </div>
 
@@ -124,11 +124,11 @@ export default function TestConsolePage() {
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="rounded-xl border border-border bg-white p-6 shadow-sm"
+          className="rounded-md border border-border bg-surface p-6 shadow-[0_16px_32px_-26px_rgba(29,26,24,0.44)]"
         >
           <div className="flex items-center gap-2 mb-6">
             <FlaskConical className="h-5 w-5 text-accent" />
-            <h2 className="text-lg font-semibold text-ink">Request</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">Request</h2>
           </div>
 
           <form onSubmit={handleTest} className="space-y-5">
@@ -149,7 +149,7 @@ export default function TestConsolePage() {
                       className="w-full"
                     />
                     {showEntityDropdown && filteredEntities.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-white shadow-lg z-10 max-h-60 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 mt-1 rounded-md border border-border bg-surface shadow-lg z-10 max-h-60 overflow-y-auto">
                         {filteredEntities.map(entity => {
                           const cfg = entityTypeIcons[entity.type as keyof typeof entityTypeIcons] || entityTypeIcons.user;
                           const Icon = cfg.icon;
@@ -179,7 +179,7 @@ export default function TestConsolePage() {
                   <select
                     value={entityType}
                     onChange={e => setEntityType(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
                   >
                     <option value="user">User</option>
                     <option value="service">Service</option>
@@ -193,7 +193,7 @@ export default function TestConsolePage() {
                   value={entityAttrs}
                   onChange={e => setEntityAttrs(e.target.value)}
                   rows={3}
-                  className="w-full font-mono text-sm rounded-lg border border-border bg-white px-3 py-2"
+                  className="w-full font-mono text-sm rounded-md border border-border bg-surface px-3 py-2"
                 />
               </div>
             </div>
@@ -204,7 +204,7 @@ export default function TestConsolePage() {
               <select
                 value={action}
                 onChange={e => setAction(e.target.value)}
-                className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm"
+                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
               >
                 <option value="read">read</option>
                 <option value="write">write</option>
@@ -230,7 +230,7 @@ export default function TestConsolePage() {
                       className="w-full"
                     />
                     {showResourceDropdown && filteredResources.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-white shadow-lg z-10 max-h-60 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 mt-1 rounded-md border border-border bg-surface shadow-lg z-10 max-h-60 overflow-y-auto">
                         {filteredResources.map(resource => {
                           const cfg = resourceTypeIcons[resource.type as keyof typeof resourceTypeIcons] || { icon: FileText, bg: 'bg-gray-50', color: 'text-gray-600' };
                           const Icon = cfg.icon;
@@ -294,11 +294,11 @@ export default function TestConsolePage() {
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="rounded-xl border border-border bg-white p-6 shadow-sm"
+          className="rounded-md border border-border bg-surface p-6 shadow-[0_16px_32px_-26px_rgba(29,26,24,0.44)]"
         >
           <div className="flex items-center gap-2 mb-6">
             <Shield className="h-5 w-5 text-accent" />
-            <h2 className="text-lg font-semibold text-ink">Result</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">Result</h2>
           </div>
 
           <AnimatePresence mode="wait">

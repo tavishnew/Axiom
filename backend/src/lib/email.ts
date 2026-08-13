@@ -2,14 +2,6 @@ import { Resend } from "resend";
 import { getEnv } from "./env";
 import { logger } from "./logger";
 
-let resend: Resend | null = null;
-function getResend(): Resend | null {
-  const env = getEnv();
-  if (!env.RESEND_API_KEY) return null;
-  if (!resend) resend = new Resend(env.RESEND_API_KEY);
-  return resend;
-}
-
 export interface InvitationEmailParams {
   to: string;
   inviterName: string;
@@ -19,111 +11,199 @@ export interface InvitationEmailParams {
   expiresAt: Date;
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, '"')
-    .replace(/'/g, "'");
+export interface PasswordResetEmailParams {
+  to: string;
+  recipientName: string;
+  resetUrl: string;
+  expiresAt: Date;
 }
 
-function formatExpiry(d: Date): string {
-  return d.toLocaleDateString("en-US", {
+export type EmailResult = {
+  delivered: boolean;
+  status: "sent" | "failed" | "not_configured";
+  providerMessageId?: string;
+  reason?: string;
+};
+
+export function toPersistedDeliveryStatus(status: EmailResult["status"]): "pending" | "sent" | "failed" | "configuration_error" {
+  switch (status) {
+    case "sent":
+      return "sent";
+    case "failed":
+      return "failed";
+    case "not_configured":
+      return "configuration_error";
+    default:
+      return "pending";
+  }
+}
+
+let resendClient: Resend | null | undefined;
+
+function getResendClient(): Resend | null {
+  if (resendClient !== undefined) return resendClient;
+
+  const env = getEnv();
+  if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) {
+    resendClient = null;
+    return resendClient;
+  }
+
+  resendClient = new Resend(env.RESEND_API_KEY);
+  return resendClient;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatExpiry(value: Date): string {
+  return value.toLocaleString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
   });
 }
 
-const TAG_END = "</";
-
-function buildInvitationHtml(p: InvitationEmailParams): string {
-  const inviter = escapeHtml(p.inviterName);
-  const ws = escapeHtml(p.workspaceName);
-  const role = escapeHtml(p.role);
-  const url = escapeHtml(p.acceptUrl);
-  const exp = escapeHtml(formatExpiry(p.expiresAt));
-  const title = "You're invited to join " + ws;
-  const introLine1 =
-    "<strong>" + inviter + TAG_END + "strong> has invited you to collaborate on " +
-    "<strong>" + ws + TAG_END + "strong> as a <strong>" + role + TAG_END + "strong>.";
-  const button =
-    "<a href=\"" + url + "\" style=\"display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:8px;\">Accept Invitation</a>";
-  const expiryNote =
-    "This invitation expires on <strong>" + exp + TAG_END + "strong> and can only be used once. " +
-    "If the button doesn't work, copy this link into your browser:";
-  const tabs = TAG_END + "td" + ">" + TAG_END + "tr" + ">";
-  const closeStyle = TAG_END + "td" + ">";
-  return [
-    "<!doctype html>",
-    "<html><body style=\"margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f8fafc;padding:32px 16px;color:#0f172a;\">",
-    "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;\">",
-    "<tr><td style=\"padding:32px 32px 16px 32px;\">",
-    "<h1 style=\"margin:0;font-size:20px;font-weight:600;color:#0f172a;\">" + title + "</h1>",
-    "<p style=\"margin:16px 0 0 0;font-size:15px;line-height:1.55;color:#334155;\">" + introLine1 + TAG_END + "p>",
-    "<p style=\"margin:24px 0 0 0;text-align:center;\">" + button + TAG_END + "p>",
-    "<p style=\"margin:24px 0 0 0;font-size:13px;color:#64748b;line-height:1.55;\">" + expiryNote + TAG_END + "p>",
-    "<p style=\"margin:8px 0 0 0;font-size:12px;word-break:break-all;color:#94a3b8;\">" + url + TAG_END + "p>",
-    closeStyle + tabs,
-    "<tr><td style=\"padding:16px 32px 32px 32px;border-top:1px solid #e2e8f0;\">",
-    "<p style=\"margin:0;font-size:12px;color:#94a3b8;\">If you didn't expect this invitation you can safely ignore this email</p>",
-    TAG_END + "td" + ">" + TAG_END + "tr" + ">",
-    TAG_END + "table" + ">" + TAG_END + "body" + ">" + TAG_END + "html" + ">",
-  ].join("");
+function buildEmailShell(title: string, body: string): string {
+  return `<!doctype html>
+<html lang="en">
+  <body style="margin:0;background:#f8fafc;padding:32px 16px;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+    <main style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:32px;">
+      <h1 style="margin:0 0 16px;font-size:22px;line-height:1.25;">${title}</h1>
+      ${body}
+    </main>
+  </body>
+</html>`;
 }
 
-function buildInvitationText(p: InvitationEmailParams): string {
+function buildActionButton(label: string, url: string): string {
+  return `<p style="margin:24px 0;text-align:center;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:8px;">${escapeHtml(label)}</a></p>`;
+}
+
+function buildInvitationHtml(params: InvitationEmailParams): string {
+  const inviter = escapeHtml(params.inviterName);
+  const workspace = escapeHtml(params.workspaceName);
+  const role = escapeHtml(params.role);
+  const acceptUrl = escapeHtml(params.acceptUrl);
+  const expiry = escapeHtml(formatExpiry(params.expiresAt));
+
+  return buildEmailShell(
+    `You are invited to join ${workspace}`,
+    `<p style="margin:0;font-size:15px;line-height:1.6;"><strong>${inviter}</strong> has invited you to collaborate in <strong>${workspace}</strong> as a <strong>${role}</strong>.</p>
+     ${buildActionButton("Accept invitation", params.acceptUrl)}
+     <p style="margin:0;font-size:13px;line-height:1.6;color:#64748b;">This invitation expires on <strong>${expiry}</strong> and can only be used once. If the button does not work, copy this link into your browser:</p>
+     <p style="margin:8px 0 0;word-break:break-all;font-size:12px;color:#64748b;">${acceptUrl}</p>
+     <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;">If you were not expecting this invitation, you can safely ignore this email.</p>`,
+  );
+}
+
+function buildInvitationText(params: InvitationEmailParams): string {
   return [
-    "You're invited to join " + p.workspaceName,
+    `You are invited to join ${params.workspaceName}`,
     "",
-    p.inviterName + ' has invited you to collaborate on "' + p.workspaceName + '" as a ' + p.role + '.',
+    `${params.inviterName} has invited you to collaborate in ${params.workspaceName} as a ${params.role}.`,
     "",
     "Accept the invitation:",
-    p.acceptUrl,
+    params.acceptUrl,
     "",
-    "This invitation expires on " + formatExpiry(p.expiresAt) + " and can only be used once.",
+    `This invitation expires on ${formatExpiry(params.expiresAt)} and can only be used once.`,
     "",
-    "If you didn't expect this invitation you can safely ignore this email.",
+    "If you were not expecting this invitation, you can safely ignore this email.",
   ].join("\n");
 }
 
-export async function sendInvitationEmail(
-  params: InvitationEmailParams,
-): Promise<{ delivered: boolean; reason?: string }> {
-  const env = getEnv();
-  const client = getResend();
-  const from = env.RESEND_FROM_EMAIL || "noreply@axiom.local";
-  const subject = "You're invited to join " + params.workspaceName;
+function buildPasswordResetHtml(params: PasswordResetEmailParams): string {
+  const recipientName = escapeHtml(params.recipientName);
+  const resetUrl = escapeHtml(params.resetUrl);
+  const expiry = escapeHtml(formatExpiry(params.expiresAt));
 
-  if (!client) {
-    logger.info(
-      { to: params.to, subject, acceptUrl: params.acceptUrl, workspace: params.workspaceName, role: params.role },
-      "[invitation email - RESEND_API_KEY not set, not delivered]",
-    );
-    return { delivered: false, reason: "RESEND_API_KEY not configured" };
+  return buildEmailShell(
+    "Reset your Axiom password",
+    `<p style="margin:0;font-size:15px;line-height:1.6;">Hello ${recipientName},</p>
+     <p style="font-size:15px;line-height:1.6;">We received a request to reset your Axiom password. Use the link below to choose a new password.</p>
+     ${buildActionButton("Reset password", params.resetUrl)}
+     <p style="margin:0;font-size:13px;line-height:1.6;color:#64748b;">This link expires on <strong>${expiry}</strong> and can only be used once. If the button does not work, copy this link into your browser:</p>
+     <p style="margin:8px 0 0;word-break:break-all;font-size:12px;color:#64748b;">${resetUrl}</p>
+     <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;">If you did not request a password reset, you can safely ignore this email. Your password will not change.</p>`,
+  );
+}
+
+function buildPasswordResetText(params: PasswordResetEmailParams): string {
+  return [
+    "Reset your Axiom password",
+    "",
+    `Hello ${params.recipientName},`,
+    "",
+    "We received a request to reset your Axiom password. Use the link below to choose a new password:",
+    params.resetUrl,
+    "",
+    `This link expires on ${formatExpiry(params.expiresAt)} and can only be used once.`,
+    "",
+    "If you did not request a password reset, you can safely ignore this email.",
+  ].join("\n");
+}
+
+async function sendMail(input: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<EmailResult> {
+  const env = getEnv();
+  const client = getResendClient();
+
+  if (!client || !env.RESEND_FROM_EMAIL) {
+    logger.warn({ to: input.to, subject: input.subject }, "Email delivery is not configured");
+    return { delivered: false, status: "not_configured", reason: "Email delivery is not configured" };
   }
 
   try {
-    const result = await client.emails.send({
-      from,
-      to: params.to,
-      subject,
-      html: buildInvitationHtml(params),
-      text: buildInvitationText(params),
+    const { data, error } = await client.emails.send({
+      from: env.RESEND_FROM_EMAIL,
+      to: [input.to],
+      subject: input.subject,
+      html: input.html,
+      text: input.text,
     });
-    if ((result as { error?: unknown }).error) {
-      const msg = String(
-        (result as { error?: { message?: string } }).error?.message || "Resend rejected send",
-      );
-      logger.error({ to: params.to, error: msg }, "Invitation email failed");
-      return { delivered: false, reason: msg };
+
+    if (error || !data?.id) {
+      const reason = error?.message || "Resend did not return a delivery identifier";
+      logger.error({ to: input.to, error: reason }, "Resend delivery failed");
+      return { delivered: false, status: "failed", reason };
     }
-    return { delivered: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown Resend error";
-    logger.error({ to: params.to, error: msg }, "Invitation email threw");
-    return { delivered: false, reason: msg };
+
+    return { delivered: true, status: "sent", providerMessageId: data.id };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unknown Resend error";
+    logger.error({ to: input.to, error: reason }, "Resend delivery failed");
+    return { delivered: false, status: "failed", reason };
   }
+}
+
+export function sendInvitationEmail(params: InvitationEmailParams): Promise<EmailResult> {
+  return sendMail({
+    to: params.to,
+    subject: `You are invited to join ${params.workspaceName}`,
+    html: buildInvitationHtml(params),
+    text: buildInvitationText(params),
+  });
+}
+
+export function sendPasswordResetEmail(params: PasswordResetEmailParams): Promise<EmailResult> {
+  return sendMail({
+    to: params.to,
+    subject: "Reset your Axiom password",
+    html: buildPasswordResetHtml(params),
+    text: buildPasswordResetText(params),
+  });
 }

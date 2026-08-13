@@ -83,14 +83,14 @@ export default function DecisionsPage() {
   const hasFilters = search || outcomeFilter || entityFilter || timeFilter;
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink">Decisions</h1>
           <p className="mt-0.5 text-sm text-muted">View and analyze authorization decisions</p>
         </div>
-        <Button variant="outline" className="gap-2" onClick={() => toast.info('Export coming soon')}>
+        <Button variant="outline" className="w-full gap-2 sm:w-auto" onClick={() => toast.info('Export coming soon')}>
           <Download className="h-4 w-4" />
           Export
         </Button>
@@ -176,7 +176,7 @@ export default function DecisionsPage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="min-w-[680px] w-full">
                 <thead>
                   <tr className="border-b border-border bg-surface-2">
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted cursor-pointer hover:text-ink" onClick={() => handleSort('createdAt')}>
@@ -255,11 +255,11 @@ export default function DecisionsPage() {
             </div>
 
             {/* Pagination */}
-            <div className="border-t border-border px-4 py-3 flex items-center justify-between">
+            <div className="flex flex-col gap-3 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-muted">
                 Showing {((pagination.page - 1) * pagination.limit) + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} decisions
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -269,7 +269,7 @@ export default function DecisionsPage() {
                   <ChevronLeft className="h-3 w-3" />
                   Previous
                 </Button>
-                <span className="flex items-center px-3 text-xs text-muted">
+                <span className="order-first flex w-full items-center text-xs text-muted sm:order-none sm:w-auto sm:px-3">
                   Page {pagination.page} of {pagination.totalPages || 1}
                 </span>
                 <Button

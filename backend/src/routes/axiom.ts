@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { db } from "@workspace/db";
 import {
   organizationsTable,
+  auditLogsTable,
   policiesTable,
   entitiesTable,
   resourcesTable,
@@ -13,6 +14,7 @@ import {
   policyAssignmentsTable,
   policyVersionsTable,
   invitationsTable,
+  verificationsTable,
   insertPolicySchema,
   insertEntitySchema,
   insertResourceSchema,
@@ -24,11 +26,15 @@ import {
   insertInvitationSchema,
 } from "@workspace/db/schema";
 import { eq, desc, and, or, isNull, inArray, sql, count as drizzleCount, like, ilike, asc } from "drizzle-orm";
-import { randomUUID, createHash } from "crypto";
+import { randomUUID, createHash, randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import type { Policy, Entity, Resource, ApiKey } from "@workspace/db/schema";
+import { logAuditEvent } from "../lib/audit";
+import { sendPasswordResetEmail } from "../lib/email";
+import { getEnv } from "../lib/env";
+import { logger } from "../lib/logger";
 
 // Stripe (lazy-load to avoid build issues if not configured)
 let stripe: any = null;
@@ -49,6 +55,14 @@ function getPagination(req: Request) {
   const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(req.query.limit as string) || DEFAULT_LIMIT));
   const offset = (page - 1) * limit;
   return { page, limit, offset };
+}
+
+function getSafeErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== "object") return undefined;
+
+  const candidate = error as { code?: unknown; cause?: { code?: unknown } };
+  const code = candidate.cause?.code ?? candidate.code;
+  return typeof code === "string" ? code : undefined;
 }
 
 function getSearchTerm(req: Request): string | undefined {
@@ -112,6 +126,7 @@ interface AuthUser {
   email: string;
   name: string;
   organizationId: string;
+  role: string;
 }
 
 declare global {
@@ -144,7 +159,7 @@ async function requireAuth(req: Request, res: Response, next: NextFunction): Pro
     const [user] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.id, session.userId))
+      .where(and(eq(usersTable.id, session.userId), isNull(usersTable.deletedAt)))
       .limit(1);
 
     if (!user || !user.organizationId) {
@@ -157,11 +172,36 @@ async function requireAuth(req: Request, res: Response, next: NextFunction): Pro
       email: user.email,
       name: user.name,
       organizationId: user.organizationId,
+      role: user.role,
     };
     next();
   } catch (error) {
     res.status(500).json({ error: { message: "Auth check failed" } });
   }
+}
+
+function requireOwner(req: Request, res: Response, next: NextFunction): void {
+  if (req.user?.role !== "owner") {
+    res.status(403).json({ error: { message: "Only organization owners can access audit logs" } });
+    return;
+  }
+  next();
+}
+
+function requireTeamManager(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user || !["owner", "admin"].includes(req.user.role)) {
+    res.status(403).json({ error: { message: "Only organization owners and admins can manage members" } });
+    return;
+  }
+  next();
+}
+
+function requireWorkspaceManager(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user || !["owner", "admin"].includes(req.user.role)) {
+    res.status(403).json({ error: { message: "Only organization owners and admins can change workspace data" } });
+    return;
+  }
+  next();
 }
 
 // Helper: create session row + set cookie
@@ -206,18 +246,32 @@ const signupRateLimit = rateLimit({
 // ============================================================
 // Auth endpoints
 // ============================================================
+const signInSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  password: z.string().min(1).max(128),
+});
+
+const signUpSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  email: z.string().trim().toLowerCase().email(),
+  password: z.string().min(8).max(128),
+  // A public sign-up creates a new organization. Only its founder can be an owner;
+  // admin and member access must be issued by an existing organization's invitation.
+  role: z.enum(["owner", "admin", "member"]).optional().default("owner"),
+});
+
 router.post("/auth/sign-in", authRateLimit, async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: { message: "Email and password required" } });
+    const parsed = signInSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: { message: "Enter a valid email address and password" } });
     }
+    const { email, password } = parsed.data;
 
     const [user] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, email))
+      .where(and(eq(usersTable.email, email), isNull(usersTable.deletedAt)))
       .limit(1);
 
     if (!user || !user.passwordHash) {
@@ -231,56 +285,76 @@ router.post("/auth/sign-in", authRateLimit, async (req: Request, res: Response) 
 
     await createSession(user.id, res);
 
-    return res.json({ data: { user: { id: user.id, email: user.email, name: user.name } } });
+    return res.json({ data: { user: { id: user.id, email: user.email, name: user.name, role: user.role } } });
   } catch (error) {
+    logger.error({
+      errorName: error instanceof Error ? error.name : "UnknownError",
+      errorCode: getSafeErrorCode(error),
+    }, "Sign-in request failed");
     return res.status(500).json({ error: { message: "Internal server error" } });
   }
 });
 
 router.post("/auth/sign-up", signupRateLimit, async (req: Request, res: Response) => {
+  const parsed = signUpSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: { message: "Enter a valid name, email address, and password of at least 8 characters" } });
+  }
+
+  const { name, email, password, role } = parsed.data;
+  if (role !== "owner") {
+    return res.status(403).json({
+      error: { message: "Admins and members must join through an organization invitation. Create a workspace as an owner, or ask an owner to invite you." },
+    });
+  }
+
   try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: { message: "Name, email, and password required" } });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({ error: { message: "Password must be at least 8 characters" } });
-    }
-
     const [existing] = await db
-      .select()
+      .select({ id: usersTable.id })
       .from(usersTable)
       .where(eq(usersTable.email, email))
       .limit(1);
-
     if (existing) {
       return res.status(409).json({ error: { message: "Email already in use" } });
     }
 
-    // Create default org + user
     const orgId = randomUUID();
-    await db.insert(organizationsTable).values({
-      id: orgId,
-      name: `${name}'s Org`,
-      slug: `org-${randomUUID().slice(0, 8)}`,
-    });
-
-    const passwordHash = await bcrypt.hash(password, 12);
     const userId = randomUUID();
-    await db.insert(usersTable).values({
-      id: userId,
-      name,
-      email,
-      passwordHash,
-      organizationId: orgId,
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    await db.transaction(async (tx) => {
+      await tx.insert(organizationsTable).values({
+        id: orgId,
+        name: `${name}'s Org`,
+        slug: `org-${randomUUID().slice(0, 8)}`,
+      });
+      await tx.insert(usersTable).values({
+        id: userId,
+        name,
+        email,
+        passwordHash,
+        organizationId: orgId,
+        role: "owner",
+      });
     });
 
     await createSession(userId, res);
+    logAuditEvent({
+      organizationId: orgId,
+      actorId: userId,
+      action: "account.created",
+      targetType: "user",
+      targetId: userId,
+      metadata: { role: "owner" },
+    });
 
-    return res.json({ data: { user: { id: userId, email, name } } });
+    return res.status(201).json({ data: { user: { id: userId, email, name, role: "owner" } } });
   } catch (error) {
+    const errorCode = getSafeErrorCode(error);
+    if (errorCode === "23505") {
+      return res.status(409).json({ error: { message: "Email already in use" } });
+    }
+    logger.error({ errorName: error instanceof Error ? error.name : "UnknownError", errorCode }, "Sign-up request failed");
     return res.status(500).json({ error: { message: "Internal server error" } });
   }
 });
@@ -295,6 +369,124 @@ router.post("/auth/sign-out", async (req: Request, res: Response) => {
     return res.json({ data: null });
   } catch (error) {
     return res.status(500).json({ error: { message: "Internal server error" } });
+  }
+});
+
+const forgotPasswordSchema = z.object({ email: z.string().trim().email() });
+const resetPasswordSchema = z.object({ token: z.string().min(32), newPassword: z.string().min(8) });
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+function passwordResetIdentifier(userId: string): string {
+  return `password-reset:${userId}`;
+}
+
+function buildResetPasswordUrl(token: string): string {
+  const env = getEnv();
+  const baseUrl = env.PASSWORD_RESET_BASE_URL || env.FRONTEND_URL || "http://localhost:3002";
+  return `${baseUrl.replace(/\/$/, "")}/auth/reset-password?token=${encodeURIComponent(token)}`;
+}
+
+router.post("/auth/forgot-password", authRateLimit, async (req: Request, res: Response) => {
+  const parsed = forgotPasswordSchema.safeParse(req.body);
+  const genericResponse = { data: { message: "If an active account exists for that email address, a reset link has been sent." } };
+  if (!parsed.success) return res.json(genericResponse);
+
+  try {
+    const [user] = await db
+      .select({ id: usersTable.id, email: usersTable.email, name: usersTable.name })
+      .from(usersTable)
+      .where(and(eq(usersTable.email, parsed.data.email), isNull(usersTable.deletedAt)))
+      .limit(1);
+    if (!user) return res.json(genericResponse);
+
+    const token = randomBytes(32).toString("base64url");
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+    const identifier = passwordResetIdentifier(user.id);
+
+    await db.transaction(async (tx) => {
+      await tx.delete(verificationsTable).where(eq(verificationsTable.identifier, identifier));
+      await tx.insert(verificationsTable).values({
+        id: randomUUID(),
+        identifier,
+        value: tokenHash,
+        expiresAt,
+      });
+    });
+
+    void sendPasswordResetEmail({
+      to: user.email,
+      recipientName: user.name,
+      resetUrl: buildResetPasswordUrl(token),
+      expiresAt,
+    }).then((result) => {
+      if (!result.delivered) {
+        logger.warn({ userId: user.id, reason: result.reason }, "Password reset email was not delivered");
+      }
+    });
+  } catch (error) {
+    logger.error({ error }, "Password reset request failed");
+  }
+  return res.json(genericResponse);
+});
+
+router.post("/auth/reset-password", authRateLimit, async (req: Request, res: Response) => {
+  const parsed = resetPasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: { message: "A valid reset token and a password of at least 8 characters are required" } });
+  }
+
+  try {
+    const tokenHash = createHash("sha256").update(parsed.data.token).digest("hex");
+    const [verification] = await db
+      .select()
+      .from(verificationsTable)
+      .where(and(eq(verificationsTable.value, tokenHash), sql`${verificationsTable.expiresAt} > NOW()`))
+      .limit(1);
+    if (!verification || !verification.identifier.startsWith("password-reset:")) {
+      return res.status(400).json({ error: { message: "This password reset link is invalid or has expired" } });
+    }
+
+    const userId = verification.identifier.slice("password-reset:".length);
+    const [user] = await db
+      .select({ id: usersTable.id, organizationId: usersTable.organizationId })
+      .from(usersTable)
+      .where(and(eq(usersTable.id, userId), isNull(usersTable.deletedAt)))
+      .limit(1);
+    if (!user) {
+      await db.delete(verificationsTable).where(eq(verificationsTable.id, verification.id));
+      return res.status(400).json({ error: { message: "This password reset link is invalid or has expired" } });
+    }
+
+    const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
+    const now = new Date();
+    const consumed = await db.transaction(async (tx) => {
+      const [deleted] = await tx
+        .delete(verificationsTable)
+        .where(and(eq(verificationsTable.id, verification.id), eq(verificationsTable.value, tokenHash)))
+        .returning({ id: verificationsTable.id });
+      if (!deleted) return false;
+      await tx.update(usersTable).set({ passwordHash, updatedAt: now }).where(eq(usersTable.id, user.id));
+      await tx.delete(sessionsTable).where(eq(sessionsTable.userId, user.id));
+      return true;
+    });
+    if (!consumed) {
+      return res.status(400).json({ error: { message: "This password reset link is invalid or has expired" } });
+    }
+
+    if (user.organizationId) {
+      logAuditEvent({
+        organizationId: user.organizationId,
+        actorId: user.id,
+        action: "account.password_reset",
+        targetType: "user",
+        targetId: user.id,
+      });
+    }
+    return res.json({ success: true });
+  } catch (error) {
+    logger.error({ error }, "Password reset failed");
+    return res.status(500).json({ error: { message: "Unable to reset password" } });
   }
 });
 
@@ -321,14 +513,16 @@ router.get("/auth/session", async (req: Request, res: Response) => {
     const [user] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.id, session.userId))
+      .where(and(eq(usersTable.id, session.userId), isNull(usersTable.deletedAt)))
       .limit(1);
 
     if (!user) {
+      await db.delete(sessionsTable).where(eq(sessionsTable.id, session.id));
+      res.clearCookie("session_token");
       return res.json({ data: null });
     }
 
-    return res.json({ data: { user: { id: user.id, email: user.email, name: user.name } } });
+    return res.json({ data: { user: { id: user.id, email: user.email, name: user.name, role: user.role } } });
   } catch (error) {
     return res.status(500).json({ error: { message: "Internal server error" } });
   }
@@ -337,6 +531,53 @@ router.get("/auth/session", async (req: Request, res: Response) => {
 // ============================================================
 // User Profile & Auth (auth-protected)
 // ============================================================
+router.delete("/account", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const organizationId = req.user!.organizationId;
+    const now = new Date();
+
+    if (req.user!.role === "owner") {
+      const [{ value: ownerCount }] = await db
+        .select({ value: drizzleCount() })
+        .from(usersTable)
+        .where(and(
+          eq(usersTable.organizationId, organizationId),
+          eq(usersTable.role, "owner"),
+          isNull(usersTable.deletedAt),
+        ));
+      if (Number(ownerCount) <= 1) {
+        return res.status(409).json({ error: { message: "Transfer organization ownership before deleting the last owner account" } });
+      }
+    }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(usersTable)
+        .set({ deletedAt: now, updatedAt: now })
+        .where(and(eq(usersTable.id, userId), isNull(usersTable.deletedAt)));
+      await tx.delete(sessionsTable).where(eq(sessionsTable.userId, userId));
+      await tx
+        .update(apiKeysTable)
+        .set({ revokedAt: now, updatedAt: now })
+        .where(and(eq(apiKeysTable.createdById, userId), isNull(apiKeysTable.revokedAt)));
+    });
+
+    logAuditEvent({
+      organizationId,
+      actorId: userId,
+      action: "account.deleted",
+      targetType: "user",
+      targetId: userId,
+      metadata: { softDeleted: true },
+    });
+    res.clearCookie("session_token");
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: { message: "Unable to delete account" } });
+  }
+});
+
 router.get("/auth/profile", requireAuth, async (req: Request, res: Response) => {
   try {
     const [user] = await db
@@ -439,13 +680,76 @@ router.get("/organizations/:id", requireAuth, async (req: Request, res: Response
   return res.json(org);
 });
 
-router.patch("/organizations/:id", requireAuth, async (req: Request, res: Response) => {
+router.get("/audit-logs", requireAuth, requireOwner, async (req: Request, res: Response) => {
+  const { page, limit, offset } = getPagination(req);
+  const action = typeof req.query.action === "string" ? req.query.action : undefined;
+  const actorId = typeof req.query.actorId === "string" ? req.query.actorId : undefined;
+  const targetType = typeof req.query.targetType === "string" ? req.query.targetType : undefined;
+
+  const conditions = [eq(auditLogsTable.organizationId, req.user!.organizationId)];
+  if (action) conditions.push(eq(auditLogsTable.action, action));
+  if (actorId) conditions.push(eq(auditLogsTable.actorId, actorId));
+  if (targetType) conditions.push(eq(auditLogsTable.targetType, targetType));
+
+  const baseQuery = db
+    .select({
+      log: auditLogsTable,
+      actorName: usersTable.name,
+      actorEmail: usersTable.email,
+    })
+    .from(auditLogsTable)
+    .leftJoin(usersTable, eq(auditLogsTable.actorId, usersTable.id))
+    .where(and(...conditions))
+    .orderBy(desc(auditLogsTable.createdAt));
+  const countQuery = db
+    .select({ value: drizzleCount() })
+    .from(auditLogsTable)
+    .where(and(...conditions));
+
+  const [rows, [{ value: total }]] = await Promise.all([
+    baseQuery.limit(limit).offset(offset),
+    countQuery,
+  ]);
+  const totalItems = Number(total);
+  const totalPages = Math.ceil(totalItems / limit);
+
+  return res.json({
+    data: rows.map(({ log, actorName, actorEmail }) => ({
+      id: log.id,
+      actorId: log.actorId,
+      actor: { id: log.actorId, name: actorName, email: actorEmail },
+      action: log.action,
+      targetType: log.targetType,
+      targetId: log.targetId,
+      metadata: log.metadata,
+      createdAt: log.createdAt.toISOString(),
+    })),
+    pagination: {
+      page,
+      limit,
+      total: totalItems,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    },
+  });
+});
+
+router.patch("/organizations/:id", requireAuth, requireOwner, async (req: Request, res: Response) => {
   if (req.params.id !== req.user!.organizationId) {
     return res.status(403).json({ error: "Access denied" });
   }
   const parsed = updateOrganizationSchema.parse(req.body);
   const [org] = await db.update(organizationsTable).set(parsed).where(eq(organizationsTable.id, req.params.id)).returning();
   if (!org) return res.status(404).json({ error: "Not found" });
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "organization.updated",
+    targetType: "organization",
+    targetId: org.id,
+    metadata: { changedFields: Object.keys(parsed) },
+  });
   return res.json(org);
 });
 
@@ -489,16 +793,24 @@ router.get("/policies/:id", requireAuth, async (req: Request, res: Response) => 
   return res.json(policy);
 });
 
-router.post("/policies", requireAuth, async (req: Request, res: Response) => {
+router.post("/policies", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const parsed = createPolicySchema.parse(req.body);
   const [policy] = await db.insert(policiesTable).values({
     ...parsed,
     organizationId: req.user!.organizationId,
   }).returning();
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "policy.created",
+    targetType: "policy",
+    targetId: policy.id,
+    metadata: { name: policy.name, effect: policy.effect, priority: policy.priority },
+  });
   return res.json(policy);
 });
 
-router.patch("/policies/:id", requireAuth, async (req: Request, res: Response) => {
+router.patch("/policies/:id", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const parsed = updatePolicySchema.parse(req.body);
   const id = req.params.id as string;
 
@@ -524,10 +836,18 @@ router.patch("/policies/:id", requireAuth, async (req: Request, res: Response) =
     .set({ ...parsed, version: current.version + 1 })
     .where(and(eq(policiesTable.id, id), eq(policiesTable.organizationId, req.user!.organizationId)))
     .returning();
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "policy.updated",
+    targetType: "policy",
+    targetId: policy.id,
+    metadata: { changedFields: Object.keys(parsed), version: policy.version },
+  });
   return res.json(policy);
 });
 
-router.delete("/policies/:id", requireAuth, async (req: Request, res: Response) => {
+router.delete("/policies/:id", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const [policy] = await db
@@ -535,6 +855,14 @@ router.delete("/policies/:id", requireAuth, async (req: Request, res: Response) 
       .where(and(eq(policiesTable.id, id), eq(policiesTable.organizationId, req.user!.organizationId)))
       .returning();
     if (!policy) return res.status(404).json({ error: "Not found" });
+    logAuditEvent({
+      organizationId: req.user!.organizationId,
+      actorId: req.user!.id,
+      action: "policy.deleted",
+      targetType: "policy",
+      targetId: policy.id,
+      metadata: { name: policy.name },
+    });
     return res.json({ success: true });
   } catch (error: any) {
     if (error.code === "23503") {
@@ -547,6 +875,13 @@ router.delete("/policies/:id", requireAuth, async (req: Request, res: Response) 
 // Policy versions
 router.get("/policies/:id/versions", requireAuth, async (req: Request, res: Response) => {
   const policyId = req.params.id as string;
+  const [policy] = await db
+    .select({ id: policiesTable.id })
+    .from(policiesTable)
+    .where(and(eq(policiesTable.id, policyId), eq(policiesTable.organizationId, req.user!.organizationId)))
+    .limit(1);
+  if (!policy) return res.status(404).json({ error: "Not found" });
+
   const versions = await db
     .select()
     .from(policyVersionsTable)
@@ -589,7 +924,7 @@ router.get("/entities/:id", requireAuth, async (req: Request, res: Response) => 
   return res.json(entity);
 });
 
-router.patch("/entities/:id", requireAuth, async (req: Request, res: Response) => {
+router.patch("/entities/:id", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const parsed = updateEntitySchema.parse(req.body);
   const id = req.params.id as string;
   const [entity] = await db
@@ -598,25 +933,49 @@ router.patch("/entities/:id", requireAuth, async (req: Request, res: Response) =
     .where(and(eq(entitiesTable.id, id), eq(entitiesTable.organizationId, req.user!.organizationId)))
     .returning();
   if (!entity) return res.status(404).json({ error: "Not found" });
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "entity.updated",
+    targetType: "entity",
+    targetId: entity.id,
+    metadata: { changedFields: Object.keys(parsed) },
+  });
   return res.json(entity);
 });
 
-router.delete("/entities/:id", requireAuth, async (req: Request, res: Response) => {
+router.delete("/entities/:id", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const [entity] = await db
     .delete(entitiesTable)
     .where(and(eq(entitiesTable.id, id), eq(entitiesTable.organizationId, req.user!.organizationId)))
     .returning();
   if (!entity) return res.status(404).json({ error: "Not found" });
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "entity.deleted",
+    targetType: "entity",
+    targetId: entity.id,
+    metadata: { externalId: entity.externalId, type: entity.type },
+  });
   return res.json({ success: true });
 });
 
-router.post("/entities", requireAuth, async (req: Request, res: Response) => {
+router.post("/entities", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const parsed = createEntitySchema.parse(req.body);
   const [entity] = await db.insert(entitiesTable).values({
     ...parsed,
     organizationId: req.user!.organizationId,
   }).returning();
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "entity.created",
+    targetType: "entity",
+    targetId: entity.id,
+    metadata: { externalId: entity.externalId, type: entity.type },
+  });
   return res.status(201).json(entity);
 });
 
@@ -654,7 +1013,7 @@ router.get("/resources/:id", requireAuth, async (req: Request, res: Response) =>
   return res.json(resource);
 });
 
-router.patch("/resources/:id", requireAuth, async (req: Request, res: Response) => {
+router.patch("/resources/:id", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const parsed = updateResourceSchema.parse(req.body);
   const id = req.params.id as string;
   const [resource] = await db
@@ -663,25 +1022,49 @@ router.patch("/resources/:id", requireAuth, async (req: Request, res: Response) 
     .where(and(eq(resourcesTable.id, id), eq(resourcesTable.organizationId, req.user!.organizationId)))
     .returning();
   if (!resource) return res.status(404).json({ error: "Not found" });
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "resource.updated",
+    targetType: "resource",
+    targetId: resource.id,
+    metadata: { changedFields: Object.keys(parsed) },
+  });
   return res.json(resource);
 });
 
-router.delete("/resources/:id", requireAuth, async (req: Request, res: Response) => {
+router.delete("/resources/:id", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const [resource] = await db
     .delete(resourcesTable)
     .where(and(eq(resourcesTable.id, id), eq(resourcesTable.organizationId, req.user!.organizationId)))
     .returning();
   if (!resource) return res.status(404).json({ error: "Not found" });
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "resource.deleted",
+    targetType: "resource",
+    targetId: resource.id,
+    metadata: { name: resource.name, type: resource.type },
+  });
   return res.json({ success: true });
 });
 
-router.post("/resources", requireAuth, async (req: Request, res: Response) => {
+router.post("/resources", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const parsed = createResourceSchema.parse(req.body);
   const [resource] = await db.insert(resourcesTable).values({
     ...parsed,
     organizationId: req.user!.organizationId,
   }).returning();
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "resource.created",
+    targetType: "resource",
+    targetId: resource.id,
+    metadata: { name: resource.name, type: resource.type },
+  });
   return res.status(201).json(resource);
 });
 
@@ -922,7 +1305,7 @@ router.post("/decisions/evaluate", requireAuth, async (req: Request, res: Respon
 // ============================================================
 // API Keys (auth-protected, tenant-scoped)
 // ============================================================
-router.get("/api-keys", requireAuth, async (req: Request, res: Response) => {
+router.get("/api-keys", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const { page, limit, offset } = getPagination(req);
   const search = getSearchTerm(req);
   const includeRevoked = req.query.includeRevoked === "true";
@@ -942,7 +1325,7 @@ router.get("/api-keys", requireAuth, async (req: Request, res: Response) => {
   return res.json(result);
 });
 
-router.post("/api-keys", requireAuth, async (req: Request, res: Response) => {
+router.post("/api-keys", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const parsed = createApiKeySchema.parse(req.body);
   const rawKey = `ak_${randomUUID()}`;
   const hashedKey = createHash("sha256").update(rawKey).digest("hex");
@@ -952,12 +1335,21 @@ router.post("/api-keys", requireAuth, async (req: Request, res: Response) => {
     hashedKey,
     prefix,
     organizationId: req.user!.organizationId,
+    createdById: req.user!.id,
   }).returning();
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "api_key.created",
+    targetType: "api_key",
+    targetId: key.id,
+    metadata: { name: key.name, prefix: key.prefix },
+  });
   // Return the raw key only once (on creation)
   return res.status(201).json({ ...key, key: rawKey });
 });
 
-router.get("/api-keys/:id", requireAuth, async (req: Request, res: Response) => {
+router.get("/api-keys/:id", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const [key] = await db
     .select()
@@ -968,7 +1360,7 @@ router.get("/api-keys/:id", requireAuth, async (req: Request, res: Response) => 
   return res.json(key);
 });
 
-router.delete("/api-keys/:id", requireAuth, async (req: Request, res: Response) => {
+router.delete("/api-keys/:id", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const [key] = await db
@@ -977,6 +1369,14 @@ router.delete("/api-keys/:id", requireAuth, async (req: Request, res: Response) 
       .where(and(eq(apiKeysTable.id, id), eq(apiKeysTable.organizationId, req.user!.organizationId)))
       .returning();
     if (!key) return res.status(404).json({ error: "Not found" });
+    logAuditEvent({
+      organizationId: req.user!.organizationId,
+      actorId: req.user!.id,
+      action: "api_key.revoked",
+      targetType: "api_key",
+      targetId: key.id,
+      metadata: { name: key.name, prefix: key.prefix },
+    });
     return res.json({ success: true, revokedAt: key.revokedAt });
   } catch (error) {
     return res.status(500).json({ error: { message: "Failed to revoke API key" } });
@@ -988,29 +1388,113 @@ router.delete("/api-keys/:id", requireAuth, async (req: Request, res: Response) 
 // ============================================================
 router.get("/team", requireAuth, async (req: Request, res: Response) => {
   const orgId = req.user!.organizationId;
-  const members = await db.select().from(usersTable).where(eq(usersTable.organizationId, orgId)).orderBy(usersTable.name);
+  const members = await db
+    .select()
+    .from(usersTable)
+    .where(and(eq(usersTable.organizationId, orgId), isNull(usersTable.deletedAt)))
+    .orderBy(usersTable.name);
   return res.json(members);
 });
 
 // Team invitations now live under /api/invitations (see routes/invitations.ts).
 
-router.patch("/team/:id", requireAuth, async (req: Request, res: Response) => {
+router.patch("/team/:id", requireAuth, requireTeamManager, async (req: Request, res: Response) => {
   try {
     const memberId = req.params.id as string;
-    const { role } = req.body;
-    if (!role) return res.status(400).json({ error: { message: "Role is required" } });
-    const [member] = await db.update(usersTable).set({ role, updatedAt: new Date() }).where(and(eq(usersTable.id, memberId), eq(usersTable.organizationId, req.user!.organizationId))).returning();
-    if (!member) return res.status(404).json({ error: "Not found" });
+    const role = typeof req.body.role === "string" ? req.body.role : "";
+    if (!['owner', 'admin', 'member'].includes(role)) {
+      return res.status(400).json({ error: { message: "Role must be owner, admin, or member" } });
+    }
+    const [currentMember] = await db
+      .select()
+      .from(usersTable)
+      .where(and(
+        eq(usersTable.id, memberId),
+        eq(usersTable.organizationId, req.user!.organizationId),
+        isNull(usersTable.deletedAt),
+      ))
+      .limit(1);
+    if (!currentMember) return res.status(404).json({ error: "Not found" });
+    if (req.user!.role !== "owner" && (currentMember.role === "owner" || role === "owner")) {
+      return res.status(403).json({ error: { message: "Only organization owners can change owner roles" } });
+    }
+    if (currentMember.role === "owner" && role !== "owner") {
+      const [{ value: ownerCount }] = await db
+        .select({ value: drizzleCount() })
+        .from(usersTable)
+        .where(and(
+          eq(usersTable.organizationId, req.user!.organizationId),
+          eq(usersTable.role, "owner"),
+          isNull(usersTable.deletedAt),
+        ));
+      if (Number(ownerCount) <= 1) {
+        return res.status(409).json({ error: { message: "Transfer ownership before changing the last owner’s role" } });
+      }
+    }
+    const [member] = await db
+      .update(usersTable)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(usersTable.id, memberId))
+      .returning();
+    logAuditEvent({
+      organizationId: req.user!.organizationId,
+      actorId: req.user!.id,
+      action: "member.role_updated",
+      targetType: "member",
+      targetId: member.id,
+      metadata: { email: member.email, role: member.role },
+    });
     return res.json(member);
   } catch (err: any) {
     return res.status(400).json({ error: { message: err.message || "Invalid request" } });
   }
 });
 
-router.delete("/team/:id", requireAuth, async (req: Request, res: Response) => {
+router.delete("/team/:id", requireAuth, requireTeamManager, async (req: Request, res: Response) => {
   const memberId = req.params.id as string;
-  const [member] = await db.delete(usersTable).where(and(eq(usersTable.id, memberId), eq(usersTable.organizationId, req.user!.organizationId))).returning();
+  if (memberId === req.user!.id) {
+    return res.status(400).json({ error: { message: "Use account deletion to remove your own account" } });
+  }
+  const [member] = await db
+    .select()
+    .from(usersTable)
+    .where(and(
+      eq(usersTable.id, memberId),
+      eq(usersTable.organizationId, req.user!.organizationId),
+      isNull(usersTable.deletedAt),
+    ))
+    .limit(1);
   if (!member) return res.status(404).json({ error: "Not found" });
+  if (req.user!.role !== "owner" && member.role === "owner") {
+    return res.status(403).json({ error: { message: "Only organization owners can remove an owner" } });
+  }
+  if (member.role === "owner") {
+    const [{ value: ownerCount }] = await db
+      .select({ value: drizzleCount() })
+      .from(usersTable)
+      .where(and(
+        eq(usersTable.organizationId, req.user!.organizationId),
+        eq(usersTable.role, "owner"),
+        isNull(usersTable.deletedAt),
+      ));
+    if (Number(ownerCount) <= 1) {
+      return res.status(409).json({ error: { message: "Transfer ownership before removing the last owner" } });
+    }
+  }
+  await db.transaction(async (tx) => {
+    await tx.delete(sessionsTable).where(eq(sessionsTable.userId, member.id));
+    await tx.update(apiKeysTable).set({ revokedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(apiKeysTable.createdById, member.id), isNull(apiKeysTable.revokedAt)));
+    await tx.delete(usersTable).where(eq(usersTable.id, member.id));
+  });
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "member.removed",
+    targetType: "member",
+    targetId: member.id,
+    metadata: { email: member.email, role: member.role },
+  });
   return res.json({ success: true });
 });
 
@@ -1102,8 +1586,20 @@ router.post("/v1/evaluate", async (req: Request, res: Response) => {
 // ============================================================
 // Policy Assignments (auth-protected, tenant-scoped)
 // ============================================================
+async function requireOrganizationEntity(entityId: string, organizationId: string) {
+  const [entity] = await db
+    .select({ id: entitiesTable.id })
+    .from(entitiesTable)
+    .where(and(eq(entitiesTable.id, entityId), eq(entitiesTable.organizationId, organizationId)))
+    .limit(1);
+  return entity;
+}
+
 router.get("/entities/:id/policies", requireAuth, async (req: Request, res: Response) => {
   const entityId = req.params.id as string;
+  const entity = await requireOrganizationEntity(entityId, req.user!.organizationId);
+  if (!entity) return res.status(404).json({ error: "Not found" });
+
   const assignments = await db
     .select()
     .from(policyAssignmentsTable)
@@ -1111,21 +1607,23 @@ router.get("/entities/:id/policies", requireAuth, async (req: Request, res: Resp
   return res.json(assignments);
 });
 
-router.post("/entities/:id/policies", requireAuth, async (req: Request, res: Response) => {
+router.post("/entities/:id/policies", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const { policyId } = req.body;
   const entityId = req.params.id as string;
-  if (!policyId) {
+  if (typeof policyId !== "string" || !policyId) {
     return res.status(400).json({ error: "policyId is required" });
   }
 
-  // Verify policy belongs to user's org
-  const [policy] = await db
-    .select()
-    .from(policiesTable)
-    .where(and(eq(policiesTable.id, policyId), eq(policiesTable.organizationId, req.user!.organizationId)))
-    .limit(1);
-  if (!policy) {
-    return res.status(404).json({ error: "Policy not found in your organization" });
+  const [entity, policy] = await Promise.all([
+    requireOrganizationEntity(entityId, req.user!.organizationId),
+    db.select({ id: policiesTable.id })
+      .from(policiesTable)
+      .where(and(eq(policiesTable.id, policyId), eq(policiesTable.organizationId, req.user!.organizationId)))
+      .limit(1)
+      .then(([result]) => result),
+  ]);
+  if (!entity || !policy) {
+    return res.status(404).json({ error: "Entity or policy not found in your organization" });
   }
 
   const [assignment] = await db
@@ -1134,12 +1632,32 @@ router.post("/entities/:id/policies", requireAuth, async (req: Request, res: Res
     .onConflictDoNothing()
     .returning();
 
+  if (assignment) {
+    logAuditEvent({
+      organizationId: req.user!.organizationId,
+      actorId: req.user!.id,
+      action: "policy.assigned",
+      targetType: "policy_assignment",
+      targetId: assignment.id,
+      metadata: { entityId, policyId },
+    });
+  }
   return res.status(201).json(assignment || { success: true });
 });
 
-router.delete("/entities/:id/policies/:policyId", requireAuth, async (req: Request, res: Response) => {
+router.delete("/entities/:id/policies/:policyId", requireAuth, requireWorkspaceManager, async (req: Request, res: Response) => {
   const entityId = req.params.id as string;
   const policyId = req.params.policyId as string;
+  const [entity, policy] = await Promise.all([
+    requireOrganizationEntity(entityId, req.user!.organizationId),
+    db.select({ id: policiesTable.id })
+      .from(policiesTable)
+      .where(and(eq(policiesTable.id, policyId), eq(policiesTable.organizationId, req.user!.organizationId)))
+      .limit(1)
+      .then(([result]) => result),
+  ]);
+  if (!entity || !policy) return res.status(404).json({ error: "Not found" });
+
   const [assignment] = await db
     .delete(policyAssignmentsTable)
     .where(and(
@@ -1148,6 +1666,14 @@ router.delete("/entities/:id/policies/:policyId", requireAuth, async (req: Reque
     ))
     .returning();
   if (!assignment) return res.status(404).json({ error: "Assignment not found" });
+  logAuditEvent({
+    organizationId: req.user!.organizationId,
+    actorId: req.user!.id,
+    action: "policy.unassigned",
+    targetType: "policy_assignment",
+    targetId: assignment.id,
+    metadata: { entityId, policyId },
+  });
   return res.json({ success: true });
 });
 
@@ -1160,7 +1686,7 @@ const createCheckoutSchema = z.object({
   cancelUrl: z.string().url().optional(),
 });
 
-router.get("/billing/subscription", requireAuth, async (req: Request, res: Response) => {
+router.get("/billing/subscription", requireAuth, requireOwner, async (req: Request, res: Response) => {
   try {
     const st = await getStripe();
     if (!st) return res.status(503).json({ error: { message: "Billing not configured" } });
@@ -1178,7 +1704,7 @@ router.get("/billing/subscription", requireAuth, async (req: Request, res: Respo
   }
 });
 
-router.post("/billing/checkout", requireAuth, async (req: Request, res: Response) => {
+router.post("/billing/checkout", requireAuth, requireOwner, async (req: Request, res: Response) => {
   try {
     const st = await getStripe();
     if (!st) return res.status(503).json({ error: { message: "Billing not configured" } });
@@ -1210,7 +1736,7 @@ router.post("/billing/checkout", requireAuth, async (req: Request, res: Response
   }
 });
 
-router.post("/billing/portal", requireAuth, async (req: Request, res: Response) => {
+router.post("/billing/portal", requireAuth, requireOwner, async (req: Request, res: Response) => {
   try {
     const st = await getStripe();
     if (!st) return res.status(503).json({ error: { message: "Billing not configured" } });
@@ -1287,7 +1813,7 @@ const createEntitySchema = insertEntitySchema.omit({ organizationId: true });
 const createResourceSchema = insertResourceSchema.omit({ organizationId: true });
 
 const createApiKeySchema = insertApiKeySchema
-  .omit({ organizationId: true, hashedKey: true, prefix: true, revokedAt: true, lastUsedAt: true })
+  .omit({ organizationId: true, createdById: true, hashedKey: true, prefix: true, revokedAt: true, lastUsedAt: true })
   .extend({
     name: z.string().min(1).max(100),
     expiresAt: z.coerce.date().optional().nullable(),

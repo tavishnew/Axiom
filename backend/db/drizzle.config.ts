@@ -19,6 +19,7 @@ for (let i = 0; i < 6; i++) {
 export default defineConfig({
   schema: [
     "./src/schema/accounts.ts",
+    "./src/schema/audit-logs.ts",
     "./src/schema/api-keys.ts",
     "./src/schema/decision-logs.ts",
     "./src/schema/entities.ts",

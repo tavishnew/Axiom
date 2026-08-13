@@ -1,4 +1,5 @@
 import { pool } from "@workspace/db";
+import type { Request, Response } from "express";
 import { logger } from "../lib/logger";
 
 const DEFAULT_LOG_RETENTION_DAYS = 7;
@@ -44,15 +45,17 @@ export async function runCleanup(): Promise<void> {
 const INTERNAL_CLEANUP_SECRET = process.env.INTERNAL_CLEANUP_SECRET;
 
 export function createCleanupHandler() {
-  return async (req: Request, res: Response) => {
+  return async (req: Request, res: Response): Promise<void> => {
     if (!INTERNAL_CLEANUP_SECRET) {
       logger.warn("INTERNAL_CLEANUP_SECRET not set, cleanup endpoint disabled");
-      return res.status(503).json({ error: "Cleanup not configured" });
+      res.status(503).json({ error: "Cleanup not configured" });
+      return;
     }
 
-    const auth = req.headers.get("authorization");
+    const auth = req.get("authorization");
     if (auth !== `Bearer ${INTERNAL_CLEANUP_SECRET}`) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return;
     }
 
     try {
@@ -60,10 +63,10 @@ export function createCleanupHandler() {
         cleanupDecisionLogs(),
         cleanupExpiredSessions(),
       ]);
-      return res.json({ success: true, logsDeleted, sessionsDeleted });
+      res.json({ success: true, logsDeleted, sessionsDeleted });
     } catch (err) {
       logger.error({ err }, "Cleanup endpoint error");
-      return res.status(500).json({ error: "Internal error" });
+      res.status(500).json({ error: "Internal error" });
     }
   };
 }

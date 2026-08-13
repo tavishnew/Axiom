@@ -11,11 +11,14 @@ import { AuthProvider, ProtectedRoute } from '@/lib/auth.tsx';
 import LandingPage from './app/landing/page';
 import SignInPage from './app/auth/sign-in/page';
 import SignUpPage from './app/auth/sign-up/page';
+import ForgotPasswordPage from './app/auth/forgot-password/page';
+import ResetPasswordPage from './app/auth/reset-password/page';
 import DashboardPage from './app/dashboard/page';
 import PoliciesPage from './app/policies/page';
 import EntitiesPage from './app/entities/page';
 import ResourcesPage from './app/resources/page';
 import DecisionsPage from './app/decisions/page';
+import AuditLogsPage from './app/audit-logs/page';
 import TestConsolePage from './app/test/page';
 import SettingsPage from './app/settings/page';
 import InvitePage from './app/invite/[token]/page';
@@ -47,12 +50,15 @@ function Router() {
         <Route path="/landing" component={LandingPage} />
         <Route path="/auth/sign-in" component={SignInPage} />
         <Route path="/auth/sign-up" component={SignUpPage} />
+        <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
+        <Route path="/auth/reset-password" component={ResetPasswordPage} />
         <Route path="/invite/:token" component={InvitePage} />
         <Route path="/dashboard" component={() => <ProtectedDashboardRoute component={DashboardPage} />} />
         <Route path="/policies" component={() => <ProtectedDashboardRoute component={PoliciesPage} />} />
         <Route path="/entities" component={() => <ProtectedDashboardRoute component={EntitiesPage} />} />
         <Route path="/resources" component={() => <ProtectedDashboardRoute component={ResourcesPage} />} />
         <Route path="/decisions" component={() => <ProtectedDashboardRoute component={DecisionsPage} />} />
+        <Route path="/audit-logs" component={() => <ProtectedDashboardRoute component={AuditLogsPage} />} />
         <Route path="/test" component={() => <ProtectedDashboardRoute component={TestConsolePage} />} />
         <Route path="/settings" component={() => <ProtectedDashboardRoute component={SettingsPage} />} />
         <Route path="/settings/*" component={() => <ProtectedDashboardRoute component={SettingsPage} />} />

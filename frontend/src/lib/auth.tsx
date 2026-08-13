@@ -3,10 +3,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useLocation } from 'wouter';
 
+export type WorkspaceRole = 'owner' | 'admin' | 'member';
+
 interface User {
   id: string;
   email: string;
   name?: string;
+  role: WorkspaceRole;
 }
 
 interface AuthContextType {

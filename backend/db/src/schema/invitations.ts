@@ -12,6 +12,13 @@ export const invitationStatusEnum = pgEnum("invitation_status", [
   "revoked",
 ]);
 
+export const invitationDeliveryStatusEnum = pgEnum("invitation_delivery_status", [
+  "pending",
+  "sent",
+  "failed",
+  "configuration_error",
+]);
+
 export const invitationsTable = pgTable("invitations", {
   id: text("id").primaryKey().default(genId()),
   email: text("email").notNull(),
@@ -22,14 +29,20 @@ export const invitationsTable = pgTable("invitations", {
   // SHA-256 hash of the plaintext token. Plaintext is sent via email and never stored.
   tokenHash: text("token_hash").unique().notNull(),
   status: invitationStatusEnum("status").default("pending").notNull(),
+  deliveryStatus: invitationDeliveryStatusEnum("delivery_status").default("pending").notNull(),
+  deliveryError: text("delivery_error"),
+  providerMessageId: text("provider_message_id"),
   expiresAt: timestamp("expires_at").notNull(),
   acceptedAt: timestamp("accepted_at"),
+  acceptedById: text("accepted_by_id").references(() => usersTable.id, { onDelete: "set null" }),
+  revokedAt: timestamp("revoked_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => ({
   idxOrgEmail: index("idx_invitations_org_email").on(table.organizationId, table.email),
   idxTokenHash: index("idx_invitations_token_hash").on(table.tokenHash),
   idxOrgStatus: index("idx_invitations_org_status").on(table.organizationId, table.status),
+  idxOrgDelivery: index("idx_invitations_org_delivery").on(table.organizationId, table.deliveryStatus),
   idxOrgExpiresAt: index("idx_invitations_org_expires").on(table.organizationId, table.expiresAt),
 }));
 
@@ -39,7 +52,12 @@ export const insertInvitationSchema = createInsertSchema(invitationsTable).omit(
   updatedAt: true,
   tokenHash: true,
   status: true,
+  deliveryStatus: true,
+  deliveryError: true,
+  providerMessageId: true,
   acceptedAt: true,
+  acceptedById: true,
+  revokedAt: true,
 });
 export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
 export type Invitation = typeof invitationsTable.$inferSelect;

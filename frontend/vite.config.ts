@@ -73,11 +73,31 @@ export default defineConfig({
         target: 'http://localhost:8787',
         changeOrigin: true,
         secure: false,
+        configure: (proxy) => {
+          proxy.on('error', (_error, _request, response) => {
+            if (!response.headersSent) {
+              response.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+            }
+            response.end(JSON.stringify({
+              error: { message: 'API service is unavailable. Start the backend and try again.' },
+            }));
+          });
+        },
       },
       '/v1': {
         target: 'http://localhost:8787',
         changeOrigin: true,
         secure: false,
+        configure: (proxy) => {
+          proxy.on('error', (_error, _request, response) => {
+            if (!response.headersSent) {
+              response.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+            }
+            response.end(JSON.stringify({
+              error: { message: 'API service is unavailable. Start the backend and try again.' },
+            }));
+          });
+        },
       }
     }
   },

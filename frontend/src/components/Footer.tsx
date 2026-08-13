@@ -1,7 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ShieldHalf, ArrowUpRight, Twitter, Github, Mail } from "lucide-react";
+import { ShieldHalf, ArrowUpRight, Github, Mail } from "lucide-react";
+
+const XLogo = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+    <path
+      d="M18.901 2h3.68l-8.04 9.19L22 22h-7.406l-5.8-8.015L3.17 22H-0.51l8.6-9.83L2 2h7.594l5.243 7.417L18.901 2Zm-1.29 18h2.028L7.338 3.91H5.19L17.611 20Z"
+      fill="currentColor"
+    />
+  </svg>
+);
 
 const columns = {
   Product: ["Overview", "Policies", "SDKs", "Changelog"],
@@ -11,9 +20,9 @@ const columns = {
 };
 
 const socialLinks = [
-  { icon: Twitter, href: "#" },
-  { icon: Github, href: "#" },
-  { icon: Mail, href: "#" },
+  { icon: XLogo, href: "https://x.com/Tavish54" },
+  { icon: Github, href: "https://github.com/tavishnew" },
+  { icon: Mail, href: "mailto:tavish0554@gmail.com" },
 ];
 
 export function Footer() {
@@ -46,6 +55,8 @@ export function Footer() {
                 <a
                   key={i}
                   href={href}
+                  target={href.startsWith("http") ? "_blank" : undefined}
+                  rel={href.startsWith("http") ? "noreferrer" : undefined}
                   className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted transition-all hover:border-accent hover:text-accent hover:bg-accent/5"
                 >
                   <Icon className="h-4 w-4" />

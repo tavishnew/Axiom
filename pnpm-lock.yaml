@@ -433,6 +433,9 @@ importers:
       lightningcss-win32-x64-msvc:
         specifier: ^1.33.0
         version: 1.33.0
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.3
       typescript:
         specifier: ~5.9.3
         version: 5.9.3

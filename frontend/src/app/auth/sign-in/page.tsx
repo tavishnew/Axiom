@@ -124,7 +124,10 @@ export default function SignInPage() {
               </button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 space-y-2 text-center">
+              <a href="/auth/forgot-password" className="block text-xs font-medium text-accent hover:underline">
+                Forgot your password?
+              </a>
               <p className="text-xs text-muted">
                 Don&apos;t have an account?{' '}
                 <a href="/auth/sign-up" className="font-medium text-accent hover:underline">

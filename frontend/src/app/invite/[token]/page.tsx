@@ -28,24 +28,18 @@ export default function InvitePage() {
 
   const validateInvite = async (t: string) => {
     try {
-      const res = await api.invitations.validate(t);
-      if (res.error) {
-        if (res.error.code === 'not_found') {
-          setState('invalid');
-        } else {
-          setState('error');
-          setError(res.error.message);
-        }
-        return;
-      }
-      if (!res.data) {
-        setState('invalid');
-        return;
-      }
-      setInvite(res.data);
-      if (res.data.status === 'expired') setState('expired');
-      else if (res.data.status === 'accepted') setState('accepted');
-      else if (res.data.status === 'revoked') setState('revoked');
+      const { data } = await api.invitations.get(t);
+      const normalizedInvite: InviteValidation = {
+        email: data.email,
+        role: data.role,
+        workspaceName: data.organization.name,
+        status: data.status,
+        expiresAt: data.expiresAt,
+      };
+      setInvite(normalizedInvite);
+      if (normalizedInvite.status === 'expired') setState('expired');
+      else if (normalizedInvite.status === 'accepted') setState('accepted');
+      else if (normalizedInvite.status === 'revoked') setState('revoked');
       else setState('ready');
     } catch (err: any) {
       setState('error');
@@ -222,9 +216,9 @@ export default function InvitePage() {
   const isAccepting = state === 'accepting';
   const isSuccess = state === 'success';
 
-  // If user is not authenticated, redirect to sign in with token
+  // New recipients create an account using the email attached to this invitation.
   if (isReady && !user) {
-    router(`/auth/sign-in?invite_token=${encodeURIComponent(token || '')}`);
+    router(`/auth/sign-up?invite_token=${encodeURIComponent(token || '')}`);
     return null;
   }
 

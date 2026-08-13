@@ -8,6 +8,27 @@
       "when": 1785069123127,
       "tag": "0000_overjoyed_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786579200000,
+      "tag": "0001_audit_logs",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786579260000,
+      "tag": "0002_account_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786579320000,
+      "tag": "0003_invitation_delivery_state",
+      "breakpoints": true
     }
   ]
 }

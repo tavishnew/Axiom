@@ -12,7 +12,7 @@ import { PolicyTableSkeleton } from '@/components/ui/table-skeleton';
 import { toast } from 'sonner';
 
 // --- Constants ---
-const CARD_SHELL = 'rounded-xl border border-border bg-white shadow-sm';
+const CARD_SHELL = 'rounded-xl border border-border bg-white p-3 shadow-sm sm:p-4';
 const TABLE_HEADER_CELL = 'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted cursor-pointer hover:text-ink';
 const BADGE_BASE = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium';
 const ICON_BUTTON = 'gap-1';
@@ -28,7 +28,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
         <h1 className="text-2xl font-bold text-ink">Policies</h1>
         <p className="mt-0.5 text-sm text-muted">Manage your access control policies</p>
       </div>
-      <Button onClick={onCreate} className="gap-2" data-testid="create-policy-btn">
+      <Button onClick={onCreate} className="w-full gap-2 sm:w-auto" data-testid="create-policy-btn">
         <Plus className="h-4 w-4" />
         Create Policy
       </Button>
@@ -178,11 +178,11 @@ function TableHeader({ onSort }: { onSort: (field: string) => void }) {
 // PaginationControls: prev/next + page info
 function PaginationControls({ pagination, loading, onPageChange }: { pagination: any; loading: boolean; onPageChange: (page: number) => void }) {
   return (
-    <footer className="border-t border-border px-4 py-3 flex items-center justify-between" data-testid="policies-pagination">
+    <footer className="flex flex-col gap-3 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-testid="policies-pagination">
       <p className="text-xs text-muted">
         Showing {((pagination.page - 1) * pagination.limit) + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} polic{pagination.total === 1 ? 'y' : 'ies'}
       </p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -193,7 +193,7 @@ function PaginationControls({ pagination, loading, onPageChange }: { pagination:
           <ChevronLeft className="h-3 w-3" />
           Previous
         </Button>
-        <span className="flex items-center px-3 text-xs text-muted">
+        <span className="order-first flex w-full items-center text-xs text-muted sm:order-none sm:w-auto sm:px-3">
           Page {pagination.page} of {pagination.totalPages || 1}
         </span>
         <Button
@@ -226,7 +226,7 @@ function PolicyTable({ policies, loading, pagination, onSort, onEdit, onDelete, 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm" data-testid="policies-table">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="min-w-[680px] w-full">
           <TableHeader onSort={onSort} />
           <tbody className="divide-y divide-border">
             {policies.length === 0 ? (
@@ -343,10 +343,10 @@ export default function PoliciesPage() {
     setPagination(p => ({ ...p, page }));
   };
 
-  const hasFilters = search || effectFilter || activeFilter;
+  const hasFilters = Boolean(search || effectFilter || activeFilter);
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <PageHeader onCreate={handleCreate} />
       <FilterBar
         search={search} onSearchChange={handleSearch}

@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type ErrorRequestHandler, type Express } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
@@ -34,9 +34,33 @@ app.use(cors({
   credentials: true,
 }));
 app.use(cookieParser());
+// Stripe validates the exact, unparsed payload. Register this exception before the JSON parser.
+app.use("/api/billing/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+// Keep the API contract JSON-only, including unmatched API routes.
+app.use("/api", (_req, res) => {
+  res.status(404).json({ error: { message: "API route not found" } });
+});
+
+const apiErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  const status = typeof error?.status === "number" && error.status >= 400 && error.status < 600
+    ? error.status
+    : error instanceof SyntaxError && "body" in error
+      ? 400
+      : 500;
+  const message = status === 400 ? "Invalid JSON request body" : "Internal server error";
+
+  logger.error({ err: error, method: req.method, path: req.path, status }, "Unhandled API error");
+  return res.status(status).json({ error: { message } });
+};
+
+app.use(apiErrorHandler);
 
 export default app;

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth.tsx';
 
 const navItems = [
  { href: '/settings', label: 'Organization', icon: Building2 },
@@ -22,6 +23,8 @@ const navItems = [
 
 export default function SettingsPage() {
  const [pathname, router] = useLocation();
+ const { user } = useAuth();
+ const canManageTeam = user?.role === 'owner' || user?.role === 'admin';
  const [org, setOrg] = useState<Organization | null>(null);
  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
  const [loading, setLoading] = useState(true);
@@ -43,7 +46,7 @@ export default function SettingsPage() {
  const [resendingId, setResendingId] = useState<string | null>(null);
  const [revokingId, setRevokingId] = useState<string | null>(null);
  const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
- const [lastInviteLink, setLastInviteLink] = useState<{ email: string; url: string } | null>(null);
+ const [lastInviteLink, setLastInviteLink] = useState<{ invitationId: string; url: string } | null>(null);
 
  // Billing state
  const [billing, setBilling] = useState<any>(null);
@@ -52,6 +55,9 @@ export default function SettingsPage() {
  // Profile state
  const [profile, setProfile] = useState<any>(null);
  const [profileLoading, setProfileLoading] = useState(false);
+ const [deleteAccountDialogOpen, setDeleteAccountDialogOpen] = useState(false);
+ const [deleteAccountConfirmation, setDeleteAccountConfirmation] = useState('');
+ const [deletingAccount, setDeletingAccount] = useState(false);
 
  // Dialog states
  const [newKeyDialogOpen, setNewKeyDialogOpen] = useState(false);
@@ -90,15 +96,9 @@ export default function SettingsPage() {
 
  const fetchInvitations = useCallback(async () => {
  setInvitationsLoading(true);
- try {
- const { data } = await api.invitations.list();
- const liveStatuses = data.map((inv) => {
- if (inv.status === 'pending' && new Date(inv.expiresAt).getTime() < Date.now()) {
- return { ...inv, status: 'expired' as const };
- }
- return inv;
- });
- setInvitations(liveStatuses);
+  try {
+  const { data } = await api.invitations.list({ includeTerminal: true });
+  setInvitations(data);
  } catch (err) {
  console.error(err);
  toast.error('Failed to load invitations');
@@ -245,15 +245,21 @@ export default function SettingsPage() {
  setInviteError(null);
  setInviting(true);
  try {
- const { data } = await api.invitations.create({ email, name: inviteName.trim() || undefined, role: inviteRole });
- toast.success('Invitation sent to ' + email);
- setInviteDialogOpen(false);
- setInviteEmail('');
- setInviteName('');
- setInviteRole('member');
- const link = data.inviteLink || data.acceptUrl;
- if (link) setLastInviteLink({ email, url: link });
- fetchInvitations();
+  const { data } = await api.invitations.create({ email, name: inviteName.trim() || undefined, role: inviteRole });
+  const link = data.inviteLink || data.acceptUrl;
+  if (link) setLastInviteLink({ invitationId: data.id, url: link });
+  if (data.deliveryStatus === 'sent') {
+  toast.success('Invitation sent to ' + email);
+  } else if (data.deliveryStatus === 'configuration_error') {
+  toast.error('Email delivery is not configured. The invitation was saved but was not sent.');
+  } else {
+  toast.error('Invitation could not be sent. Check your email configuration.');
+  }
+  setInviteDialogOpen(false);
+  setInviteEmail('');
+  setInviteName('');
+  setInviteRole('member');
+  await fetchInvitations();
  } catch (err: any) {
  const msg = err?.message || 'Failed to send invitation';
  setInviteError(msg);
@@ -266,10 +272,16 @@ export default function SettingsPage() {
  const handleResendInvitation = async (inv: Invitation) => {
  setResendingId(inv.id);
  try {
- const { data } = await api.invitations.resend(inv.id);
- toast.success('Invitation resent to ' + inv.email);
- if (data.inviteLink) setLastInviteLink({ email: inv.email, url: data.inviteLink });
- await fetchInvitations();
+  const { data } = await api.invitations.resend(inv.id);
+  if (data.inviteLink) setLastInviteLink({ invitationId: inv.id, url: data.inviteLink });
+  if (data.deliveryStatus === 'sent') {
+  toast.success('Invitation resent to ' + inv.email);
+  } else if (data.deliveryStatus === 'configuration_error') {
+  toast.error('Email delivery is not configured. The invitation was updated but was not sent.');
+  } else {
+  toast.error('Invitation could not be sent. Check your email configuration.');
+  }
+  await fetchInvitations();
  } catch (err: any) {
  toast.error(err?.message || 'Failed to resend invitation');
  } finally {
@@ -280,27 +292,28 @@ export default function SettingsPage() {
  const handleRevokeInvitation = async (inv: Invitation) => {
  if (!window.confirm('Revoke the invitation to ' + inv.email + '?')) return;
  setRevokingId(inv.id);
- const snapshot = invitations;
- setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
- try {
- await api.invitations.revoke(inv.id);
- toast.success('Invitation revoked');
- } catch (err: any) {
- setInvitations(snapshot);
- toast.error(err?.message || 'Failed to revoke invitation');
+  try {
+  await api.invitations.revoke(inv.id);
+  toast.success('Invitation revoked');
+  await fetchInvitations();
+  } catch (err: any) {
+  toast.error(err?.message || 'Failed to revoke invitation');
  } finally {
  setRevokingId(null);
  }
  };
 
  const handleCopyInviteLink = async (inv: Invitation) => {
- const url = lastInviteLink && lastInviteLink.email === inv.email ? lastInviteLink.url : '';
- const text = url || (window.location.origin + '/invite/' + encodeURIComponent(inv.email));
- try {
- await navigator.clipboard.writeText(text);
- setCopiedInviteId(inv.id);
- window.setTimeout(() => setCopiedInviteId(null), 1800);
- toast.success(url ? 'Invite link copied to clipboard' : 'Copied. The full link is only available right after sending.');
+  const url = lastInviteLink?.invitationId === inv.id ? lastInviteLink.url : '';
+  if (!url) {
+  toast.error('The secure invite link is only available immediately after sending or resending. Resend this invitation to generate a new link.');
+  return;
+  }
+  try {
+  await navigator.clipboard.writeText(url);
+  setCopiedInviteId(inv.id);
+  window.setTimeout(() => setCopiedInviteId(null), 1800);
+  toast.success('Invite link copied to clipboard');
  } catch {
  toast.error('Could not access clipboard');
  }
@@ -327,17 +340,6 @@ export default function SettingsPage() {
  } catch (err) {
  console.error(err);
  toast.error('Failed to remove team member');
- }
- };
-
- const handleUpdateMemberRole = async (member: any, role: string) => {
- try {
- await api.team.update(member.id, { role });
- toast.success('Role updated');
- setTeamMembers(prev => prev.map(m => m.id === member.id ? { ...m, role } : m));
- } catch (err) {
- console.error(err);
- toast.error('Failed to update role');
  }
  };
 
@@ -377,6 +379,24 @@ const handleRevokeSession = async (sessionId: string) => {
  }
 };
 
+const handleDeleteAccount = async () => {
+ if (deleteAccountConfirmation !== 'DELETE') {
+ toast.error('Type DELETE to confirm account deletion');
+ return;
+ }
+ setDeletingAccount(true);
+ try {
+ await api.auth.deleteAccount();
+ toast.success('Your account has been deleted');
+ window.location.assign('/auth/sign-in');
+ } catch (err: any) {
+ console.error(err);
+ toast.error(err?.message || 'Unable to delete account');
+ } finally {
+ setDeletingAccount(false);
+ }
+};
+
 const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  e.preventDefault();
  const formData = new FormData(e.currentTarget);
@@ -410,7 +430,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  const isProfilePage = pathname.startsWith('/settings/profile');
 
  return (
- <div className="p-6 md:p-8">
+ <div className="p-4 sm:p-6 md:p-8">
  <div className="mb-6">
  <h1 className="text-2xl font-bold text-ink">Settings</h1>
  <p className="mt-0.5 text-sm text-muted">Manage your organization and API access</p>
@@ -418,7 +438,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 
  <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
  <div className="lg:col-span-1">
- <nav className="rounded-xl border border-border bg-white p-2 shadow-sm">
+ <nav className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-white p-2 shadow-sm lg:block">
  {navItems.map((item, i) => {
  const Icon = item.icon;
  const isActive =
@@ -448,7 +468,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 
  <div className="space-y-5 lg:col-span-3">
  {isOrganizationPage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <Building2 className="h-5 w-5 text-accent" /> Organization
 </h2>
@@ -476,12 +496,12 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  )}
 
  {isApiKeysPage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
- <div className="flex items-center justify-between">
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
+ <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <Key className="h-5 w-5 text-accent" /> API Keys
 </h2>
- <Button variant="outline" onClick={() => setNewKeyDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" />New Key</Button>
+ <Button variant="outline" onClick={() => setNewKeyDialogOpen(true)} className="w-full gap-2 sm:w-auto"><Plus className="h-4 w-4" />New Key</Button>
 </div>
  {loading ? (
  <p className="mt-5 text-sm text-muted">Loading</p>
@@ -493,17 +513,17 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  ) : (
  <div className="mt-5 space-y-3">
  {apiKeys.map((key, i) => (
- <div key={key.id} className="flex items-center justify-between rounded-lg border border-border bg-white p-3 transition-colors hover:bg-surface-2/50">
- <div>
- <p className="text-sm font-medium text-ink">{key.name}</p>
- <div className="mt-0.5 flex items-center gap-3 text-xs text-muted">
+ <div key={key.id} className="flex flex-col gap-3 rounded-lg border border-border bg-white p-3 transition-colors hover:bg-surface-2/50 sm:flex-row sm:items-center sm:justify-between">
+ <div className="min-w-0">
+ <p className="truncate text-sm font-medium text-ink">{key.name}</p>
+ <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-muted">
  <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono">{key.prefix}</code>
  <span>Created: {new Date(key.createdAt).toLocaleDateString()}</span>
  {key.lastUsedAt && <span>Last used: {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
  {key.revokedAt && <span className="text-red-500">Revoked</span>}
 </div>
 </div>
- <div className="flex items-center gap-2">
+ <div className="flex flex-wrap items-center gap-2">
  <Button variant="ghost" size="sm" onClick={() => handleCopy(`${key.prefix}...`, i)} className="gap-1">
  {copiedIndex === i ? (<><Check className="mr-1 inline h-3.5 w-3.5" />Copied</>) : (<><Copy className="mr-1 inline h-3.5 w-3.5" />Copy</>)}
 </Button>
@@ -523,7 +543,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <DialogTitle>Create API Key</DialogTitle>
  <DialogDescription>Give your API key a descriptive name. The key will only be shown once</DialogDescription>
 </DialogHeader>
- <form onSubmit={handleCreateApiKey} className="space-y-4 p-6">
+ <form onSubmit={handleCreateApiKey} className="space-y-4 p-4 sm:p-6">
  <div className="space-y-2">
  <Label htmlFor="key-name">Key Name</Label>
  <Input id="key-name" value={newKeyName} onChange={e => setNewKeyName(e.target.value)} placeholder="e.g., Production Server, CI/CD Pipeline" autoFocus />
@@ -541,14 +561,14 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  )}
 
  {isTeamPage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
- <div className="flex items-center justify-between">
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
+ <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <UsersIcon className="h-5 w-5 text-accent" /> Team Members
 </h2>
- <Button onClick={() => setInviteDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" />Invite Member</Button>
+ {canManageTeam && <Button onClick={() => setInviteDialogOpen(true)} className="w-full gap-2 sm:w-auto"><Plus className="h-4 w-4" />Invite Member</Button>}
 </div>
- <p className="mt-4 text-sm text-muted">Manage team members and their roles within your organization</p>
+ <p className="mt-4 text-sm text-muted">{canManageTeam ? 'Invite and manage team access. Roles are assigned through a secure invitation.' : 'View the members in your organization. Role changes are managed by owners and admins.'}</p>
  <div className="mt-6 space-y-6">
  <div>
  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Active members ({teamMembers.length})</h3>
@@ -561,25 +581,21 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  ) : (
  <div className="space-y-2">
  {teamMembers.map((member) => (
- <div key={member.id} className="flex items-center justify-between rounded-lg border border-surface-2 p-3 transition-colors hover:bg-surface-2/40">
- <div className="flex items-center gap-3">
- <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
+ <div key={member.id} className="flex flex-col gap-3 rounded-lg border border-surface-2 p-3 transition-colors hover:bg-surface-2/40 sm:flex-row sm:items-center sm:justify-between">
+ <div className="flex min-w-0 items-center gap-3">
+ <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
  <LucideUser className="h-4 w-4 text-blue-600" />
 </div>
- <div>
- <p className="text-sm font-medium text-ink">{member.name || member.email}</p>
- <p className="text-xs text-muted">{member.email}</p>
+ <div className="min-w-0">
+ <p className="truncate text-sm font-medium text-ink">{member.name || member.email}</p>
+ <p className="truncate text-xs text-muted">{member.email}</p>
 </div>
 </div>
- <div className="flex items-center gap-2">
- <select aria-label="Role" value={member.role?.toLowerCase?.() || 'member'} onChange={e => handleUpdateMemberRole(member, e.target.value)} className="rounded border border-border bg-white px-2 py-1 text-xs">
- <option value="owner">Owner</option>
- <option value="admin">Admin</option>
- <option value="member">Member</option>
-</select>
- <Button aria-label="Remove member" variant="ghost" size="sm" onClick={() => handleRemoveMember(member)} className="h-8 w-8 p-0 text-red-600 hover:bg-red-50">
+ <div className="flex flex-wrap items-center gap-2">
+ <span className="rounded border border-border bg-surface-2 px-2 py-1 text-xs font-medium capitalize text-muted">{member.role?.toLowerCase?.() || 'member'}</span>
+ {canManageTeam && <Button aria-label="Remove member" variant="ghost" size="sm" onClick={() => handleRemoveMember(member)} className="h-8 w-8 p-0 text-red-600 hover:bg-red-50">
  <Trash2 className="h-3.5 w-3.5" />
-</Button>
+</Button>}
 </div>
 </div>
  ))}
@@ -588,22 +604,32 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 </div>
 
  <div>
- <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Pending invitations ({invitations.length})</h3>
+ <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Invitations ({invitations.length})</h3>
  {invitationsLoading ? (
  <div className="flex items-center justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
  ) : invitations.length === 0 ? (
  <div className="rounded-lg border border-dashed border-border bg-surface-2/30 py-6 text-center text-sm text-muted">
- <Mail className="mx-auto mb-1 h-6 w-6 opacity-40" />No pending invitations
+ <Mail className="mx-auto mb-1 h-6 w-6 opacity-40" />No invitations yet
 </div>
  ) : (
  <div className="space-y-2">
  {invitations.map((inv) => {
  const exp = expiresInLabel(inv.expiresAt);
- const expired = inv.status !== 'pending' || exp.expired;
- const rowColor = expired ? 'border-surface-2 bg-surface-2/20' : 'border-surface-2 bg-white';
- const statusColor = expired ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700';
+ const isActionable = inv.status === 'pending' && !exp.expired;
+ const statusColor = {
+ pending: 'bg-amber-50 text-amber-700',
+ accepted: 'bg-emerald-50 text-emerald-700',
+ expired: 'bg-red-50 text-red-700',
+ revoked: 'bg-slate-100 text-slate-700',
+ }[inv.status];
+ const deliveryColor = {
+ pending: 'bg-slate-100 text-slate-700',
+ sent: 'bg-blue-50 text-blue-700',
+ failed: 'bg-red-50 text-red-700',
+ configuration_error: 'bg-red-50 text-red-700',
+ }[inv.deliveryStatus];
  return (
- <div key={inv.id} className={rowColor + ' flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between'}>
+ <div key={inv.id} className="flex flex-col gap-3 rounded-lg border border-surface-2 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
  <div className="flex min-w-0 items-start gap-3">
  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
  <Mail className="h-4 w-4 text-amber-600" />
@@ -614,15 +640,21 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <span className="inline-flex items-center rounded-full bg-surface-2 px-2 py-0.5 font-medium capitalize text-ink/80">{inv.role}</span>
  <span>Invited by {inv.invitedBy?.name || inv.invitedBy?.email || 'unknown'}</span>
  <span>on {new Date(inv.createdAt).toLocaleDateString()}</span>
- <span>expires {exp.label}</span>
-</div>
+ <span>{inv.status === 'pending' ? `expires ${exp.label}` : `expires ${new Date(inv.expiresAt).toLocaleDateString()}`}</span>
+ {inv.acceptedAt && <span>accepted {new Date(inv.acceptedAt).toLocaleDateString()} by {inv.acceptedBy?.name || inv.acceptedBy?.email || 'member'}</span>}
+ {inv.revokedAt && <span>revoked {new Date(inv.revokedAt).toLocaleDateString()}</span>}
+ </div>
+ {inv.deliveryError && <p className="mt-1 text-xs text-red-600">Delivery: {inv.deliveryError}</p>}
 </div>
 </div>
  <div className="flex shrink-0 items-center gap-2">
  <span className={statusColor + ' inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium'}>
- {expired ? 'expired' : inv.status}
-</span>
- {!expired && (
+ {inv.status}
+ </span>
+ <span className={deliveryColor + ' inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium'}>
+ email: {inv.deliveryStatus === 'configuration_error' ? 'not configured' : inv.deliveryStatus}
+ </span>
+ {isActionable && (
  <>
  <Button aria-label={'Copy invite link for ' + inv.email} variant="ghost" size="sm" onClick={() => handleCopyInviteLink(inv)} className="h-8 gap-1 px-2 text-xs">
  {copiedInviteId === inv.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -652,7 +684,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <DialogTitle>Invite Team Member</DialogTitle>
  <DialogDescription>Enter the email and role for the new team member</DialogDescription>
 </DialogHeader>
- <form onSubmit={handleInviteMember} className="space-y-4 p-6" noValidate>
+ <form onSubmit={handleInviteMember} className="space-y-4 p-4 sm:p-6" noValidate>
  <div className="space-y-2">
  <Label htmlFor="invite-email">Email</Label>
  <Input id="invite-email" type="email" value={inviteEmail} onChange={e => { setInviteEmail(e.target.value); setInviteError(null); }} placeholder="colleague@example.com" required aria-invalid={!!inviteError || undefined} aria-describedby={inviteError ? 'invite-email-error' : undefined} />
@@ -685,7 +717,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  )}
 
  {isBillingPage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <CreditCard className="h-5 w-5 text-accent" /> Billing
 </h2>
@@ -699,7 +731,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <p className="mt-2 text-xs text-muted">Renews on {billing.current_period_end ? new Date(billing.current_period_end * 1000).toLocaleDateString() : 'N/A'}</p>
 </div>
  <div className="flex gap-2">
- <Button onClick={handleUpdatePayment} className="gap-2"><CreditCard className="h-4 w-4" />Manage Subscription</Button>
+ <Button onClick={handleUpdatePayment} className="w-full gap-2 sm:w-auto"><CreditCard className="h-4 w-4" />Manage Subscription</Button>
 </div>
 </div>
  ) : (
@@ -709,7 +741,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <p className="mt-1 text-sm text-muted">Upgrade to Pro to unlock all features</p>
 </div>
  <div className="flex gap-2">
- <Button onClick={handleUpgrade} className="gap-2"><Plus className="h-4 w-4" />Upgrade to Pro</Button>
+ <Button onClick={handleUpgrade} className="w-full gap-2 sm:w-auto"><Plus className="h-4 w-4" />Upgrade to Pro</Button>
 </div>
 </div>
  )}
@@ -717,7 +749,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  )}
 
  {isProfilePage && (
- <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-6 shadow-sm">
+ <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
  <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
  <LucideUser className="h-5 w-5 text-accent" /> Profile
 </h2>
@@ -795,9 +827,34 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <Input id="confirm-password" type="password" name="confirmPassword" required className="w-full max-w-md" />
 </div>
  <Button type="submit" className="gap-2"><Lock className="h-4 w-4" />Change Password</Button>
-</form>
-</div>
-</div>
+ </form>
+ </div>
+ <div className="rounded-lg border border-red-200 bg-red-50/50 p-4">
+ <h4 className="text-sm font-semibold text-red-800">Delete account</h4>
+ <p className="mt-1 text-sm text-red-700">This permanently disables sign-in, revokes your active sessions and API keys that you created, and removes your account from active workspace access.</p>
+ <Button variant="outline" className="mt-3 border-red-300 text-red-700 hover:bg-red-100 hover:text-red-800" onClick={() => { setDeleteAccountConfirmation(''); setDeleteAccountDialogOpen(true); }}>
+ <Trash2 className="mr-2 h-4 w-4" />Delete account
+ </Button>
+ </div>
+ <Dialog open={deleteAccountDialogOpen} onOpenChange={(open) => { if (!deletingAccount) setDeleteAccountDialogOpen(open); }}>
+ <DialogContent className="sm:max-w-[480px]">
+ <DialogHeader>
+ <DialogTitle>Delete your account?</DialogTitle>
+ <DialogDescription>This action is irreversible. Your active sessions and API keys you created will be revoked immediately.</DialogDescription>
+ </DialogHeader>
+ <div className="space-y-3 p-6">
+ <Label htmlFor="delete-account-confirmation">Type <strong>DELETE</strong> to confirm</Label>
+ <Input id="delete-account-confirmation" value={deleteAccountConfirmation} onChange={(event) => setDeleteAccountConfirmation(event.target.value)} placeholder="DELETE" autoComplete="off" />
+ </div>
+ <DialogFooter className="gap-2">
+ <Button type="button" variant="outline" onClick={() => setDeleteAccountDialogOpen(false)} disabled={deletingAccount}>Cancel</Button>
+ <Button type="button" className="bg-red-600 text-white hover:bg-red-700" onClick={handleDeleteAccount} disabled={deletingAccount || deleteAccountConfirmation !== 'DELETE'}>
+ {deletingAccount ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}Delete account
+ </Button>
+ </DialogFooter>
+ </DialogContent>
+ </Dialog>
+ </div>
  ) : (
  <p className="mt-5 text-sm text-muted">No profile data available</p>
  )}

@@ -136,17 +136,41 @@ export interface Session {
  createdAt: string;
 }
 
+export interface InvitationPreview {
+ id: string;
+ email: string;
+ role: string;
+ status: Invitation["status"];
+ expiresAt: string;
+ organization: Pick<Organization, "id" | "name">;
+}
+
 export interface Invitation {
  id: string;
  email: string;
  name: string | null;
  role: string;
- status: "pending" | "accepted" | "expired" | "revoked";
- expiresAt: string;
- acceptedAt: string | null;
+  status: "pending" | "accepted" | "expired" | "revoked";
+  deliveryStatus: "pending" | "sent" | "failed" | "configuration_error";
+  deliveryError: string | null;
+  expiresAt: string;
+  acceptedAt: string | null;
+  acceptedBy?: { id: string; name: string | null; email: string | null } | null;
+  revokedAt?: string | null;
+  createdAt: string;
+  invitedById: string | null;
+  invitedBy?: { id: string; name: string | null; email: string } | null;
+}
+
+export interface AuditLog {
+ id: string;
+ actorId: string;
+ actor: { id: string; name: string | null; email: string | null };
+ action: string;
+ targetType: string;
+ targetId: string;
+ metadata: Record<string, unknown>;
  createdAt: string;
- invitedById: string | null;
- invitedBy?: { id: string; name: string | null; email: string } | null;
 }
 
 export interface StatCardData {
@@ -285,13 +309,17 @@ export const api = {
  invitations: {
  list: (params?: { includeTerminal?: boolean }) =>
  request<{ data: Invitation[] }>(`/invitations${params?.includeTerminal !== undefined ? '?includeTerminal=' + params.includeTerminal : ''}`),
- create: (data: { email: string; name?: string; role?: string }) =>
- request<{ data: Invitation & { acceptUrl?: string; inviteLink?: string; emailDelivered?: boolean; emailReason?: string | null } }>(
- '/invitations',
+     create: (data: { email: string; name?: string; role?: string }) =>
+    request<{ data: Invitation & { acceptUrl?: string; inviteLink?: string } }>(
+
+ '/organizations/invite',
  { method: 'POST', body: JSON.stringify(data) }
  ),
- resend: (id: string) =>
- request<{ data: Invitation & { inviteLink?: string; emailDelivered?: boolean } }>(
+ get: (token: string) =>
+ request<{ data: InvitationPreview }>(`/invitations/${encodeURIComponent(token)}`),
+     resend: (id: string) =>
+    request<{ data: Invitation & { inviteLink?: string } }>(
+
  `/invitations/${id}/resend`,
  { method: 'POST' }
  ),
@@ -322,9 +350,23 @@ export const api = {
  request<{ data: User }>('/auth/profile', { method: 'PATCH', body: JSON.stringify(data) }),
  changePassword: (data: { currentPassword: string; newPassword: string }) =>
  request<{ success: boolean }>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
+ acceptInvitation: (data: { token: string; name: string; email: string; password: string }) =>
+ request<{ data: { user: { id: string; name: string; email: string; role: string } } }>(
+ '/auth/accept-invite',
+ { method: 'POST', body: JSON.stringify(data) },
+ ),
+ forgotPassword: (email: string) => request<{ data: { message: string } }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+ resetPassword: (data: { token: string; newPassword: string }) => request<{ success: boolean }>('/auth/reset-password', { method: 'POST', body: JSON.stringify(data) }),
  listSessions: () => request<Session[]>('/auth/sessions'),
  revokeSession: (id: string) =>
  request<{ success: boolean }>(`/auth/sessions/${id}`, { method: 'DELETE' }),
+ deleteAccount: () => request<{ success: boolean }>('/account', { method: 'DELETE' }),
+ },
+
+ // Audit logs
+ auditLogs: {
+ list: (params?: PaginationParams & { action?: string; actorId?: string; targetType?: string }) =>
+ request<PaginatedResponse<AuditLog>>(`/audit-logs${buildQuery(params || {})}`),
  },
 
  // Billing

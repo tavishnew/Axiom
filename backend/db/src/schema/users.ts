@@ -12,12 +12,14 @@ export const usersTable = pgTable("user", {
   image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at"),
   organizationId: text("organization_id").references(() => organizationsTable.id, { onDelete: "set null" }),
   role: text("role").default("member").notNull(),
 }, (table) => ({
   idxOrgRole: index("idx_users_org_role").on(table.organizationId, table.role),
   idxOrgCreatedAt: index("idx_users_org_created").on(table.organizationId, table.createdAt.desc()),
   idxEmail: index("idx_users_email").on(table.email),
+  idxDeletedAt: index("idx_users_deleted_at").on(table.deletedAt),
 }));
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true, updatedAt: true });

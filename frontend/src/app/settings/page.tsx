@@ -3,7 +3,7 @@
 import { useLocation } from 'wouter';
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, Copy, Trash2, Plus, Building2, Key, Users as UsersIcon, CreditCard, User as LucideUser, Check, RefreshCw, Loader2, Mail, Lock, Shield, X } from 'lucide-react';
+import { Settings as SettingsIcon, Copy, Trash2, Plus, Building2, Key, Users as UsersIcon, CreditCard, User as LucideUser, Check, RefreshCw, Loader2, Mail, Lock, Shield, X, ArrowUpRight } from 'lucide-react';
 import { api, type Organization, type ApiKey, type Session, type Invitation } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -884,9 +884,18 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <div className="rounded-lg border border-red-200 bg-red-50/50 p-4">
  <h4 className="text-sm font-semibold text-red-800">Delete account</h4>
  <p className="mt-1 text-sm text-red-700">This permanently disables sign-in, revokes your active sessions and API keys that you created, and removes your account from active workspace access.</p>
- <Button variant="outline" className="mt-3 border-red-300 text-red-700 hover:bg-red-100 hover:text-red-800" onClick={() => { setDeleteAccountConfirmation(''); setDeleteAccountDialogOpen(true); }}>
- <Trash2 className="mr-2 h-4 w-4" />Delete account
- </Button>
+ {user?.role === 'owner' && teamMembers.filter(m => m.role === 'owner').length === 1 ? (
+   <div className="mt-3 space-y-2">
+     <p className="text-sm text-red-700">You are the sole owner of this organization. Transfer ownership to another member before deleting your account.</p>
+     <a href="/settings/team" className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline">
+       Go to Team settings <ArrowUpRight className="h-3.5 w-3.5" />
+     </a>
+   </div>
+ ) : (
+   <Button variant="outline" className="mt-3 border-red-300 text-red-700 hover:bg-red-100 hover:text-red-800" onClick={() => { setDeleteAccountConfirmation(''); setDeleteAccountDialogOpen(true); }}>
+   <Trash2 className="mr-2 h-4 w-4" />Delete account
+   </Button>
+ )}
  </div>
  <Dialog open={deleteAccountDialogOpen} onOpenChange={(open) => { if (!deletingAccount) setDeleteAccountDialogOpen(open); }}>
  <DialogContent className="sm:max-w-[480px]">

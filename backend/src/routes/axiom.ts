@@ -138,34 +138,62 @@ declare global {
 }
 
 async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const requestId = randomUUID().slice(0, 8);
+  const logPrefix = `[requireAuth:${requestId}]`;
+
   try {
     const token = req.cookies?.session_token;
     if (!token) {
+      logger.info({ requestId }, `${logPrefix} No session cookie present`);
       res.status(401).json({ error: { message: "Authentication required" } });
       return;
     }
 
-    const [session] = await db
-      .select()
-      .from(sessionsTable)
-      .where(and(eq(sessionsTable.token, token), sql`${sessionsTable.expiresAt} > NOW()`))
-      .limit(1);
+    logger.debug({ requestId, tokenPrefix: token.slice(0, 8) }, `${logPrefix} Session cookie found, querying database`);
+
+    let session;
+    try {
+      const result = await db
+        .select()
+        .from(sessionsTable)
+        .where(and(eq(sessionsTable.token, token), sql`${sessionsTable.expiresAt} > NOW()`))
+        .limit(1);
+      session = result[0];
+    } catch (dbError) {
+      logger.error({ requestId, error: dbError, errorName: dbError instanceof Error ? dbError.name : "UnknownError" }, `${logPrefix} Database query failed during session lookup`);
+      res.status(500).json({ error: { message: "Internal server error" } });
+      return;
+    }
 
     if (!session) {
+      logger.info({ requestId }, `${logPrefix} Session not found or expired`);
       res.status(401).json({ error: { message: "Session expired or invalid" } });
       return;
     }
 
-    const [user] = await db
-      .select()
-      .from(usersTable)
-      .where(and(eq(usersTable.id, session.userId), isNull(usersTable.deletedAt)))
-      .limit(1);
+    logger.debug({ requestId, sessionId: session.id, userId: session.userId }, `${logPrefix} Session found, fetching user`);
+
+    let user;
+    try {
+      const result = await db
+        .select()
+        .from(usersTable)
+        .where(and(eq(usersTable.id, session.userId), isNull(usersTable.deletedAt)))
+        .limit(1);
+      user = result[0];
+    } catch (dbError) {
+      logger.error({ requestId, error: dbError, errorName: dbError instanceof Error ? dbError.name : "UnknownError" }, `${logPrefix} Database query failed during user lookup`);
+      res.status(500).json({ error: { message: "Internal server error" } });
+      return;
+    }
 
     if (!user || !user.organizationId) {
+      logger.info({ requestId, sessionId: session.id }, `${logPrefix} User not found or has no organization`);
       res.status(401).json({ error: { message: "User not found" } });
       return;
     }
+
+    logger.info({ requestId, userId: user.id, organizationId: user.organizationId, role: user.role }, `${logPrefix} Authentication successful`);
 
     req.user = {
       id: user.id,
@@ -176,7 +204,8 @@ async function requireAuth(req: Request, res: Response, next: NextFunction): Pro
     };
     next();
   } catch (error) {
-    res.status(500).json({ error: { message: "Auth check failed" } });
+    logger.error({ requestId, error, errorName: error instanceof Error ? error.name : "UnknownError" }, `${logPrefix} Unexpected error in auth middleware`);
+    res.status(500).json({ error: { message: "Internal server error" } });
   }
 }
 

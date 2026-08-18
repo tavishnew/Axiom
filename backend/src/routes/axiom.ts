@@ -204,6 +204,15 @@ function requireWorkspaceManager(req: Request, res: Response, next: NextFunction
   next();
 }
 
+// Helper: get cookie options (must match between set and clear)
+function getCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "lax" | "strict" | "none",
+  };
+}
+
 // Helper: create session row + set cookie
 async function createSession(userId: string, res: Response) {
   const id = randomUUID();
@@ -216,12 +225,15 @@ async function createSession(userId: string, res: Response) {
     expiresAt,
   });
   res.cookie("session_token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    ...getCookieOptions(),
     expires: expiresAt,
   });
   return token;
+}
+
+// Helper: clear session cookie (must use same options as set)
+function clearSessionCookie(res: Response) {
+  res.clearCookie("session_token", getCookieOptions());
 }
 
 // Rate limiters for auth routes (10 req/min per IP)
@@ -364,7 +376,7 @@ router.post("/auth/sign-out", async (req: Request, res: Response) => {
     const token = req.cookies?.session_token;
     if (token) {
       await db.delete(sessionsTable).where(eq(sessionsTable.token, token));
-      res.clearCookie("session_token");
+      clearSessionCookie(res);
     }
     return res.json({ data: null });
   } catch (error) {
@@ -518,7 +530,7 @@ router.get("/auth/session", async (req: Request, res: Response) => {
 
     if (!user) {
       await db.delete(sessionsTable).where(eq(sessionsTable.id, session.id));
-      res.clearCookie("session_token");
+      clearSessionCookie(res);
       return res.json({ data: null });
     }
 
@@ -571,7 +583,7 @@ router.delete("/account", requireAuth, async (req: Request, res: Response) => {
       targetId: userId,
       metadata: { softDeleted: true },
     });
-    res.clearCookie("session_token");
+    clearSessionCookie(res);
     return res.json({ success: true });
   } catch (error) {
     return res.status(500).json({ error: { message: "Unable to delete account" } });

@@ -301,6 +301,8 @@ export const api = {
  request<any>(`/team/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
  remove: (id: string) =>
  request<{ success: boolean }>(`/team/${id}`, { method: 'DELETE' }),
+  transferOwnership: (id: string) =>
+  request<{ success: boolean; newOwner: any }>(`/team/${id}/transfer-ownership`, { method: 'POST' }),
  },
 
  // Invitations

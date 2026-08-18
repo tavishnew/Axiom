@@ -1491,6 +1491,41 @@ router.patch("/team/:id", requireAuth, requireTeamManager, async (req: Request, 
   }
 });
 
+router.post("/team/:id/transfer-ownership", requireAuth, async (req: Request, res: Response) => {
+  const memberId = req.params.id as string;
+  const user = req.user!;
+  if (user.role !== "owner") {
+    return res.status(403).json({ error: { message: "Only organization owners can transfer ownership" } });
+  }
+  if (memberId === user.id) {
+    return res.status(400).json({ error: { message: "Cannot transfer ownership to yourself" } });
+  }
+  const [member] = await db
+    .select()
+    .from(usersTable)
+    .where(and(
+      eq(usersTable.id, memberId),
+      eq(usersTable.organizationId, user.organizationId),
+      isNull(usersTable.deletedAt),
+    ))
+    .limit(1);
+  if (!member) return res.status(404).json({ error: "Member not found" });
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    await tx.update(usersTable).set({ role: "member", updatedAt: now }).where(eq(usersTable.id, user.id));
+    await tx.update(usersTable).set({ role: "owner", updatedAt: now }).where(eq(usersTable.id, memberId));
+  });
+  logAuditEvent({
+    organizationId: user.organizationId,
+    actorId: user.id,
+    action: "ownership.transferred",
+    targetType: "member",
+    targetId: memberId,
+    metadata: { newOwnerId: memberId, newOwnerEmail: member.email },
+  });
+  return res.json({ success: true, newOwner: { id: memberId, email: member.email, name: member.name } });
+});
+
 router.delete("/team/:id", requireAuth, requireTeamManager, async (req: Request, res: Response) => {
   const memberId = req.params.id as string;
   if (memberId === req.user!.id) {

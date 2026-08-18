@@ -356,6 +356,23 @@ export default function SettingsPage() {
  }
  };
 
+const handleTransferOwnership = async (member: any) => {
+ if (!(await confirm({
+ title: `Transfer ownership to ${member.name || member.email}?`,
+ description: 'You will become a member and lose owner permissions. This action is irreversible.',
+ confirmLabel: 'Transfer ownership',
+ cancelLabel: 'Cancel',
+ }))) return;
+ try {
+ await api.team.transferOwnership(member.id);
+ toast.success('Ownership transferred');
+ fetchTeam();
+ } catch (err: any) {
+ console.error(err);
+ toast.error(err?.message || 'Failed to transfer ownership');
+ }
+};
+
  const handleUpdatePayment = async () => {
  try {
  const { data } = await api.billing.createPortal();
@@ -622,6 +639,11 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 </div>
  <div className="flex flex-wrap items-center gap-2">
  <span className="rounded border border-border bg-surface-2 px-2 py-1 text-xs font-medium capitalize text-muted">{member.role?.toLowerCase?.() || 'member'}</span>
+ {canManageTeam && user?.role === 'owner' && member.id !== user.id && member.role !== 'owner' && (
+  <Button aria-label="Transfer ownership" variant="ghost" size="sm" onClick={() => handleTransferOwnership(member)} className="h-8 gap-1 px-2 text-xs text-accent hover:bg-accent/5">
+   <Shield className="h-3.5 w-3.5" />Transfer Ownership
+  </Button>
+ )}
  {canManageTeam && <Button aria-label="Remove member" variant="ghost" size="sm" onClick={() => handleRemoveMember(member)} className="h-8 w-8 p-0 text-red-600 hover:bg-red-50">
  <Trash2 className="h-3.5 w-3.5" />
 </Button>}

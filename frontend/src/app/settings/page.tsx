@@ -480,12 +480,25 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  return;
  }
 
+ if (changingPassword) return;
+
+ setChangingPassword(true);
  try {
  await api.auth.changePassword({ currentPassword, newPassword });
  toast.success('Password changed successfully');
  e.currentTarget.reset();
- } catch (err) {
+ } catch (err: any) {
+ console.error(err);
+ const msg = err?.message || '';
+ if (msg.includes('Current password is incorrect') || msg.includes('Invalid credentials') || msg.includes('401')) {
+ toast.error('Current password is incorrect');
+ } else if (msg.includes('400') || msg.includes('Invalid request')) {
+ toast.error('Invalid password. Must be at least 8 characters.');
+ } else {
  toast.error('Failed to change password');
+ }
+ } finally {
+ setChangingPassword(false);
  }
  };
 

@@ -416,6 +416,7 @@ const handleRevokeSession = async (sessionId: string) => {
 };
 
 const handleDeleteAccount = async () => {
+ if (deletingAccount) return;
  if (deleteAccountConfirmation !== 'DELETE') {
  toast.error('Type DELETE to confirm account deletion');
  return;
@@ -427,7 +428,14 @@ const handleDeleteAccount = async () => {
  window.location.assign('/auth/sign-in');
  } catch (err: any) {
  console.error(err);
- toast.error(err?.message || 'Unable to delete account');
+ const msg = err?.message || '';
+ if (msg.includes('last owner') || msg.includes('Transfer organization ownership')) {
+ toast.error("You can't delete your account because you are the only owner of this organization. Transfer ownership to another member first, or delete the organization instead.");
+ } else if (msg.includes('409') || msg.includes('Conflict')) {
+ toast.error("You can't delete your account because you are the only owner of this organization. Transfer ownership to another member first, or delete the organization instead.");
+ } else {
+ toast.error('Unable to delete account');
+ }
  } finally {
  setDeletingAccount(false);
  }

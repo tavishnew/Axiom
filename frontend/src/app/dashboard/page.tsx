@@ -92,7 +92,7 @@ export default function DashboardPage() {
           whileHover={reduceMotion ? undefined : { y: -2 }}
           whileTap={reduceMotion ? undefined : { scale: 0.98 }}
           transition={motionTransition}
-          className="inline-flex items-center justify-center gap-2 rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-ink hover:bg-accent-2"
+          className="inline-flex items-center justify-center gap-2 rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-ink hover:bg-accent-2 cursor-pointer"
         >
           <FlaskConical className="h-4 w-4" aria-hidden /> Evaluate a request
         </motion.button>
@@ -145,7 +145,7 @@ export default function DashboardPage() {
                 whileHover={reduceMotion ? undefined : { x: 4 }}
                 whileTap={reduceMotion ? undefined : { scale: 0.995 }}
                 transition={motionTransition}
-                className="group grid grid-cols-[2rem_1fr_auto] gap-3 py-4 hover:bg-paper-tint"
+                className="group grid grid-cols-[2rem_1fr_auto] gap-3 py-4 hover:bg-paper-tint cursor-pointer"
               >
                 <span className="flex h-8 w-8 items-center justify-center border border-line text-accent"><Icon className="h-4 w-4" aria-hidden /></span>
                 <span><span className="block text-sm font-semibold text-ink">{index + 1}. {title}</span><span className="mt-1 block text-xs leading-5 text-muted">{detail}</span></span>
@@ -161,7 +161,7 @@ export default function DashboardPage() {
               <p className="editorial-eyebrow">Evidence</p>
               <h2 id="recent-decisions-heading" className="font-serif text-3xl tracking-[-0.03em] text-ink">Recent decisions</h2>
             </div>
-            <a href="/decisions" className="text-sm font-semibold text-ink underline decoration-line-strong underline-offset-4 hover:text-accent hover:decoration-accent">View all</a>
+            <a href="/decisions" className="text-sm font-semibold text-ink underline decoration-line-strong underline-offset-4 hover:text-accent hover:decoration-accent cursor-pointer">View all</a>
           </div>
           {loading ? (
             <div className="space-y-3 border-b border-line py-5" aria-label="Loading recent decisions">
@@ -172,7 +172,7 @@ export default function DashboardPage() {
               <ClipboardList className="mx-auto h-6 w-6 text-muted" aria-hidden />
               <p className="mt-3 font-serif text-2xl text-ink">No evidence yet.</p>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted">Evaluate a request after creating a resource, entity, and policy. The resulting record will appear here.</p>
-              <a href="/test" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent underline underline-offset-4">Evaluate a request <ArrowRight className="h-4 w-4" aria-hidden /></a>
+              <a href="/test" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent underline underline-offset-4 cursor-pointer">Evaluate a request <ArrowRight className="h-4 w-4" aria-hidden /></a>
             </div>
           ) : (
             <div className="divide-y divide-line border-b border-line">
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                     href="/decisions"
                     whileHover={reduceMotion ? undefined : { x: 3 }}
                     transition={motionTransition}
-                    className="grid gap-2 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-4 hover:bg-paper-tint"
+                    className="grid gap-2 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-4 hover:bg-paper-tint cursor-pointer"
                   >
                     <span className={allowed ? "inline-flex w-fit items-center gap-1.5 border-l-2 border-moss bg-moss-wash px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-moss" : "inline-flex w-fit items-center gap-1.5 border-l-2 border-danger bg-danger-wash px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-danger"}>{allowed ? "Allowed" : "Denied"}</span>
                     <span><span className="block truncate text-sm font-semibold text-ink">{decision.entityId} <span className="text-muted">→</span> {decision.resourceType}</span><span className="mt-1 block font-mono text-[11px] text-muted">{decision.action}</span></span>

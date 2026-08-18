@@ -158,7 +158,7 @@ export default function TestConsolePage() {
                               key={entity.id}
                               type="button"
                               onClick={() => selectEntity(entity)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-2 transition-colors"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-2 transition-colors cursor-pointer"
                             >
                               <div className={`flex h-6 w-6 items-center justify-center rounded ${cfg.bg}`}>
                                 <Icon className={`h-3 w-3 ${cfg.color}`} />
@@ -239,7 +239,7 @@ export default function TestConsolePage() {
                               key={resource.id}
                               type="button"
                               onClick={() => selectResource(resource)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-2 transition-colors"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-2 transition-colors cursor-pointer"
                             >
                               <div className={`flex h-6 w-6 items-center justify-center rounded ${cfg.bg}`}>
                                 <Icon className={`h-3 w-3 ${cfg.color}`} />

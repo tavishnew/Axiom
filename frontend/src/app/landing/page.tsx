@@ -58,7 +58,7 @@ function SectionLabel({ number, children }: { number: string; children: React.Re
 
 function EditorialLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <a href={href} className="group inline-flex items-center gap-2 text-sm font-semibold text-ink underline decoration-line-strong underline-offset-4 transition-colors hover:decoration-accent hover:text-accent">
+    <a href={href} className="group inline-flex items-center gap-2 text-sm font-semibold text-ink underline decoration-line-strong underline-offset-4 transition-colors hover:decoration-accent hover:text-accent cursor-pointer">
       {children}
       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
     </a>
@@ -157,7 +157,7 @@ function EvaluationArtifact() {
 
 function PolicySpecimen() {
   return (
-      <motion.div whileHover={{ y: -3 }} transition={transition} className="border border-line bg-paper-raised">
+      <motion.div whileHover={{ y: -3 }} transition={transition} className="border border-line bg-paper-raised cursor-pointer">
       <div className="flex items-center justify-between border-b border-line px-5 py-3">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
           <FileSearch className="h-3.5 w-3.5 text-accent" aria-hidden />
@@ -203,7 +203,7 @@ export default function LandingPage() {
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 transition={transition}
-                className="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-ink shadow-[0_10px_24px_-16px_rgba(47,96,74,0.58)] hover:bg-accent-2"
+                className="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-ink shadow-[0_10px_24px_-16px_rgba(47,96,74,0.58)] hover:bg-accent-2 cursor-pointer"
               >
                 Enter the console <ArrowRight className="h-4 w-4" aria-hidden />
               </motion.a>
@@ -305,7 +305,7 @@ export default function LandingPage() {
             <h2 className="mt-5 max-w-4xl font-serif text-5xl leading-[0.92] tracking-[-0.045em] sm:text-6xl">Build access your team can explain tomorrow.</h2>
           </div>
           <div className="flex items-end lg:col-span-4 lg:justify-end">
-            <a href="/auth/sign-up" className="inline-flex items-center gap-2 rounded-sm bg-paper-raised px-4 py-3 text-sm font-semibold text-oxblood hover:bg-paper-tint">
+            <a href="/auth/sign-up" className="inline-flex items-center gap-2 rounded-sm bg-paper-raised px-4 py-3 text-sm font-semibold text-oxblood hover:bg-paper-tint cursor-pointer">
               Start with a policy <ArrowRight className="h-4 w-4" aria-hidden />
             </a>
           </div>
@@ -316,10 +316,10 @@ export default function LandingPage() {
         <div className="flex flex-col justify-between gap-4 text-sm sm:flex-row sm:items-center">
           <p className="font-serif text-2xl tracking-[-0.035em] text-ink">Axiom<span className="text-accent">.</span></p>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-muted">
-            <a href="#system" className="hover:text-ink">System</a>
-            <a href="#policy" className="hover:text-ink">Policy</a>
-            <a href="#evidence" className="hover:text-ink">Evidence</a>
-            <a href="/auth/sign-in" className="hover:text-ink">Sign in</a>
+            <a href="#system" className="hover:text-ink cursor-pointer">System</a>
+            <a href="#policy" className="hover:text-ink cursor-pointer">Policy</a>
+            <a href="#evidence" className="hover:text-ink cursor-pointer">Evidence</a>
+            <a href="/auth/sign-in" className="hover:text-ink cursor-pointer">Sign in</a>
           </div>
           <p className="font-mono text-[11px] text-muted">Authorization, in the open.</p>
         </div>

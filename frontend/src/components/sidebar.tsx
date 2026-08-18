@@ -91,7 +91,7 @@ function NavigationContent({ collapsed, onNavigate }: { collapsed: boolean; onNa
                       onClick={onNavigate}
                       title={collapsed ? item.name : undefined}
                       aria-current={active ? "page" : undefined}
-                      className={`group relative flex min-h-10 items-center text-sm font-medium transition-colors ${collapsed ? "justify-center rounded-sm px-2" : "gap-3 px-3"} ${active ? "bg-oxblood-wash text-ink" : "text-muted hover:bg-paper-tint hover:text-ink"}`}
+                      className={`group relative flex min-h-10 items-center text-sm font-medium transition-colors cursor-pointer ${collapsed ? "justify-center rounded-sm px-2" : "gap-3 px-3"} ${active ? "bg-oxblood-wash text-ink" : "text-muted hover:bg-paper-tint hover:text-ink"}`}
                     >
                       {active && <span aria-hidden className="absolute inset-y-1 left-0 w-[2px] bg-accent" />}
                       <Icon className={`h-4 w-4 shrink-0 ${active ? "text-accent" : "text-muted group-hover:text-ink"}`} aria-hidden />
@@ -106,7 +106,7 @@ function NavigationContent({ collapsed, onNavigate }: { collapsed: boolean; onNa
       </nav>
 
       <div className={collapsed ? "border-t border-line p-3" : "border-t border-line p-4"}>
-        <a href="/settings" className={collapsed ? "flex items-center justify-center rounded-sm p-1 hover:bg-paper-tint" : "flex items-center gap-3 rounded-sm p-1 hover:bg-paper-tint"} title={collapsed ? `${userName}${userEmail ? ` · ${userEmail}` : ""}` : undefined}>
+        <a href="/settings" className={collapsed ? "flex items-center justify-center rounded-sm p-1 hover:bg-paper-tint cursor-pointer" : "flex items-center gap-3 rounded-sm p-1 hover:bg-paper-tint cursor-pointer"} title={collapsed ? `${userName}${userEmail ? ` · ${userEmail}` : ""}` : undefined}>
           <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-line-strong bg-paper-raised font-mono text-[10px] font-semibold text-ink">{initials(userName, userEmail)}</span>
           {!collapsed && <span className="min-w-0"><span className="block truncate text-sm font-medium text-ink">{userName}</span><span className="block truncate text-xs text-muted">{userEmail || "Workspace settings"}</span></span>}
         </a>

@@ -39,7 +39,7 @@ export function Navbar() {
             <a
               key={item.name}
               href={item.href}
-              className="border-b border-transparent py-1 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-ink"
+              className="border-b border-transparent py-1 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-ink cursor-pointer"
             >
               {item.name}
             </a>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useLocation } from 'wouter';
 import { useState, useEffect, useCallback } from 'react';
@@ -63,6 +63,7 @@ export default function SettingsPage() {
  const [deleteOrgDialogOpen, setDeleteOrgDialogOpen] = useState(false);
  const [deleteOrgConfirmation, setDeleteOrgConfirmation] = useState('');
  const [deletingOrg, setDeletingOrg] = useState(false);
+const [changingPassword, setChangingPassword] = useState(false);
 
  // Dialog states
  const [newKeyDialogOpen, setNewKeyDialogOpen] = useState(false);
@@ -222,7 +223,7 @@ export default function SettingsPage() {
  return;
  }
  setNewKeyValue(key.key);
- toast.success('API key created. Copy it now — it will not be shown again.');
+ toast.success('API key created. Copy it now â€” it will not be shown again.');
  setNewKeyName('');
  setNewKeyDialogOpen(false);
  const keys = await api.apiKeys.list({ limit: 100 });
@@ -442,7 +443,7 @@ const handleDeleteAccount = async () => {
 };
 
 const handleDeleteOrg = async () => {
- if (!confirm('This will delete your entire organization and all its data. Type DELETE to confirm.')) {
+ if (!window.confirm('This will delete your entire organization and all its data. Type DELETE to confirm.')) {
  return;
  }
  const input = prompt('Type DELETE to confirm organization deletion:');
@@ -535,7 +536,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  initial={{ opacity: 0, x: -8 }}
  animate={{ opacity: 1, x: 0 }}
  transition={{ delay: i * 0.03 }}
- className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${isActive ? 'bg-accent text-white shadow-sm' : 'text-muted hover:bg-surface-2 hover:text-ink'}`}
+ className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all cursor-pointer ${isActive ? 'bg-accent text-white shadow-sm' : 'text-muted hover:bg-surface-2 hover:text-ink'}`}
  >
  <Icon className="h-4 w-4" />
  {item.label}
@@ -824,7 +825,7 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <div className="mt-5 space-y-4">
  <div className="rounded-md border border-border bg-surface p-4">
  <h3 className="font-medium text-ink">Current Plan</h3>
- <p className="mt-1 text-sm text-muted">Pro Plan — $29/month</p>
+ <p className="mt-1 text-sm text-muted">Pro Plan â€” $29/month</p>
  <p className="mt-2 text-xs text-muted">Renews on {billing.current_period_end ? new Date(billing.current_period_end * 1000).toLocaleDateString() : 'N/A'}</p>
 </div>
  <div className="flex gap-2">
@@ -995,3 +996,4 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
 </div>
  );
 }
+

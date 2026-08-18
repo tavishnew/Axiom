@@ -6,7 +6,7 @@ import { ShieldHalf, ArrowUpRight, Twitter, Github, Mail } from "lucide-react";
 const columns = {
   Product: ["Overview", "Policies", "SDKs", "Changelog"],
   Company: ["About", "Careers", "Customers", "Press"],
-  Resources: ["Documentation", "API Reference", "Status", "Security"],
+  Resources: ["API Reference", "Status", "Security"],
   Legal: ["Privacy", "Terms", "DPA", "Cookies"],
 };
 

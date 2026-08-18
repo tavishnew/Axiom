@@ -15,7 +15,6 @@ const nav = [
   { name: "System", href: "#system" },
   { name: "Policy", href: "#policy" },
   { name: "Evidence", href: "#evidence" },
-  { name: "Documentation", href: "#documentation" },
 ];
 
 function Wordmark({ compact = false }: { compact?: boolean }) {

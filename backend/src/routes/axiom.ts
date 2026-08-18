@@ -794,6 +794,34 @@ router.patch("/organizations/:id", requireAuth, requireOwner, async (req: Reques
   return res.json(org);
 });
 
+router.delete("/organizations/:id", requireAuth, requireOwner, async (req: Request, res: Response) => {
+  if (req.params.id !== req.user!.organizationId) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  const orgId = req.params.id;
+  const userId = req.user!.id;
+  const now = new Date();
+
+  await db.transaction(async (tx) => {
+    await tx.update(usersTable).set({ deletedAt: now, updatedAt: now, organizationId: null }).where(eq(usersTable.organizationId, orgId));
+    await tx.delete(sessionsTable).where(inArray(sessionsTable.userId, db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.organizationId, orgId))));
+    await tx.update(apiKeysTable).set({ revokedAt: now, updatedAt: now }).where(eq(apiKeysTable.organizationId, orgId));
+    await tx.update(invitationsTable).set({ revokedAt: now, updatedAt: now }).where(eq(invitationsTable.organizationId, orgId));
+    await tx.update(organizationsTable).set({ deletedAt: now, updatedAt: now }).where(eq(organizationsTable.id, orgId));
+  });
+
+  logAuditEvent({
+    organizationId: orgId,
+    actorId: userId,
+    action: "organization.deleted",
+    targetType: "organization",
+    targetId: orgId,
+    metadata: { softDeleted: true },
+  });
+  clearSessionCookie(res);
+  return res.json({ success: true });
+});
+
 // POST /organizations removed — organizations are created during sign-up only
 
 // ============================================================

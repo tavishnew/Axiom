@@ -292,6 +292,8 @@ export const api = {
  // Organizations
   organizations: {
   list: () => request<Organization[]>('/organizations'),
+  delete: (id: string) =>
+    request<{ success: boolean }>(`/organizations/${id}`, { method: 'DELETE' }),
   },
 
  // Team

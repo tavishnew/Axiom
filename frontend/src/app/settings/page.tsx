@@ -60,6 +60,9 @@ export default function SettingsPage() {
  const [deleteAccountDialogOpen, setDeleteAccountDialogOpen] = useState(false);
  const [deleteAccountConfirmation, setDeleteAccountConfirmation] = useState('');
  const [deletingAccount, setDeletingAccount] = useState(false);
+ const [deleteOrgDialogOpen, setDeleteOrgDialogOpen] = useState(false);
+ const [deleteOrgConfirmation, setDeleteOrgConfirmation] = useState('');
+ const [deletingOrg, setDeletingOrg] = useState(false);
 
  // Dialog states
  const [newKeyDialogOpen, setNewKeyDialogOpen] = useState(false);
@@ -427,6 +430,28 @@ const handleDeleteAccount = async () => {
  toast.error(err?.message || 'Unable to delete account');
  } finally {
  setDeletingAccount(false);
+ }
+};
+
+const handleDeleteOrg = async () => {
+ if (!confirm('This will delete your entire organization and all its data. Type DELETE to confirm.')) {
+ return;
+ }
+ const input = prompt('Type DELETE to confirm organization deletion:');
+ if (input !== 'DELETE') {
+ toast.error('Confirmation failed');
+ return;
+ }
+ setDeletingOrg(true);
+ try {
+ await api.organizations.delete(org?.id || '');
+ toast.success('Organization deleted');
+ window.location.assign('/auth/sign-in');
+ } catch (err: any) {
+ console.error(err);
+ toast.error(err?.message || 'Unable to delete organization');
+ } finally {
+ setDeletingOrg(false);
  }
 };
 
@@ -886,10 +911,15 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <p className="mt-1 text-sm text-red-700">This permanently disables sign-in, revokes your active sessions and API keys that you created, and removes your account from active workspace access.</p>
  {user?.role === 'owner' && teamMembers.filter(m => m.role === 'owner').length === 1 ? (
    <div className="mt-3 space-y-2">
-     <p className="text-sm text-red-700">You are the sole owner of this organization. Transfer ownership to another member before deleting your account.</p>
-     <a href="/settings/team" className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline">
-       Go to Team settings <ArrowUpRight className="h-3.5 w-3.5" />
-     </a>
+     <p className="text-sm text-red-700">You are the sole owner of this organization.</p>
+     <div className="flex flex-col gap-2">
+       <a href="/settings/team" className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline">
+         Transfer ownership to another member <ArrowUpRight className="h-3.5 w-3.5" />
+       </a>
+       <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-100 hover:text-red-800" onClick={() => { setDeleteOrgDialogOpen(true); }}>
+         <Trash2 className="mr-2 h-4 w-4" />Delete organization instead
+       </Button>
+     </div>
    </div>
  ) : (
    <Button variant="outline" className="mt-3 border-red-300 text-red-700 hover:bg-red-100 hover:text-red-800" onClick={() => { setDeleteAccountConfirmation(''); setDeleteAccountDialogOpen(true); }}>
@@ -911,6 +941,24 @@ const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
  <Button type="button" variant="outline" onClick={() => setDeleteAccountDialogOpen(false)} disabled={deletingAccount}>Cancel</Button>
  <Button type="button" className="bg-red-600 text-white hover:bg-red-700" onClick={handleDeleteAccount} disabled={deletingAccount || deleteAccountConfirmation !== 'DELETE'}>
  {deletingAccount ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}Delete account
+ </Button>
+ </DialogFooter>
+ </DialogContent>
+ </Dialog>
+ <Dialog open={deleteOrgDialogOpen} onOpenChange={(open) => { if (!deletingOrg) setDeleteOrgDialogOpen(open); }}>
+ <DialogContent className="sm:max-w-[480px]">
+ <DialogHeader>
+ <DialogTitle>Delete your organization?</DialogTitle>
+ <DialogDescription>This action is irreversible. All organization data, team members, API keys, and policies will be permanently deleted.</DialogDescription>
+ </DialogHeader>
+ <div className="space-y-3 p-6">
+ <Label htmlFor="delete-org-confirmation">Type <strong>DELETE</strong> to confirm</Label>
+ <Input id="delete-org-confirmation" value={deleteOrgConfirmation} onChange={(event) => setDeleteOrgConfirmation(event.target.value)} placeholder="DELETE" autoComplete="off" />
+ </div>
+ <DialogFooter className="gap-2">
+ <Button type="button" variant="outline" onClick={() => setDeleteOrgDialogOpen(false)} disabled={deletingOrg}>Cancel</Button>
+ <Button type="button" className="bg-red-600 text-white hover:bg-red-700" onClick={handleDeleteOrg} disabled={deletingOrg || deleteOrgConfirmation !== 'DELETE'}>
+ {deletingOrg ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}Delete organization
  </Button>
  </DialogFooter>
  </DialogContent>
